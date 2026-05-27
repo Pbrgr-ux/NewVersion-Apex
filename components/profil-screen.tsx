@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Crown,
@@ -15,11 +16,13 @@ import {
   BarChart3,
   User,
   ChevronRight,
+  Loader2,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { createClient } from "@/lib/supabase/client"
 
 // Mock user data
 const mockUser = {
@@ -119,7 +122,17 @@ function PerformanceChart({ data }: { data: { month: string; value: number }[] }
 }
 
 export function ProfilScreen() {
+  const router = useRouter()
+  const supabase = createClient()
   const [isPro] = useState(mockUser.isPro)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  async function handleLogOut() {
+    setLoggingOut(true)
+    await supabase.auth.signOut()
+    router.push("/")
+    router.refresh()
+  }
 
   const memberDate = new Date(mockUser.memberSince)
   const formattedDate = memberDate.toLocaleDateString("fr-FR", {
@@ -300,11 +313,16 @@ export function ProfilScreen() {
           )}
           <Button
             variant="outline"
-            className="h-12 justify-between border-border bg-card text-foreground hover:bg-secondary"
+            onClick={handleLogOut}
+            disabled={loggingOut}
+            className="h-12 justify-between border-border bg-card text-foreground hover:bg-secondary disabled:opacity-60"
           >
             <div className="flex items-center gap-3">
-              <LogOut className="h-5 w-5 text-danger" />
-              <span>Log Out</span>
+              {loggingOut
+                ? <Loader2 className="h-5 w-5 animate-spin text-danger" />
+                : <LogOut className="h-5 w-5 text-danger" />
+              }
+              <span>{loggingOut ? "Déconnexion…" : "Log Out"}</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Button>
