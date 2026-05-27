@@ -1,156 +1,134 @@
 /**
- * Auto-generated types for the APEX Supabase schema.
- * Regenerate with: npx supabase gen types typescript --project-id <id> > types/database.ts
+ * Types TypeScript générés depuis le schéma Supabase APEX.
+ * Pour regénérer automatiquement :
+ *   npx supabase gen types typescript --project-id <id> > types/database.ts
  */
 export type Database = {
   public: {
     Tables: {
-      profiles: {
+
+      // ── users ──────────────────────────────────────────────
+      users: {
         Row: {
-          id: string                  // uuid — references auth.users
-          pseudo: string
-          avatar_url: string | null
-          is_pro: boolean
+          id:         string        // uuid — references auth.users
+          email:      string
+          pseudo:     string
+          is_pro:     boolean
           created_at: string
-          updated_at: string
         }
         Insert: {
-          id: string
-          pseudo: string
-          avatar_url?: string | null
-          is_pro?: boolean
+          id:          string
+          email:       string
+          pseudo:      string
+          is_pro?:     boolean
           created_at?: string
-          updated_at?: string
         }
         Update: {
-          pseudo?: string
-          avatar_url?: string | null
-          is_pro?: boolean
-          updated_at?: string
+          pseudo?:     string
+          is_pro?:     boolean
         }
       }
 
+      // ── portfolios ─────────────────────────────────────────
       portfolios: {
         Row: {
-          id: string
-          user_id: string
-          season: number
-          ticker: string
-          allocation: number          // 0–100 (percentage)
-          submitted_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          season: number
-          ticker: string
-          allocation: number
-          submitted_at?: string
-        }
-        Update: {
-          allocation?: number
-        }
-      }
-
-      performance: {
-        Row: {
-          id: string
-          user_id: string
-          season: number
-          week: number
-          perf_day: number
-          perf_week: number
-          perf_month: number
-          perf_season: number
-          recorded_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          season: number
-          week: number
-          perf_day: number
-          perf_week: number
-          perf_month: number
-          perf_season: number
-          recorded_at?: string
-        }
-        Update: never
-      }
-
-      leagues: {
-        Row: {
-          id: string
-          name: string
-          code: string                // short invite code e.g. WOLF-42
-          creator_id: string
-          season: number
+          id:         string
+          user_id:    string
+          saison:     number
+          cash:       number
           created_at: string
         }
         Insert: {
-          id?: string
-          name: string
-          code: string
-          creator_id: string
-          season?: number
+          id?:         string
+          user_id:     string
+          saison?:     number
+          cash?:       number
           created_at?: string
         }
         Update: {
-          name?: string
+          cash?:   number
+          saison?: number
         }
       }
 
-      league_members: {
+      // ── positions ──────────────────────────────────────────
+      positions: {
         Row: {
-          league_id: string
-          user_id: string
-          joined_at: string
+          id:             string
+          portfolio_id:   string
+          ticker:         string
+          allocation_pct: number   // 0–100
+          prix_achat:     number
+          created_at:     string
         }
         Insert: {
-          league_id: string
-          user_id: string
-          joined_at?: string
-        }
-        Update: never
-      }
-
-      subscriptions: {
-        Row: {
-          id: string
-          user_id: string
-          stripe_customer_id: string
-          stripe_subscription_id: string
-          plan: "monthly" | "annual"
-          status: "active" | "canceled" | "past_due"
-          current_period_end: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          stripe_customer_id: string
-          stripe_subscription_id: string
-          plan: "monthly" | "annual"
-          status?: "active" | "canceled" | "past_due"
-          current_period_end: string
-          created_at?: string
+          id?:             string
+          portfolio_id:    string
+          ticker:          string
+          allocation_pct:  number
+          prix_achat:      number
+          created_at?:     string
         }
         Update: {
-          status?: "active" | "canceled" | "past_due"
-          current_period_end?: string
+          allocation_pct?: number
+          prix_achat?:     number
         }
       }
+
+      // ── cours ──────────────────────────────────────────────
+      cours: {
+        Row: {
+          id:     string
+          ticker: string
+          prix:   number
+          date:   string  // format ISO "YYYY-MM-DD"
+        }
+        Insert: {
+          id?:    string
+          ticker: string
+          prix:   number
+          date:   string
+        }
+        Update: {
+          prix?: number
+        }
+      }
+
+      // ── classement ─────────────────────────────────────────
+      classement: {
+        Row: {
+          id:          string
+          user_id:     string
+          saison:      number
+          perf_totale: number   // ex: 12.34 = +12.34%
+          rang:        number
+          updated_at:  string
+        }
+        Insert: {
+          id?:          string
+          user_id:      string
+          saison?:      number
+          perf_totale?: number
+          rang?:        number
+          updated_at?:  string
+        }
+        Update: {
+          perf_totale?: number
+          rang?:        number
+          updated_at?:  string
+        }
+      }
+
     }
-    Views: Record<string, never>
+    Views:     Record<string, never>
     Functions: Record<string, never>
-    Enums: Record<string, never>
+    Enums:     Record<string, never>
   }
 }
 
-// Convenience type aliases
-export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
-export type Portfolio = Database["public"]["Tables"]["portfolios"]["Row"]
-export type Performance = Database["public"]["Tables"]["performance"]["Row"]
-export type League = Database["public"]["Tables"]["leagues"]["Row"]
-export type LeagueMember = Database["public"]["Tables"]["league_members"]["Row"]
-export type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"]
+// ── Alias pratiques ───────────────────────────────────────────
+export type User        = Database["public"]["Tables"]["users"]["Row"]
+export type Portfolio   = Database["public"]["Tables"]["portfolios"]["Row"]
+export type Position    = Database["public"]["Tables"]["positions"]["Row"]
+export type Cours       = Database["public"]["Tables"]["cours"]["Row"]
+export type Classement  = Database["public"]["Tables"]["classement"]["Row"]
