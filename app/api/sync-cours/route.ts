@@ -1,18 +1,17 @@
 /**
  * POST /api/sync-cours
  *
- * Récupère le cours de clôture de la veille pour les 65 tickers
- * autorisés via Polygon.io et insère/met à jour la table `cours`
- * dans Supabase.
+ * Récupère le cours de clôture précédent pour les 65 tickers APEX
+ * via Polygon.io et upserte dans la table `cours` de Supabase.
  *
- * Protégé par un secret : Header  Authorization: Bearer <CRON_SECRET>
- * ou query param           ?secret=<CRON_SECRET>
+ * Plan Polygon FREE (5 req/min) → 1 appel toutes les 13s
+ * → durée totale ≈ 14 min  (cron quotidien acceptable)
  *
- * À appeler chaque jour ouvré après la clôture des marchés US (22h30 CET).
- * Peut être déclenché par :
- *   - Vercel Cron Jobs (vercel.json)
- *   - GitHub Actions (schedule)
- *   - Supabase Edge Functions
+ * Plan Polygon Starter ($29/mo) → supprimer le CALL_DELAY
+ * → durée totale < 30s
+ *
+ * Protection : Authorization: Bearer <CRON_SECRET>
+ *              ou ?secret=<CRON_SECRET>
  */
 
 import { NextRequest, NextResponse } from "next/server"
@@ -20,69 +19,55 @@ import { createClient }              from "@supabase/supabase-js"
 import type { Database }             from "@/types/database"
 import { TICKERS }                   from "@/lib/tickers"
 
-// ── Config ────────────────────────────────────────────────────
-const POLYGON_BASE  = "https://api.polygon.io"
-const BATCH_SIZE    = 5          // appels Polygon en parallèle
-const BATCH_DELAY   = 1200       // ms entre les batchs (évite le rate-limit)
+const POLYGON_BASE = "https://api.polygon.io"
 
-type PolygonPrevResult = {
-  T:  string   // ticker
-  c:  number   // close
-  o:  number   // open
-  h:  number   // high
-  l:  number   // low
-  v:  number   // volume
-  vw: number   // VWAP
-  t:  number   // timestamp (ms)
+/**
+ * Délai entre chaque appel Polygon.
+ * Plan FREE  : 5 req/min  → 13 000 ms
+ * Plan payant: illimité   → 0 ms
+ */
+const CALL_DELAY = parseInt(process.env.POLYGON_CALL_DELAY_MS ?? "13000", 10)
+
+// ── Auth ──────────────────────────────────────────────────────
+function isAuthorized(req: NextRequest): boolean {
+  const secret = process.env.CRON_SECRET
+  if (!secret) return true
+  const auth = req.headers.get("authorization")
+  if (auth === `Bearer ${secret}`) return true
+  return new URL(req.url).searchParams.get("secret") === secret
 }
 
-type SyncResult = {
-  ticker:  string
-  status:  "ok" | "skip" | "error"
-  date?:   string
-  prix?:   number
-  reason?: string
+function sleep(ms: number) {
+  return new Promise<void>((r) => setTimeout(r, ms))
 }
 
-// ── Auth helper ────────────────────────────────────────────────
-function isAuthorized(request: NextRequest): boolean {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret) return true // pas de secret configuré → dev local
-
-  const authHeader = request.headers.get("authorization")
-  if (authHeader === `Bearer ${cronSecret}`) return true
-
-  const { searchParams } = new URL(request.url)
-  if (searchParams.get("secret") === cronSecret) return true
-
-  return false
-}
-
-// ── Polygon fetch (cours précédent) ───────────────────────────
+// ── Polygon /prev ─────────────────────────────────────────────
 async function fetchPrevClose(
   ticker: string,
   apiKey: string
 ): Promise<{ prix: number; date: string } | null> {
-  const url = `${POLYGON_BASE}/v2/aggs/ticker/${encodeURIComponent(ticker)}/prev?adjusted=true&apiKey=${apiKey}`
+  try {
+    const url =
+      `${POLYGON_BASE}/v2/aggs/ticker/${encodeURIComponent(ticker)}/prev` +
+      `?adjusted=true&apiKey=${apiKey}`
 
-  const res = await fetch(url, {
-    next: { revalidate: 0 },          // pas de cache Next.js
-    signal: AbortSignal.timeout(8000),
-  })
+    const res = await fetch(url, {
+      next: { revalidate: 0 },
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (!res.ok) return null
 
-  if (!res.ok) return null
+    const json = await res.json()
+    const r = json.results?.[0]
+    if (!r?.c) return null
 
-  const json = await res.json()
-  const result: PolygonPrevResult | undefined = json.results?.[0]
-  if (!result) return null
-
-  const date = new Date(result.t).toISOString().split("T")[0]
-  return { prix: result.c, date }
-}
-
-// ── Batch helper ──────────────────────────────────────────────
-function sleep(ms: number) {
-  return new Promise<void>((r) => setTimeout(r, ms))
+    return {
+      prix: r.c,
+      date: new Date(r.t).toISOString().split("T")[0],
+    }
+  } catch {
+    return null
+  }
 }
 
 // ── Handler ───────────────────────────────────────────────────
@@ -93,78 +78,63 @@ export async function POST(request: NextRequest) {
 
   const polygonKey = process.env.POLYGON_API_KEY
   if (!polygonKey) {
-    return NextResponse.json(
-      { error: "POLYGON_API_KEY manquante dans .env.local" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "POLYGON_API_KEY manquante" }, { status: 500 })
   }
 
-  // Supabase avec service_role pour bypass RLS sur la table cours
   const supabase = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const results: SyncResult[] = []
-  const startedAt = Date.now()
+  type Result = {
+    ticker: string
+    status: "ok" | "skip" | "error"
+    prix?:  number
+    date?:  string
+    reason?: string
+  }
 
-  // ── Traitement par batchs ───────────────────────────────────
-  for (let i = 0; i < TICKERS.length; i += BATCH_SIZE) {
-    const batch = TICKERS.slice(i, i + BATCH_SIZE)
+  const results: Result[] = []
+  const start = Date.now()
 
-    const batchResults = await Promise.all(
-      batch.map(async ({ ticker }): Promise<SyncResult> => {
-        try {
-          const data = await fetchPrevClose(ticker, polygonKey)
+  for (let i = 0; i < TICKERS.length; i++) {
+    const { ticker } = TICKERS[i]
 
-          if (!data) {
-            return { ticker, status: "skip", reason: "Pas de données Polygon (ticker non couvert ou marché fermé)" }
-          }
+    const data = await fetchPrevClose(ticker, polygonKey)
 
-          const { error: dbError } = await supabase
-            .from("cours")
-            .upsert(
-              { ticker, prix: data.prix, date: data.date },
-              { onConflict: "ticker,date" }
-            )
+    if (!data) {
+      results.push({ ticker, status: "skip", reason: "Pas de données Polygon" })
+    } else {
+      const { error } = await supabase
+        .from("cours")
+        .upsert({ ticker, prix: data.prix, date: data.date }, { onConflict: "ticker,date" })
 
-          if (dbError) {
-            return { ticker, status: "error", reason: dbError.message }
-          }
+      if (error) {
+        results.push({ ticker, status: "error", reason: error.message })
+      } else {
+        results.push({ ticker, status: "ok", prix: data.prix, date: data.date })
+      }
+    }
 
-          return { ticker, status: "ok", prix: data.prix, date: data.date }
-
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err)
-          return { ticker, status: "error", reason: message }
-        }
-      })
-    )
-
-    results.push(...batchResults)
-
-    // Pause entre les batchs (sauf après le dernier)
-    if (i + BATCH_SIZE < TICKERS.length) {
-      await sleep(BATCH_DELAY)
+    // Pause inter-appels (sauf après le dernier ticker)
+    if (i < TICKERS.length - 1 && CALL_DELAY > 0) {
+      await sleep(CALL_DELAY)
     }
   }
 
-  // ── Résumé ─────────────────────────────────────────────────
   const summary = {
-    duration_ms: Date.now() - startedAt,
+    duration_ms: Date.now() - start,
+    call_delay_ms: CALL_DELAY,
     total:  results.length,
     ok:     results.filter((r) => r.status === "ok").length,
     skip:   results.filter((r) => r.status === "skip").length,
     errors: results.filter((r) => r.status === "error").length,
   }
 
-  return NextResponse.json({
-    summary,
-    results,
-  })
+  console.log("[sync-cours]", summary)
+  return NextResponse.json({ summary, results })
 }
 
-// Permet aussi un GET pratique pour tester depuis le navigateur en dev
 export async function GET(request: NextRequest) {
   return POST(request)
 }
