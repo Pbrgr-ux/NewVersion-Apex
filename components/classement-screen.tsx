@@ -2,314 +2,272 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Trophy, TrendingUp, TrendingDown, Home, BarChart3, User, Crown, Medal } from "lucide-react"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import {
+  Trophy, TrendingUp, TrendingDown,
+  Home, BarChart3, User, Crown, Medal,
+} from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Avatar, AvatarFallback }      from "@/components/ui/avatar"
+import { Badge }                        from "@/components/ui/badge"
+import type { AllClassementData, LeaderboardEntry } from "@/lib/classement-data"
 
-// Mock data - replace with Supabase data
-const currentUserId = "user-47"
+// ── Types ─────────────────────────────────────────────────────
+type TabId = "saison" | "mois" | "semaine" | "jour"
 
-const mockLeaderboard = [
-  { id: "user-1", rank: 1, pseudo: "AlphaTrader", avatar: null, perf: 48.72, weekChange: 3.21, isPro: true },
-  { id: "user-2", rank: 2, pseudo: "WallStreetWolf", avatar: null, perf: 45.31, weekChange: -1.45, isPro: true },
-  { id: "user-3", rank: 3, pseudo: "CryptoKing", avatar: null, perf: 42.89, weekChange: 2.87, isPro: false },
-  { id: "user-4", rank: 4, pseudo: "BullRunner", avatar: null, perf: 38.56, weekChange: 1.12, isPro: true },
-  { id: "user-5", rank: 5, pseudo: "MarketMaven", avatar: null, perf: 35.24, weekChange: -0.34, isPro: false },
-  { id: "user-6", rank: 6, pseudo: "TradeMaster", avatar: null, perf: 33.91, weekChange: 2.15, isPro: false },
-  { id: "user-7", rank: 7, pseudo: "StockSage", avatar: null, perf: 31.78, weekChange: 0.89, isPro: true },
-  { id: "user-8", rank: 8, pseudo: "EquityElite", avatar: null, perf: 29.45, weekChange: -2.01, isPro: false },
-  { id: "user-9", rank: 9, pseudo: "PortfolioPro", avatar: null, perf: 27.32, weekChange: 1.56, isPro: true },
-  { id: "user-10", rank: 10, pseudo: "InvestorX", avatar: null, perf: 25.18, weekChange: 0.43, isPro: false },
-  ...Array.from({ length: 90 }, (_, i) => ({
-    id: i === 36 ? "user-47" : `user-${i + 11}`,
-    rank: i + 11,
-    pseudo: i === 36 ? "You" : `Trader${i + 11}`,
-    avatar: null,
-    perf: Math.max(0, 24 - i * 0.25 + (i % 7) * 0.3 - (i % 3) * 0.1).toFixed(2),
-    weekChange: (((i % 5) - 2) * 0.7).toFixed(2),
-    isPro: i % 3 === 0,
-  })),
-].map((item, index) => ({
-  ...item,
-  rank: index + 1,
-  perf: typeof item.perf === "string" ? parseFloat(item.perf) : item.perf,
-  weekChange: typeof item.weekChange === "string" ? parseFloat(item.weekChange) : item.weekChange,
-}))
+const TABS: { id: TabId; label: string }[] = [
+  { id: "saison",  label: "Saison"  },
+  { id: "mois",    label: "Mois"    },
+  { id: "semaine", label: "Semaine" },
+  { id: "jour",    label: "Jour"    },
+]
 
-type FilterType = "general" | "league"
-type PeriodType = "today" | "week" | "month" | "season"
-
-function getRankStyle(rank: number): { bg: string; text: string; icon: React.ReactNode } {
-  switch (rank) {
-    case 1:
-      return {
-        bg: "bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border-amber-500/50",
-        text: "text-amber-400",
-        icon: <Crown className="h-5 w-5 text-amber-400" />,
-      }
-    case 2:
-      return {
-        bg: "bg-gradient-to-r from-slate-400/20 to-gray-400/20 border-slate-400/50",
-        text: "text-slate-300",
-        icon: <Medal className="h-5 w-5 text-slate-300" />,
-      }
-    case 3:
-      return {
-        bg: "bg-gradient-to-r from-orange-600/20 to-amber-700/20 border-orange-600/50",
-        text: "text-orange-400",
-        icon: <Medal className="h-5 w-5 text-orange-400" />,
-      }
-    default:
-      return {
-        bg: "bg-card border-border",
-        text: "text-muted-foreground",
-        icon: null,
-      }
-  }
+// ── Helpers ───────────────────────────────────────────────────
+function fmtPerf(v: number | null): string {
+  if (v == null) return "—"
+  return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`
 }
 
-function LeaderboardRow({
-  player,
-  isCurrentUser,
-}: {
-  player: (typeof mockLeaderboard)[0]
-  isCurrentUser: boolean
-}) {
-  const rankStyle = getRankStyle(player.rank)
-  const isTop3 = player.rank <= 3
+function podiumRingClass(rank: 1 | 2 | 3): string {
+  return rank === 1 ? "ring-2 ring-amber-400"
+    : rank === 2   ? "ring-2 ring-slate-400"
+                   : "ring-2 ring-orange-500"
+}
+
+function podiumFallbackClass(rank: 1 | 2 | 3): string {
+  return rank === 1 ? "bg-gradient-to-br from-amber-400 to-yellow-500 text-white font-bold"
+    : rank === 2   ? "bg-gradient-to-br from-slate-400 to-gray-500 text-white font-bold"
+                   : "bg-gradient-to-br from-orange-500 to-amber-600 text-white font-bold"
+}
+
+function badgeBg(rank: 1 | 2 | 3): string {
+  return rank === 1 ? "bg-amber-400" : rank === 2 ? "bg-slate-400" : "bg-orange-500"
+}
+
+// ── Podium top 3 ──────────────────────────────────────────────
+function Podium({ entries }: { entries: LeaderboardEntry[] }) {
+  const first  = entries[0]
+  const second = entries[1]
+  const third  = entries[2]
+  if (!first) return null
+
+  function Slot({
+    entry,
+    rank,
+    size = "normal",
+  }: {
+    entry?: LeaderboardEntry
+    rank: 1 | 2 | 3
+    size?: "normal" | "large"
+  }) {
+    if (!entry) return <div className={size === "large" ? "h-16 w-16" : "h-14 w-14"} />
+    const positive = (entry.perf ?? 0) >= 0
+    return (
+      <>
+        {rank === 1 && <Crown className="h-6 w-6 text-amber-400 mb-0" />}
+        <div className="relative">
+          <Avatar className={`${size === "large" ? "h-16 w-16" : "h-14 w-14"} ${podiumRingClass(rank)}`}>
+            <AvatarFallback className={`${podiumFallbackClass(rank)} ${size === "large" ? "text-lg" : ""}`}>
+              {entry.pseudo.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className={`absolute -bottom-1 -right-1 flex ${size === "large" ? "h-6 w-6 text-xs" : "h-5 w-5 text-[10px]"} items-center justify-center rounded-full font-bold text-white ${badgeBg(rank)}`}>
+            {rank}
+          </div>
+        </div>
+        <span className={`${size === "large" ? "text-sm font-semibold" : "text-xs font-medium"} text-foreground truncate max-w-full px-1 text-center`}>
+          {entry.pseudo}
+        </span>
+        <span className={`${size === "large" ? "text-base" : "text-sm"} font-bold tabular-nums ${positive ? "text-success" : "text-danger"}`}>
+          {fmtPerf(entry.perf)}
+        </span>
+      </>
+    )
+  }
 
   return (
-    <div
-      className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
-        isCurrentUser
-          ? "border-[var(--signup-blue)] bg-[var(--signup-blue)]/10"
-          : rankStyle.bg
-      }`}
-    >
-      {/* Rank */}
-      <div className={`flex h-8 w-8 items-center justify-center ${isTop3 ? "" : ""}`}>
-        {rankStyle.icon || (
-          <span className={`text-sm font-bold tabular-nums ${rankStyle.text}`}>
-            #{player.rank}
-          </span>
-        )}
+    <div className="mb-4 grid grid-cols-3 gap-2">
+      {/* 2e — décalé vers le bas */}
+      <div className="flex flex-col items-center gap-2 pt-6">
+        <Slot entry={second} rank={2} />
       </div>
-
-      {/* Avatar */}
-      <Avatar className="h-10 w-10">
-        <AvatarImage src={player.avatar || undefined} />
-        <AvatarFallback className="bg-secondary text-foreground text-xs font-medium">
-          {player.pseudo.slice(0, 2).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-
-      {/* Name & Badge */}
-      <div className="flex flex-1 flex-col gap-0.5 min-w-0">
-        <div className="flex items-center gap-2">
-          <span
-            className={`truncate font-semibold ${
-              isCurrentUser ? "text-[var(--signup-blue)]" : "text-foreground"
-            } ${isTop3 ? rankStyle.text : ""}`}
-          >
-            {player.pseudo}
-          </span>
-          {player.isPro && (
-            <Badge
-              variant="secondary"
-              className="bg-primary/20 text-primary text-[10px] px-1.5 py-0"
-            >
-              PRO
-            </Badge>
-          )}
-        </div>
-        {isTop3 && (
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {player.rank === 1 ? "1st Place" : player.rank === 2 ? "2nd Place" : "3rd Place"}
-          </span>
-        )}
+      {/* 1er — au centre, plus grand */}
+      <div className="flex flex-col items-center gap-2">
+        <Slot entry={first} rank={1} size="large" />
       </div>
-
-      {/* Performance */}
-      <div className="flex flex-col items-end gap-0.5">
-        <span
-          className={`text-base font-bold tabular-nums ${
-            player.perf >= 0 ? "text-success" : "text-danger"
-          }`}
-        >
-          {player.perf >= 0 ? "+" : ""}
-          {player.perf.toFixed(2)}%
-        </span>
-        <div className="flex items-center gap-0.5">
-          {player.weekChange >= 0 ? (
-            <TrendingUp className="h-3 w-3 text-success" />
-          ) : (
-            <TrendingDown className="h-3 w-3 text-danger" />
-          )}
-          <span
-            className={`text-xs tabular-nums ${
-              player.weekChange >= 0 ? "text-success" : "text-danger"
-            }`}
-          >
-            {player.weekChange >= 0 ? "+" : ""}
-            {player.weekChange.toFixed(2)}%
-          </span>
-        </div>
+      {/* 3e — décalé vers le bas */}
+      <div className="flex flex-col items-center gap-2 pt-6">
+        <Slot entry={third} rank={3} />
       </div>
     </div>
   )
 }
 
-export function ClassementScreen() {
-  const [filter, setFilter] = useState<FilterType>("general")
-  const [period, setPeriod] = useState<PeriodType>("season")
+// ── Ligne de classement ───────────────────────────────────────
+function LeaderboardRow({
+  entry,
+  isSelf,
+}: {
+  entry:  LeaderboardEntry
+  isSelf: boolean
+}) {
+  const positive = (entry.perf ?? 0) >= 0
 
-  // Find current user position
-  const currentUserIndex = mockLeaderboard.findIndex((p) => p.id === currentUserId)
+  let rowClass = "bg-card border-border"
+  if (isSelf)          rowClass = "border-primary/60 bg-primary/10"
+  else if (entry.rang === 1) rowClass = "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/40"
+  else if (entry.rang === 2) rowClass = "bg-gradient-to-r from-slate-400/10 to-gray-400/10 border-slate-400/40"
+  else if (entry.rang === 3) rowClass = "bg-gradient-to-r from-orange-600/10 to-amber-700/10 border-orange-600/40"
+
+  return (
+    <div className={`flex items-center gap-3 rounded-lg border p-3 ${rowClass}`}>
+      {/* Rang / icône */}
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+        {entry.rang === 1 ? <Crown  className="h-5 w-5 text-amber-400" />
+         : entry.rang === 2 ? <Medal className="h-5 w-5 text-slate-300" />
+         : entry.rang === 3 ? <Medal className="h-5 w-5 text-orange-400" />
+         : <span className="text-sm font-bold tabular-nums text-muted-foreground">#{entry.rang}</span>}
+      </div>
+
+      {/* Avatar */}
+      <Avatar className="h-9 w-9 shrink-0">
+        <AvatarFallback className="bg-secondary text-foreground text-xs font-medium">
+          {entry.pseudo.slice(0, 2).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+
+      {/* Pseudo + PRO */}
+      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+        <span className={`truncate font-semibold ${
+          isSelf         ? "text-primary"    :
+          entry.rang <= 3 ? (entry.rang === 1 ? "text-amber-400" : entry.rang === 2 ? "text-slate-300" : "text-orange-400")
+                          : "text-foreground"
+        }`}>
+          {entry.pseudo}
+          {isSelf && <span className="ml-1 text-xs font-normal opacity-60">(vous)</span>}
+        </span>
+        {entry.is_pro && (
+          <Badge variant="secondary" className="shrink-0 bg-primary/20 text-primary text-[10px] px-1.5 py-0 leading-4">
+            PRO
+          </Badge>
+        )}
+      </div>
+
+      {/* Perf */}
+      <div className="flex shrink-0 items-center gap-1">
+        {positive
+          ? <TrendingUp   className="h-3.5 w-3.5 text-success" />
+          : <TrendingDown className="h-3.5 w-3.5 text-danger"  />}
+        <span className={`text-base font-bold tabular-nums ${positive ? "text-success" : "text-danger"}`}>
+          {fmtPerf(entry.perf)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ── Empty state ───────────────────────────────────────────────
+function EmptyTab({ tab }: { tab: TabId }) {
+  return (
+    <div className="flex flex-col items-center gap-3 py-16 text-center">
+      <Trophy className="h-10 w-10 text-muted-foreground/40" />
+      <p className="text-sm text-muted-foreground max-w-[240px]">
+        {tab === "saison"
+          ? "Aucun joueur classé pour l'instant."
+          : "Pas encore de données de cours pour calculer ce classement. Lance une synchronisation via /api/sync-cours."}
+      </p>
+    </div>
+  )
+}
+
+// ── Composant principal ───────────────────────────────────────
+export function ClassementScreen({ data }: { data: AllClassementData }) {
+  const [activeTab, setActiveTab] = useState<TabId>("saison")
+
+  const lists: Record<TabId, LeaderboardEntry[]> = {
+    saison:  data.saison,
+    mois:    data.mois,
+    semaine: data.semaine,
+    jour:    data.jour,
+  }
+
+  const entries   = lists[activeTab]
+  const top3      = entries.slice(0, 3)
+  const rest      = entries.slice(3)
+  const currentId = data.currentUserId
+  const selfEntry = entries.find((e) => e.user_id === currentId)
 
   return (
     <main className="flex min-h-svh flex-col bg-background pb-20">
-      {/* Header */}
-      <div className="flex flex-col items-center gap-2 px-6 pt-6 pb-4">
+
+      {/* ── Header ──────────────────────────────────────────── */}
+      <div className="flex flex-col items-center gap-1 px-6 pt-6 pb-3">
         <div className="flex items-center gap-2">
           <Trophy className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">Classement</h1>
         </div>
-        <p className="text-sm text-muted-foreground">Season 2025</p>
+        <p className="text-sm text-muted-foreground">
+          Saison 1
+          {entries.length > 0 && ` · ${entries.length} joueur${entries.length > 1 ? "s" : ""}`}
+        </p>
       </div>
 
-      {/* Filter Toggle */}
-      <div className="flex justify-center gap-2 px-4 pb-2">
-        <Button
-          size="sm"
-          variant={filter === "general" ? "default" : "outline"}
-          onClick={() => setFilter("general")}
-          className={filter === "general" ? "bg-primary text-primary-foreground" : ""}
-        >
-          General
-        </Button>
-        <Button
-          size="sm"
-          variant={filter === "league" ? "default" : "outline"}
-          onClick={() => setFilter("league")}
-          className={filter === "league" ? "bg-primary text-primary-foreground" : ""}
-        >
-          My League
-        </Button>
-      </div>
+      {/* ── Votre position (sticky) ──────────────────────────── */}
+      {selfEntry && (
+        <div className="mx-4 mb-2 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2">
+          <span className="text-sm font-medium text-primary">Votre position</span>
+          <span className="font-bold text-primary tabular-nums">
+            #{selfEntry.rang}
+            <span className="ml-2 font-normal text-primary/70">{fmtPerf(selfEntry.perf)}</span>
+          </span>
+        </div>
+      )}
 
-      {/* Period Tabs */}
-      <div className="px-4 py-2">
-        <Tabs value={period} onValueChange={(v) => setPeriod(v as PeriodType)}>
+      {/* ── Tabs ────────────────────────────────────────────── */}
+      <div className="px-4 pb-2">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
           <TabsList className="w-full">
-            <TabsTrigger value="today" className="flex-1">Today</TabsTrigger>
-            <TabsTrigger value="week" className="flex-1">Week</TabsTrigger>
-            <TabsTrigger value="month" className="flex-1">Month</TabsTrigger>
-            <TabsTrigger value="season" className="flex-1">Season</TabsTrigger>
+            {TABS.map(({ id, label }) => (
+              <TabsTrigger key={id} value={id} className="flex-1 text-xs sm:text-sm">
+                {label}
+              </TabsTrigger>
+            ))}
           </TabsList>
-
-          <TabsContent value={period} className="mt-4">
-            {/* Top 3 Podium */}
-            <div className="mb-4 grid grid-cols-3 gap-2">
-              {/* 2nd Place */}
-              <div className="flex flex-col items-center gap-2 pt-4">
-                <div className="relative">
-                  <Avatar className="h-14 w-14 ring-2 ring-slate-400">
-                    <AvatarFallback className="bg-gradient-to-br from-slate-400 to-gray-500 text-white font-bold">
-                      {mockLeaderboard[1].pseudo.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-400 text-[10px] font-bold text-white">
-                    2
-                  </div>
-                </div>
-                <span className="text-xs font-medium text-foreground truncate max-w-full px-1">
-                  {mockLeaderboard[1].pseudo}
-                </span>
-                <span className="text-sm font-bold text-success tabular-nums">
-                  +{mockLeaderboard[1].perf.toFixed(1)}%
-                </span>
-              </div>
-
-              {/* 1st Place */}
-              <div className="flex flex-col items-center gap-2">
-                <Crown className="h-6 w-6 text-amber-400" />
-                <div className="relative">
-                  <Avatar className="h-16 w-16 ring-2 ring-amber-400">
-                    <AvatarFallback className="bg-gradient-to-br from-amber-400 to-yellow-500 text-white font-bold text-lg">
-                      {mockLeaderboard[0].pseudo.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-amber-400 text-xs font-bold text-white">
-                    1
-                  </div>
-                </div>
-                <span className="text-sm font-semibold text-foreground truncate max-w-full px-1">
-                  {mockLeaderboard[0].pseudo}
-                </span>
-                <span className="text-base font-bold text-success tabular-nums">
-                  +{mockLeaderboard[0].perf.toFixed(1)}%
-                </span>
-              </div>
-
-              {/* 3rd Place */}
-              <div className="flex flex-col items-center gap-2 pt-4">
-                <div className="relative">
-                  <Avatar className="h-14 w-14 ring-2 ring-orange-500">
-                    <AvatarFallback className="bg-gradient-to-br from-orange-500 to-amber-600 text-white font-bold">
-                      {mockLeaderboard[2].pseudo.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
-                    3
-                  </div>
-                </div>
-                <span className="text-xs font-medium text-foreground truncate max-w-full px-1">
-                  {mockLeaderboard[2].pseudo}
-                </span>
-                <span className="text-sm font-bold text-success tabular-nums">
-                  +{mockLeaderboard[2].perf.toFixed(1)}%
-                </span>
-              </div>
-            </div>
-
-            {/* Leaderboard List */}
-            <div className="flex flex-col gap-2">
-              {mockLeaderboard.slice(3).map((player) => (
-                <LeaderboardRow
-                  key={player.id}
-                  player={player}
-                  isCurrentUser={player.id === currentUserId}
-                />
-              ))}
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
 
-      {/* Bottom Navigation */}
+      {/* ── Contenu principal ───────────────────────────────── */}
+      <div className="flex-1 px-4 pb-4">
+        {entries.length === 0 ? (
+          <EmptyTab tab={activeTab} />
+        ) : (
+          <>
+            <Podium entries={top3} />
+            <div className="flex flex-col gap-2">
+              {rest.map((entry) => (
+                <LeaderboardRow
+                  key={entry.user_id}
+                  entry={entry}
+                  isSelf={entry.user_id === currentId}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Navigation ──────────────────────────────────────── */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-md items-center justify-around py-2">
-          <Link
-            href="/dashboard"
-            className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground"
-          >
-            <Home className="h-5 w-5" />
+          <Link href="/dashboard" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
+            <Home    className="h-5 w-5" />
             <span className="text-[10px] font-medium">Dashboard</span>
           </Link>
-          <Link
-            href="/classement"
-            className="flex flex-col items-center gap-1 px-4 py-2 text-primary"
-          >
+          <Link href="/classement" className="flex flex-col items-center gap-1 px-4 py-2 text-primary">
             <BarChart3 className="h-5 w-5" />
             <span className="text-[10px] font-medium">Classement</span>
           </Link>
-          <Link
-            href="/profil"
-            className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground"
-          >
-            <User className="h-5 w-5" />
+          <Link href="/profil" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
+            <User  className="h-5 w-5" />
             <span className="text-[10px] font-medium">Profil</span>
           </Link>
         </div>

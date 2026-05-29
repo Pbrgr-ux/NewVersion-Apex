@@ -94,11 +94,17 @@ export async function POST(request: NextRequest) {
     reason?: string
   }
 
+  // ?limit=N → traite uniquement les N premiers tickers (pratique pour tester)
+  const { searchParams } = new URL(request.url)
+  const limitParam = searchParams.get("limit")
+  const limit = limitParam ? Math.min(parseInt(limitParam, 10), TICKERS.length) : TICKERS.length
+  const tickersToProcess = TICKERS.slice(0, limit)
+
   const results: Result[] = []
   const start = Date.now()
 
-  for (let i = 0; i < TICKERS.length; i++) {
-    const { ticker } = TICKERS[i]
+  for (let i = 0; i < tickersToProcess.length; i++) {
+    const { ticker } = tickersToProcess[i]
 
     const data = await fetchPrevClose(ticker, polygonKey)
 
@@ -117,7 +123,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Pause inter-appels (sauf après le dernier ticker)
-    if (i < TICKERS.length - 1 && CALL_DELAY > 0) {
+    if (i < tickersToProcess.length - 1 && CALL_DELAY > 0) {
       await sleep(CALL_DELAY)
     }
   }

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/update-cours",
+      "schedule": "5 16 * * 1-5"
+    }
+  ]
+}

@@ -10,7 +10,7 @@ export type Database = {
       // ── users ──────────────────────────────────────────────
       users: {
         Row: {
-          id:         string        // uuid — references auth.users
+          id:         string
           email:      string
           pseudo:     string
           is_pro:     boolean
@@ -27,6 +27,7 @@ export type Database = {
           pseudo?:     string
           is_pro?:     boolean
         }
+        Relationships: []
       }
 
       // ── portfolios ─────────────────────────────────────────
@@ -49,6 +50,15 @@ export type Database = {
           cash?:   number
           saison?: number
         }
+        Relationships: [
+          {
+            foreignKeyName: "portfolios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
 
       // ── positions ──────────────────────────────────────────
@@ -57,7 +67,7 @@ export type Database = {
           id:             string
           portfolio_id:   string
           ticker:         string
-          allocation_pct: number   // 0–100
+          allocation_pct: number
           prix_achat:     number
           created_at:     string
         }
@@ -73,6 +83,15 @@ export type Database = {
           allocation_pct?: number
           prix_achat?:     number
         }
+        Relationships: [
+          {
+            foreignKeyName: "positions_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          }
+        ]
       }
 
       // ── cours ──────────────────────────────────────────────
@@ -81,7 +100,7 @@ export type Database = {
           id:     string
           ticker: string
           prix:   number
-          date:   string  // format ISO "YYYY-MM-DD"
+          date:   string
         }
         Insert: {
           id?:    string
@@ -92,6 +111,7 @@ export type Database = {
         Update: {
           prix?: number
         }
+        Relationships: []
       }
 
       // ── classement ─────────────────────────────────────────
@@ -100,7 +120,7 @@ export type Database = {
           id:          string
           user_id:     string
           saison:      number
-          perf_totale: number   // ex: 12.34 = +12.34%
+          perf_totale: number
           rang:        number
           updated_at:  string
         }
@@ -117,12 +137,21 @@ export type Database = {
           rang?:        number
           updated_at?:  string
         }
+        Relationships: [
+          {
+            foreignKeyName: "classement_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
 
     }
-    Views:     Record<string, never>
-    Functions: Record<string, never>
-    Enums:     Record<string, never>
+    Views:     { [_ in never]: never }
+    Functions: { [_ in never]: never }
+    Enums:     { [_ in never]: never }
   }
 }
 
