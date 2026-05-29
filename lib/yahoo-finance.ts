@@ -13,8 +13,19 @@
  *                  → schedule : "0,15,30,45 7-22 * * 1-5"
  */
 
-import yahooFinance from "yahoo-finance2"
+// yahoo-finance2 v3 exporte une CLASSE (pas une instance)
+// → import default = classe, instancier avec new
+import YahooFinanceClass from "yahoo-finance2"
 import { TICKERS, YAHOO_TO_TICKER } from "./tickers"
+
+// Instance unique réutilisée (suppressNotices évite le message survey au démarrage)
+const yf = new (YahooFinanceClass as unknown as new (opts?: object) => {
+  quote(
+    symbols: string | string[],
+    queryOptions?: object,
+    moduleOptions?: object
+  ): Promise<unknown>
+})({ suppressNotices: ["yahooSurvey"] })
 
 export type FetchedPrice = {
   ticker: string   // symbole interne (clé en base)
@@ -65,11 +76,7 @@ async function fetchBySymbols(symbols: string[]): Promise<FetchedPrice[]> {
 
   let raw: unknown
   try {
-    raw = await yahooFinance.quote(
-      symbols,
-      {},
-      { validateResult: false }
-    )
+    raw = await yf.quote(symbols, {}, { validateResult: false })
   } catch (err) {
     console.error("[yahoo-finance] Erreur batch quote:", err)
     return []
@@ -79,7 +86,7 @@ async function fetchBySymbols(symbols: string[]): Promise<FetchedPrice[]> {
   const results: FetchedPrice[] = []
 
   for (const q of quotes) {
-    if (!q?.regularMarketPrice) continue
+    if (!q || q.regularMarketPrice == null) continue
 
     const internalTicker = YAHOO_TO_TICKER[q.symbol]
     if (!internalTicker) continue
