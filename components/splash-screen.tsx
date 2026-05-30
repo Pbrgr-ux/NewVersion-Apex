@@ -57,8 +57,9 @@ export function SplashScreen() {
             variant="outline"
             size="lg"
             className="w-full border-border bg-secondary/50 text-foreground backdrop-blur-sm hover:bg-secondary"
+            asChild
           >
-            Sign In
+            <Link href="/connexion">Sign In</Link>
           </Button>
         </div>
       </div>
