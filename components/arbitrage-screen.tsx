@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import {
   Clock,
@@ -26,6 +26,10 @@ import {
 } from "@/components/ui/dialog"
 import { useArbitrageWindow }      from "@/hooks/use-arbitrage-window"
 import { TICKERS }                 from "@/lib/tickers"
+import { createClient }            from "@/lib/supabase/client"
+
+const CURRENT_SAISON = 1
+const LS_KEY         = "tl_lock_close"   // localStorage key
 
 type Region = "US" | "Europe" | "ETF"
 
@@ -78,8 +82,10 @@ const TABS: { label: string; region: Region }[] = [
 
 export function ArbitrageScreen() {
   const arbitrage = useArbitrageWindow()
+  const supabase  = createClient()
 
   const [activeTab, setActiveTab] = useState<Region>("US")
+  const [isLocked, setIsLocked]   = useState(false)
 
   const [allocations, setAllocations] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {}
@@ -88,6 +94,15 @@ export function ArbitrageScreen() {
   })
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [isSubmitting, setIsSubmitting]           = useState(false)
+  const [submitError, setSubmitError]             = useState<string | null>(null)
+
+  // ── Vérifier le lock au montage ─────────────────────────────
+  useEffect(() => {
+    const lockedUntil = localStorage.getItem(LS_KEY)
+    if (lockedUntil && Date.now() < new Date(lockedUntil).getTime()) {
+      setIsLocked(true)
+    }
+  }, [])
 
   const visibleStocks = useMemo(
     () => TICKERS.filter((t) => t.region === activeTab),
@@ -115,9 +130,167 @@ export function ArbitrageScreen() {
 
   const handleConfirm = async () => {
     setIsSubmitting(true)
-    await new Promise((r) => setTimeout(r, 1500)) // TODO: Supabase upsert positions
-    setIsSubmitting(false)
-    setShowConfirmDialog(false)
+    setSubmitError(null)
+
+    try {
+      // 1. Utilisateur connecté
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Non connecté")
+
+      // 2. Créer / récupérer le portfolio de la saison courante
+      const { data: portfolio, error: pErr } = await supabase
+        .from("portfolios")
+        .upsert(
+          { user_id: user.id, saison: CURRENT_SAISON, cash: 0 },
+          { onConflict: "user_id,saison" }
+        )
+        .select("id")
+        .single()
+
+      if (pErr || !portfolio) throw new Error("Erreur portfolio")
+
+      // 3. Supprimer les anciennes positions
+      await supabase.from("positions").delete().eq("portfolio_id", portfolio.id)
+
+      // 4. Insérer les nouvelles positions (allocation > 0 uniquement)
+      const newPositions = TICKERS
+        .filter((t) => (allocations[t.ticker] ?? 0) > 0)
+        .map((t) => ({
+          portfolio_id:   portfolio.id,
+          ticker:         t.ticker,
+          allocation_pct: allocations[t.ticker],
+          prix_achat:     MOCK_MARKET[t.ticker]?.price ?? 100,
+        }))
+
+      if (newPositions.length > 0) {
+        const { error: iErr } = await supabase.from("positions").insert(newPositions)
+        if (iErr) throw new Error("Erreur enregistrement positions")
+      }
+
+      // 5. Verrouiller jusqu'à la fermeture de la fenêtre
+      if (arbitrage.windowCloseISO) {
+        localStorage.setItem(LS_KEY, arbitrage.windowCloseISO)
+      }
+      setIsLocked(true)
+      setShowConfirmDialog(false)
+
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Erreur inconnue")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // ── Positions soumises (pour l'écran verrouillé) ────────────
+  const submittedPositions = useMemo(
+    () => TICKERS
+      .filter((t) => (allocations[t.ticker] ?? 0) > 0)
+      .sort((a, b) => (allocations[b.ticker] ?? 0) - (allocations[a.ticker] ?? 0)),
+    [allocations]
+  )
+
+  // ── Écran verrouillé ─────────────────────────────────────────
+  if (isLocked) {
+    return (
+      <main className="flex min-h-svh flex-col bg-background pb-20">
+        {/* Header */}
+        <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-sm">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Clock className={`h-5 w-5 ${arbitrage.isOpen ? "text-green-500" : "text-muted-foreground"}`} />
+              <span className="font-semibold text-foreground">
+                {arbitrage.isOpen ? "Fenêtre ouverte" : "Fenêtre fermée"}
+              </span>
+            </div>
+            <span className="font-mono text-sm text-muted-foreground">
+              {arbitrage.isOpen
+                ? <span>Ferme dans <span className="font-semibold text-green-500">{arbitrage.timeUntilClose}</span></span>
+                : <span>Ouvre dans <span className="font-semibold">{arbitrage.timeUntilOpen}</span></span>
+              }
+            </span>
+          </div>
+        </header>
+
+        {/* Bandeau validé */}
+        <div className="mx-4 mt-4 flex items-center gap-3 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/20">
+            <Lock className="h-4 w-4 text-green-500" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-green-500">Portefeuille validé</p>
+            <p className="text-xs text-muted-foreground">
+              {arbitrage.isOpen
+                ? "Modification impossible jusqu'à la fermeture de la fenêtre."
+                : "Modifiable lors de la prochaine fenêtre d'arbitrage."}
+            </p>
+          </div>
+        </div>
+
+        {/* Récap allocation soumise */}
+        <div className="px-4 py-4 space-y-2">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+            Répartition soumise
+          </h3>
+
+          {submittedPositions.map((t) => {
+            const pct    = allocations[t.ticker] ?? 0
+            const market = MOCK_MARKET[t.ticker]
+            return (
+              <div key={t.ticker} className="flex items-center gap-3 rounded-xl bg-card border border-border px-4 py-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-foreground">
+                  {t.ticker.replace(".", "").slice(0, 2)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <div>
+                      <span className="font-semibold text-foreground text-sm">{t.ticker}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">{t.name}</span>
+                    </div>
+                    <span className="text-sm font-bold text-foreground tabular-nums">{pct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${(pct / 50) * 100}%` }} />
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Cash */}
+          {cashPct > 0 && (
+            <div className="flex items-center gap-3 rounded-xl bg-card border border-green-500/20 px-4 py-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/15 text-sm">
+                💵
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-semibold text-green-500 text-sm">Cash</span>
+                  <span className="text-sm font-bold text-green-500 tabular-nums">{cashPct}%</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                  <div className="h-full rounded-full bg-green-500/60" style={{ width: `${cashPct}%` }} />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom nav */}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-md items-center justify-around py-2">
+            <Link href="/dashboard" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
+              <Home className="h-5 w-5" /><span className="text-[10px] font-medium">Dashboard</span>
+            </Link>
+            <Link href="/classement" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
+              <BarChart3 className="h-5 w-5" /><span className="text-[10px] font-medium">Classement</span>
+            </Link>
+            <Link href="/profil" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
+              <User className="h-5 w-5" /><span className="text-[10px] font-medium">Profil</span>
+            </Link>
+          </div>
+        </nav>
+      </main>
+    )
   }
 
   return (
@@ -443,6 +616,11 @@ export function ArbitrageScreen() {
               <span>Fenêtre se ferme dans</span>
               <span className="font-mono font-semibold text-foreground">{arbitrage.timeUntilClose}</span>
             </div>
+            {submitError && (
+              <p className="text-xs text-red-500 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2">
+                {submitError}
+              </p>
+            )}
             <DialogFooter>
               <Button
                 variant="outline"
@@ -456,7 +634,7 @@ export function ArbitrageScreen() {
                 disabled={isSubmitting}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                {isSubmitting ? "Validation…" : "Confirmer"}
+                {isSubmitting ? "Enregistrement…" : "Confirmer"}
               </Button>
             </DialogFooter>
           </div>

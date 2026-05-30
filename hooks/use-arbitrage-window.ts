@@ -18,9 +18,10 @@
 import { useState, useEffect } from "react"
 
 export type ArbitrageWindowState = {
-  isOpen:         boolean
-  timeUntilOpen:  string
-  timeUntilClose: string
+  isOpen:          boolean
+  timeUntilOpen:   string
+  timeUntilClose:  string
+  windowCloseISO:  string | null   // ISO de la fermeture courante (null si fermée)
 }
 
 // État initial identique côté serveur et client → pas de hydration mismatch
@@ -28,6 +29,7 @@ const INITIAL: ArbitrageWindowState = {
   isOpen:         false,
   timeUntilOpen:  "--:--:--",
   timeUntilClose: "--:--:--",
+  windowCloseISO: null,
 }
 
 // ── Constantes ────────────────────────────────────────────────
@@ -86,16 +88,18 @@ function computeState(now: Date): ArbitrageWindowState {
     (day === 0 && currentSod < CLOSE_SOD)
 
   if (isOpen) {
-    // Temps restant jusqu'à Dimanche 21:00
     const secUntilClose =
       day === 6
-        ? (86400 - currentSod) + CLOSE_SOD   // Samedi → minuit + 21h du dimanche
-        : CLOSE_SOD - currentSod              // Dimanche → reste jusqu'à 21:00
+        ? (86400 - currentSod) + CLOSE_SOD
+        : CLOSE_SOD - currentSod
+
+    const windowCloseISO = new Date(now.getTime() + secUntilClose * 1000).toISOString()
 
     return {
-      isOpen:         true,
-      timeUntilOpen:  "--",
-      timeUntilClose: formatDuration(Math.round(secUntilClose)),
+      isOpen:          true,
+      timeUntilOpen:   "--",
+      timeUntilClose:  formatDuration(Math.round(secUntilClose)),
+      windowCloseISO,
     }
   }
 
@@ -114,9 +118,10 @@ function computeState(now: Date): ArbitrageWindowState {
   }
 
   return {
-    isOpen:         false,
-    timeUntilOpen:  formatDuration(Math.round(secUntilOpen)),
-    timeUntilClose: "--",
+    isOpen:          false,
+    timeUntilOpen:   formatDuration(Math.round(secUntilOpen)),
+    timeUntilClose:  "--",
+    windowCloseISO:  null,
   }
 }
 
