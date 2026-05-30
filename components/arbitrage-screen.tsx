@@ -25,41 +25,74 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useArbitrageWindow }      from "@/hooks/use-arbitrage-window"
+import { TICKERS }                 from "@/lib/tickers"
 
-// ── Mock data (remplacé par Supabase + Polygon dans la tâche 6) ──
-const mockStocks = [
-  { ticker: "AAPL",  name: "Apple Inc.",          sector: "Technology",    price: 178.42, weekChange:  1.84 },
-  { ticker: "MSFT",  name: "Microsoft Corp.",      sector: "Technology",    price: 378.12, weekChange:  0.92 },
-  { ticker: "GOOGL", name: "Alphabet Inc.",        sector: "Technology",    price: 141.80, weekChange: -1.05 },
-  { ticker: "AMZN",  name: "Amazon.com Inc.",      sector: "Consumer",      price: 178.25, weekChange:  2.31 },
-  { ticker: "NVDA",  name: "NVIDIA Corp.",         sector: "Technology",    price: 456.89, weekChange:  4.67 },
-  { ticker: "TSLA",  name: "Tesla Inc.",           sector: "Automotive",    price: 245.67, weekChange: -2.10 },
-  { ticker: "META",  name: "Meta Platforms",       sector: "Technology",    price: 505.95, weekChange:  3.22 },
-  { ticker: "BRK.B", name: "Berkshire Hathaway",  sector: "Finance",       price: 408.23, weekChange:  0.54 },
-  { ticker: "JPM",   name: "JPMorgan Chase",       sector: "Finance",       price: 198.45, weekChange:  1.12 },
-  { ticker: "V",     name: "Visa Inc.",            sector: "Finance",       price: 279.34, weekChange:  0.47 },
-  { ticker: "JNJ",   name: "Johnson & Johnson",    sector: "Healthcare",    price: 156.78, weekChange: -0.38 },
-  { ticker: "WMT",   name: "Walmart Inc.",         sector: "Retail",        price: 165.42, weekChange:  0.89 },
-  { ticker: "PG",    name: "Procter & Gamble",     sector: "Consumer",      price: 158.90, weekChange:  0.21 },
-  { ticker: "MA",    name: "Mastercard Inc.",      sector: "Finance",       price: 456.12, weekChange:  0.63 },
-  { ticker: "UNH",   name: "UnitedHealth Group",   sector: "Healthcare",    price: 523.45, weekChange: -0.14 },
-  { ticker: "HD",    name: "Home Depot Inc.",      sector: "Retail",        price: 345.67, weekChange:  0.37 },
-  { ticker: "NFLX",  name: "Netflix Inc.",         sector: "Entertainment", price: 478.90, weekChange:  2.45 },
-  { ticker: "ADBE",  name: "Adobe Inc.",           sector: "Technology",    price: 512.34, weekChange:  1.18 },
-  { ticker: "CRM",   name: "Salesforce Inc.",      sector: "Technology",    price: 267.89, weekChange:  1.94 },
-  { ticker: "ORCL",  name: "Oracle Corp.",         sector: "Technology",    price: 123.45, weekChange:  1.72 },
+type Region = "US" | "Europe" | "ETF"
+
+// ── Mock prix + variation semaine (remplacé par cours Supabase en V2) ──
+const MOCK_MARKET: Record<string, { price: number; weekChange: number }> = {
+  // US
+  AAPL:  { price: 189.30, weekChange:  1.84 }, MSFT:  { price: 415.20, weekChange:  0.92 },
+  NVDA:  { price: 875.40, weekChange:  4.67 }, GOOGL: { price: 175.60, weekChange: -1.05 },
+  AMZN:  { price: 192.10, weekChange:  2.31 }, META:  { price: 527.80, weekChange:  3.22 },
+  "BRK.B":{ price: 412.50, weekChange:  0.54 }, TSLA: { price: 172.30, weekChange: -2.10 },
+  AVGO:  { price: 1342.0, weekChange:  2.08 }, JPM:   { price: 208.90, weekChange:  1.12 },
+  LLY:   { price: 798.50, weekChange: -0.76 }, V:     { price: 285.40, weekChange:  0.47 },
+  XOM:   { price: 119.70, weekChange:  0.33 }, UNH:   { price: 495.20, weekChange: -0.14 },
+  JNJ:   { price: 147.60, weekChange: -0.38 }, WMT:   { price: 68.40,  weekChange:  0.89 },
+  MA:    { price: 478.30, weekChange:  0.63 }, PG:    { price: 165.10, weekChange:  0.21 },
+  ORCL:  { price: 127.80, weekChange:  1.72 }, HD:    { price: 358.90, weekChange:  0.37 },
+  COST:  { price: 824.60, weekChange:  1.56 }, BAC:   { price: 40.20,  weekChange:  0.81 },
+  NFLX:  { price: 628.40, weekChange:  2.45 }, CVX:   { price: 162.30, weekChange: -0.55 },
+  CRM:   { price: 285.10, weekChange:  1.94 },
+  // Europe
+  MC:    { price: 642.00, weekChange: -1.20 }, NESN:  { price: 94.50,  weekChange:  0.32 },
+  ASML:  { price: 788.00, weekChange:  2.11 }, "NOVO-B":{ price: 826.00, weekChange: -3.40 },
+  ROG:   { price: 245.30, weekChange: -0.68 }, SAP:   { price: 196.40, weekChange:  1.45 },
+  NOVN:  { price: 98.20,  weekChange:  0.14 }, AZN:   { price: 2156.0, weekChange:  0.87 },
+  RMS:   { price: 2180.0, weekChange: -0.92 }, SHEL:  { price: 2712.0, weekChange:  0.44 },
+  TTE:   { price: 61.40,  weekChange:  0.28 }, SIE:   { price: 187.60, weekChange:  1.03 },
+  SU:    { price: 235.80, weekChange:  0.76 }, OR:    { price: 378.50, weekChange: -0.51 },
+  SAN:   { price: 98.70,  weekChange: -0.33 }, ULVR:  { price: 3924.0, weekChange:  0.62 },
+  HSBA:  { price: 712.00, weekChange:  0.19 }, AIR:   { price: 172.40, weekChange:  1.88 },
+  ALV:   { price: 298.50, weekChange:  0.54 }, ITX:   { price: 48.30,  weekChange:  0.97 },
+  IBE:   { price: 12.84,  weekChange:  0.41 }, ABBN:  { price: 50.60,  weekChange:  0.73 },
+  BNP:   { price: 69.40,  weekChange: -0.28 }, CFR:   { price: 124.50, weekChange: -1.14 },
+  MUV2:  { price: 418.70, weekChange:  0.85 },
+  // ETF
+  SPY:   { price: 524.10, weekChange:  1.42 }, IVV:   { price: 527.80, weekChange:  1.38 },
+  VOO:   { price: 483.40, weekChange:  1.39 }, QQQ:   { price: 448.20, weekChange:  2.17 },
+  VTI:   { price: 254.60, weekChange:  1.31 }, SOXX:  { price: 214.30, weekChange:  3.85 },
+  XLF:   { price: 43.70,  weekChange:  0.94 }, XLV:   { price: 140.20, weekChange: -0.22 },
+  VGK:   { price: 68.40,  weekChange:  0.88 }, URTH:  { price: 112.60, weekChange:  1.15 },
+  IEMG:  { price: 51.30,  weekChange:  0.63 }, LCUW:  { price: 489.40, weekChange:  1.22 },
+  "500": { price: 34.18,  weekChange:  1.35 }, BND:   { price: 73.20,  weekChange: -0.08 },
+  IAU:   { price: 40.80,  weekChange:  2.94 },
+}
+
+const TABS: { label: string; region: Region }[] = [
+  { label: "🇺🇸 US",     region: "US"     },
+  { label: "🇪🇺 Europe", region: "Europe" },
+  { label: "📦 ETF",    region: "ETF"    },
 ]
 
 export function ArbitrageScreen() {
   const arbitrage = useArbitrageWindow()
 
+  const [activeTab, setActiveTab] = useState<Region>("US")
+
   const [allocations, setAllocations] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {}
-    mockStocks.forEach((s) => { init[s.ticker] = 0 })
+    TICKERS.forEach((t) => { init[t.ticker] = 0 })
     return init
   })
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [isSubmitting, setIsSubmitting]           = useState(false)
+
+  const visibleStocks = useMemo(
+    () => TICKERS.filter((t) => t.region === activeTab),
+    [activeTab]
+  )
 
   const totalAllocation = useMemo(
     () => Object.values(allocations).reduce((sum, v) => sum + v, 0),
@@ -146,98 +179,118 @@ export function ArbitrageScreen() {
         </span>
       </div>
 
+      {/* ── Onglets US / Europe / ETF ──────────────────────────── */}
+      <div className="sticky top-[57px] z-30 border-b border-border bg-background px-4 py-2">
+        <div className="flex gap-2">
+          {TABS.map((tab) => {
+            const tabTotal = TICKERS
+              .filter((t) => t.region === tab.region)
+              .reduce((s, t) => s + (allocations[t.ticker] ?? 0), 0)
+            return (
+              <button
+                key={tab.region}
+                onClick={() => setActiveTab(tab.region)}
+                className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                  activeTab === tab.region
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab.label}
+                {tabTotal > 0 && (
+                  <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                    activeTab === tab.region ? "bg-white/20" : "bg-primary/15 text-primary"
+                  }`}>
+                    {tabTotal}%
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* ── Liste des actions ──────────────────────────────────── */}
       <div className="flex-1 px-4 py-4">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Répartition du portfolio
-          </h2>
+        <div className="mb-3 flex items-center justify-end">
           <span className="text-xs text-muted-foreground">Max 50 % par action</span>
         </div>
 
         <div className="flex flex-col gap-3">
-          {mockStocks.map((stock) => (
-            <Card
-              key={stock.ticker}
-              className={`border-border overflow-hidden transition-opacity ${
-                arbitrage.isOpen ? "bg-card" : "bg-card opacity-60"
-              }`}
-            >
-              <CardContent className="p-0">
-                {/* Ligne infos + prix */}
-                <div className="flex items-center justify-between p-3 border-b border-border/50">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-foreground">
-                      {stock.ticker.slice(0, 2)}
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">{stock.ticker}</span>
-                        <span className="text-[10px] font-medium text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
-                          {stock.sector}
-                        </span>
+          {visibleStocks.map((stock) => {
+            const market = MOCK_MARKET[stock.ticker] ?? { price: 100, weekChange: 0 }
+            const alloc  = allocations[stock.ticker] ?? 0
+            return (
+              <Card
+                key={stock.ticker}
+                className={`border-border overflow-hidden transition-opacity ${
+                  arbitrage.isOpen ? "bg-card" : "bg-card opacity-60"
+                }`}
+              >
+                <CardContent className="p-0">
+                  {/* Ligne infos + prix */}
+                  <div className="flex items-center justify-between p-3 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-foreground">
+                        {stock.ticker.replace(".", "").slice(0, 2)}
                       </div>
-                      <span className="text-xs text-muted-foreground">{stock.name}</span>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-foreground">{stock.ticker}</span>
+                        <span className="text-xs text-muted-foreground">{stock.name}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="font-medium tabular-nums text-foreground">
+                        {market.price.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span className={`text-xs font-medium tabular-nums ${
+                        market.weekChange >= 0 ? "text-green-500" : "text-red-500"
+                      }`}>
+                        {market.weekChange >= 0 ? "+" : ""}{market.weekChange.toFixed(2)}% /7j
+                      </span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <span className="font-medium tabular-nums text-foreground">
-                      ${stock.price.toFixed(2)}
-                    </span>
-                    <span
-                      className={`text-xs font-medium tabular-nums ${
-                        stock.weekChange >= 0 ? "text-success" : "text-danger"
-                      }`}
+
+                  {/* Slider allocation */}
+                  <div className="flex items-center gap-3 p-3 bg-secondary/30">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => updateAllocation(stock.ticker, alloc - 5)}
+                      disabled={!arbitrage.isOpen || alloc === 0}
                     >
-                      {stock.weekChange >= 0 ? "+" : ""}
-                      {stock.weekChange.toFixed(2)}% /7j
-                    </span>
+                      <Minus className="h-4 w-4" />
+                    </Button>
+
+                    <div className="flex flex-1 items-center gap-3">
+                      <Slider
+                        value={[alloc]}
+                        onValueChange={([v]) => updateAllocation(stock.ticker, v)}
+                        max={50}
+                        step={1}
+                        disabled={!arbitrage.isOpen}
+                        className="flex-1"
+                      />
+                      <span className="w-12 text-right font-mono text-sm font-semibold text-foreground tabular-nums">
+                        {alloc}%
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => updateAllocation(stock.ticker, alloc + 5)}
+                      disabled={!arbitrage.isOpen || alloc >= 50}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
-                </div>
-
-                {/* Slider allocation */}
-                <div className="flex items-center gap-3 p-3 bg-secondary/30">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() =>
-                      updateAllocation(stock.ticker, allocations[stock.ticker] - 5)
-                    }
-                    disabled={!arbitrage.isOpen || allocations[stock.ticker] === 0}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-
-                  <div className="flex flex-1 items-center gap-3">
-                    <Slider
-                      value={[allocations[stock.ticker]]}
-                      onValueChange={([v]) => updateAllocation(stock.ticker, v)}
-                      max={50}
-                      step={1}
-                      disabled={!arbitrage.isOpen}
-                      className="flex-1"
-                    />
-                    <span className="w-12 text-right font-mono text-sm font-semibold text-foreground tabular-nums">
-                      {allocations[stock.ticker]}%
-                    </span>
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() =>
-                      updateAllocation(stock.ticker, allocations[stock.ticker] + 5)
-                    }
-                    disabled={!arbitrage.isOpen || allocations[stock.ticker] === 50}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       </div>
 
