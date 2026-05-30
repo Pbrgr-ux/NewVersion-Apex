@@ -65,15 +65,19 @@ export function ArbitrageScreen() {
     () => Object.values(allocations).reduce((sum, v) => sum + v, 0),
     [allocations]
   )
-  const isValid  = totalAllocation === 100
-  const canSubmit = arbitrage.isOpen && isValid
+  const cashPct    = 100 - totalAllocation
+  const isValid    = totalAllocation > 0 && totalAllocation <= 100
+  const canSubmit  = arbitrage.isOpen && isValid
 
   const updateAllocation = (ticker: string, value: number) => {
     if (!arbitrage.isOpen) return
-    setAllocations((prev) => ({
-      ...prev,
-      [ticker]: Math.max(0, Math.min(50, value)),
-    }))
+    setAllocations((prev) => {
+      const current   = prev[ticker] ?? 0
+      const otherSum  = totalAllocation - current
+      // Ne pas dépasser 100% au total, ni 50% par action
+      const maxForThis = Math.min(50, 100 - otherSum)
+      return { ...prev, [ticker]: Math.max(0, Math.min(maxForThis, value)) }
+    })
   }
 
   const handleConfirm = async () => {
@@ -239,36 +243,33 @@ export function ArbitrageScreen() {
 
       {/* ── Barre basse fixe ───────────────────────────────────── */}
       <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-sm">
-        <div className="px-4 py-4">
-          {/* Récap allocation */}
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">Total alloué</span>
-            <span
-              className={`text-lg font-bold tabular-nums ${
-                totalAllocation === 100
-                  ? "text-success"
-                  : totalAllocation > 100
-                    ? "text-danger"
-                    : "text-foreground"
-              }`}
-            >
-              {totalAllocation}%
-              <span className="text-sm font-normal text-muted-foreground"> / 100%</span>
-            </span>
+        <div className="px-4 pt-3 pb-4">
+
+          {/* Récap investi / cash */}
+          <div className="mb-2 flex items-center justify-between text-sm">
+            <div className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary" />
+              <span className="text-muted-foreground">Investi</span>
+              <span className="font-bold text-foreground tabular-nums">{totalAllocation}%</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-secondary border border-border" />
+              <span className="text-muted-foreground">Cash</span>
+              <span className={`font-bold tabular-nums ${cashPct > 0 ? "text-green-500" : "text-muted-foreground"}`}>
+                {cashPct}%
+              </span>
+            </div>
           </div>
 
-          <Progress
-            value={Math.min(totalAllocation, 100)}
-            className={`h-2 mb-4 ${
-              totalAllocation === 100
-                ? "[&>[data-slot=progress-indicator]]:bg-success"
-                : totalAllocation > 100
-                  ? "[&>[data-slot=progress-indicator]]:bg-danger"
-                  : ""
-            }`}
-          />
+          {/* Barre bicolore */}
+          <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-secondary">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-200"
+              style={{ width: `${totalAllocation}%` }}
+            />
+          </div>
 
-          {/* CTA : désactivé avec compte à rebours si fenêtre fermée */}
+          {/* CTA */}
           <Button
             size="lg"
             className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -280,12 +281,10 @@ export function ArbitrageScreen() {
                 <Lock className="h-4 w-4" />
                 Ouvre dans {arbitrage.timeUntilOpen}
               </span>
-            ) : totalAllocation < 100 ? (
-              `Allouer ${100 - totalAllocation}% de plus`
-            ) : totalAllocation > 100 ? (
-              `Retirer ${totalAllocation - 100}%`
+            ) : totalAllocation === 0 ? (
+              "Sélectionne au moins 1 action"
             ) : (
-              "Valider mon allocation"
+              `Valider — ${totalAllocation}% investi, ${cashPct}% en cash`
             )}
           </Button>
         </div>
@@ -340,10 +339,16 @@ export function ArbitrageScreen() {
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Total alloué</span>
-              <span className="font-semibold text-success">100%</span>
+              <span className="text-muted-foreground">Investi en actions</span>
+              <span className="font-semibold text-foreground">{totalAllocation}%</span>
             </div>
             <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Conservé en cash</span>
+              <span className={`font-semibold ${cashPct > 0 ? "text-green-500" : "text-muted-foreground"}`}>
+                {cashPct}%
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm border-t border-border pt-2">
               <span className="text-muted-foreground">Fenêtre se ferme dans</span>
               <span className="font-mono font-semibold text-foreground">
                 {arbitrage.timeUntilClose}
