@@ -35,6 +35,7 @@ export type ProfilData = {
     pseudo:      string
     email:       string
     memberSince: string   // "YYYY-MM-DD"
+    isPro:       boolean
   }
   saison: {
     rang:        number | null
@@ -53,11 +54,21 @@ export async function getProfilData(): Promise<ProfilData | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const pseudo      = (user.user_metadata?.pseudo as string | undefined) ?? user.email?.split("@")[0] ?? "Trader"
-  const email       = user.email ?? ""
-  const memberSince = user.created_at.split("T")[0]
+  // ── 2. Données depuis la table users (pseudo, is_pro) ─────
+  // La table users est alimentée par le trigger handle_new_user()
+  // Fallback sur user_metadata si la ligne n'existe pas encore
+  const { data: dbUser } = await supabase
+    .from("users")
+    .select("pseudo, is_pro, email, created_at")
+    .eq("id", user.id)
+    .maybeSingle()
 
-  // ── 2. Classement + historique + positions en parallèle ───
+  const pseudo      = dbUser?.pseudo ?? (user.user_metadata?.pseudo as string | undefined) ?? user.email?.split("@")[0] ?? "Trader"
+  const email       = dbUser?.email  ?? user.email ?? ""
+  const memberSince = (dbUser?.created_at ?? user.created_at).split("T")[0]
+  const isPro       = dbUser?.is_pro  ?? false
+
+  // ── 3. Classement + historique + positions en parallèle ───
   const [classementRes, portfolioRes, totalRes] = await Promise.all([
     // Toutes les entrées classement de l'utilisateur
     supabase
@@ -134,7 +145,7 @@ export async function getProfilData(): Promise<ProfilData | null> {
   }
 
   return {
-    user: { pseudo, email, memberSince },
+    user: { pseudo, email, memberSince, isPro },
     saison: {
       rang:        saisonCourante?.rang        ?? null,
       perf_totale: saisonCourante ? Number(saisonCourante.perf_totale) : null,

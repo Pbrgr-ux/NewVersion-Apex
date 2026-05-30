@@ -39,6 +39,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
   const [loggingOut, setLoggingOut] = useState(false)
 
   const { user, saison, historique, positions, hasPortfolio } = data
+  const { isPro } = user
 
   const initials    = user.pseudo.slice(0, 2).toUpperCase()
   const memberDate  = new Date(user.memberSince).toLocaleDateString("fr-FR", {
@@ -64,7 +65,14 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
         </Avatar>
 
         <div className="flex flex-col items-center gap-1.5">
-          <h1 className="text-2xl font-bold text-foreground">{user.pseudo}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground">{user.pseudo}</h1>
+            {isPro && (
+              <Badge className="bg-primary text-primary-foreground">
+                <Crown className="mr-1 h-3 w-3" />PRO
+              </Badge>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">{user.email}</p>
           <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
             <Calendar className="h-3.5 w-3.5" />
