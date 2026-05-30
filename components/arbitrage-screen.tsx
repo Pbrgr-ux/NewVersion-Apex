@@ -28,26 +28,26 @@ import { useArbitrageWindow }      from "@/hooks/use-arbitrage-window"
 
 // ── Mock data (remplacé par Supabase + Polygon dans la tâche 6) ──
 const mockStocks = [
-  { ticker: "AAPL",  name: "Apple Inc.",          sector: "Technology", price: 178.42, monthChange:  5.23 },
-  { ticker: "MSFT",  name: "Microsoft Corp.",      sector: "Technology", price: 378.12, monthChange:  3.45 },
-  { ticker: "GOOGL", name: "Alphabet Inc.",        sector: "Technology", price: 141.80, monthChange: -2.12 },
-  { ticker: "AMZN",  name: "Amazon.com Inc.",      sector: "Consumer",   price: 178.25, monthChange:  8.67 },
-  { ticker: "NVDA",  name: "NVIDIA Corp.",         sector: "Technology", price: 456.89, monthChange: 15.34 },
-  { ticker: "TSLA",  name: "Tesla Inc.",           sector: "Automotive", price: 245.67, monthChange: -4.21 },
-  { ticker: "META",  name: "Meta Platforms",       sector: "Technology", price: 505.95, monthChange: 12.45 },
-  { ticker: "BRK.B", name: "Berkshire Hathaway",  sector: "Finance",    price: 408.23, monthChange:  2.11 },
-  { ticker: "JPM",   name: "JPMorgan Chase",       sector: "Finance",    price: 198.45, monthChange:  4.56 },
-  { ticker: "V",     name: "Visa Inc.",            sector: "Finance",    price: 279.34, monthChange:  1.89 },
-  { ticker: "JNJ",   name: "Johnson & Johnson",   sector: "Healthcare", price: 156.78, monthChange: -1.23 },
-  { ticker: "WMT",   name: "Walmart Inc.",         sector: "Retail",     price: 165.42, monthChange:  3.21 },
-  { ticker: "PG",    name: "Procter & Gamble",     sector: "Consumer",   price: 158.90, monthChange:  0.87 },
-  { ticker: "MA",    name: "Mastercard Inc.",      sector: "Finance",    price: 456.12, monthChange:  2.34 },
-  { ticker: "UNH",   name: "UnitedHealth Group",  sector: "Healthcare", price: 523.45, monthChange: -0.56 },
-  { ticker: "HD",    name: "Home Depot Inc.",      sector: "Retail",     price: 345.67, monthChange:  1.45 },
-  { ticker: "NFLX",  name: "Netflix Inc.",         sector: "Entertainment", price: 478.90, monthChange: 9.12 },
-  { ticker: "ADBE",  name: "Adobe Inc.",           sector: "Technology", price: 512.34, monthChange:  4.56 },
-  { ticker: "CRM",   name: "Salesforce Inc.",      sector: "Technology", price: 267.89, monthChange:  7.23 },
-  { ticker: "ORCL",  name: "Oracle Corp.",         sector: "Technology", price: 123.45, monthChange:  6.78 },
+  { ticker: "AAPL",  name: "Apple Inc.",          sector: "Technology",    price: 178.42, weekChange:  1.84 },
+  { ticker: "MSFT",  name: "Microsoft Corp.",      sector: "Technology",    price: 378.12, weekChange:  0.92 },
+  { ticker: "GOOGL", name: "Alphabet Inc.",        sector: "Technology",    price: 141.80, weekChange: -1.05 },
+  { ticker: "AMZN",  name: "Amazon.com Inc.",      sector: "Consumer",      price: 178.25, weekChange:  2.31 },
+  { ticker: "NVDA",  name: "NVIDIA Corp.",         sector: "Technology",    price: 456.89, weekChange:  4.67 },
+  { ticker: "TSLA",  name: "Tesla Inc.",           sector: "Automotive",    price: 245.67, weekChange: -2.10 },
+  { ticker: "META",  name: "Meta Platforms",       sector: "Technology",    price: 505.95, weekChange:  3.22 },
+  { ticker: "BRK.B", name: "Berkshire Hathaway",  sector: "Finance",       price: 408.23, weekChange:  0.54 },
+  { ticker: "JPM",   name: "JPMorgan Chase",       sector: "Finance",       price: 198.45, weekChange:  1.12 },
+  { ticker: "V",     name: "Visa Inc.",            sector: "Finance",       price: 279.34, weekChange:  0.47 },
+  { ticker: "JNJ",   name: "Johnson & Johnson",    sector: "Healthcare",    price: 156.78, weekChange: -0.38 },
+  { ticker: "WMT",   name: "Walmart Inc.",         sector: "Retail",        price: 165.42, weekChange:  0.89 },
+  { ticker: "PG",    name: "Procter & Gamble",     sector: "Consumer",      price: 158.90, weekChange:  0.21 },
+  { ticker: "MA",    name: "Mastercard Inc.",      sector: "Finance",       price: 456.12, weekChange:  0.63 },
+  { ticker: "UNH",   name: "UnitedHealth Group",   sector: "Healthcare",    price: 523.45, weekChange: -0.14 },
+  { ticker: "HD",    name: "Home Depot Inc.",      sector: "Retail",        price: 345.67, weekChange:  0.37 },
+  { ticker: "NFLX",  name: "Netflix Inc.",         sector: "Entertainment", price: 478.90, weekChange:  2.45 },
+  { ticker: "ADBE",  name: "Adobe Inc.",           sector: "Technology",    price: 512.34, weekChange:  1.18 },
+  { ticker: "CRM",   name: "Salesforce Inc.",      sector: "Technology",    price: 267.89, weekChange:  1.94 },
+  { ticker: "ORCL",  name: "Oracle Corp.",         sector: "Technology",    price: 123.45, weekChange:  1.72 },
 ]
 
 export function ArbitrageScreen() {
@@ -186,11 +186,11 @@ export function ArbitrageScreen() {
                     </span>
                     <span
                       className={`text-xs font-medium tabular-nums ${
-                        stock.monthChange >= 0 ? "text-success" : "text-danger"
+                        stock.weekChange >= 0 ? "text-success" : "text-danger"
                       }`}
                     >
-                      {stock.monthChange >= 0 ? "+" : ""}
-                      {stock.monthChange.toFixed(2)}% /mo
+                      {stock.weekChange >= 0 ? "+" : ""}
+                      {stock.weekChange.toFixed(2)}% /7j
                     </span>
                   </div>
                 </div>
