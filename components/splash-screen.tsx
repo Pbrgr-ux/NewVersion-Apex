@@ -25,7 +25,7 @@ export function SplashScreen() {
               <TrendingUp className="h-7 w-7 text-primary-foreground" />
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-foreground">
-              APEX
+              TradeLeague
             </h1>
           </div>
         </div>

@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { ArbitrageScreen } from "@/components/arbitrage-screen"
 
 export const metadata: Metadata = {
-  title: "Arbitrage Window | APEX",
+  title: "Arbitrage Window | TradeLeague",
   description: "Allocate your portfolio across 50 stocks during the arbitrage window.",
 }
 

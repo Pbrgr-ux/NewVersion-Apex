@@ -8,7 +8,7 @@ import { TrendingUp, Lock, Users, Plus, ArrowRight, Home, BarChart3, User } from
 type HubView = "choose" | "create" | "join" | "created"
 
 function generateCode(name: string): string {
-  const prefix = name.trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4) || "APEX"
+  const prefix = name.trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4) || "TL"
   const num = (name.length * 7 + 13) % 90 + 10
   return `${prefix}-${num}`
 }

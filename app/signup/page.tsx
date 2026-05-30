@@ -1,8 +1,8 @@
 import { SignupScreen } from "@/components/signup-screen"
 
 export const metadata = {
-  title: "Sign Up — APEX",
-  description: "Create your APEX account and start competing.",
+  title: "Sign Up — TradeLeague",
+  description: "Create your TradeLeague account and start competing.",
 }
 
 export default function SignupPage() {

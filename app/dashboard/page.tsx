@@ -4,7 +4,7 @@ import { getDashboardData }  from "@/lib/dashboard-data"
 export const dynamic = "force-dynamic" // toujours des données fraîches
 
 export const metadata = {
-  title:       "Dashboard | APEX",
+  title:       "Dashboard | TradeLeague",
   description: "Vue d'ensemble de votre portfolio et performances du marché",
 }
 

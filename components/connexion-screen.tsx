@@ -53,7 +53,7 @@ export function ConnexionScreen() {
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
           <TrendingUp className="h-5 w-5 text-primary-foreground" />
         </div>
-        <span className="text-2xl font-bold tracking-tight text-foreground">APEX</span>
+        <span className="text-2xl font-bold tracking-tight text-foreground">TradeLeague</span>
       </div>
 
       <div className="w-full max-w-sm">

@@ -83,7 +83,7 @@ export function PaywallScreen({ returnTo = "/" }: { returnTo?: string }) {
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">APEX</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">TradeLeague</p>
           <h1 className="text-3xl font-bold text-foreground">Passez Pro</h1>
           <p className="mt-2 text-sm text-muted-foreground max-w-xs">
             Accédez à toutes les fonctionnalités pour dominer le classement.

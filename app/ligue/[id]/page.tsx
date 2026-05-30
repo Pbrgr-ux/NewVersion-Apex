@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { LigueScreen } from "@/components/ligue-screen"
 
 export const metadata: Metadata = {
-  title: "Ligue Privée - APEX",
+  title: "Ligue Privée - TradeLeague",
   description: "Classement interne de ta ligue privée.",
 }
 

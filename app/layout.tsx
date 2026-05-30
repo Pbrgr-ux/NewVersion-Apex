@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'APEX - Invest Smarter, Grow Faster',
-  description: 'Real-time market insights and intelligent portfolio management at your fingertips.',
+  title: 'TradeLeague - One trade a week. Real rivals.',
+  description: 'Composez votre portefeuille chaque semaine et affrontez vos rivaux sur les vrais marchés.',
   generator: 'v0.app',
   icons: {
     icon: [

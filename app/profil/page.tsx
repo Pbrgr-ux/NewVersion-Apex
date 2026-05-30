@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { ProfilScreen } from "@/components/profil-screen"
 
 export const metadata: Metadata = {
-  title: "Profil - APEX",
+  title: "Profil - TradeLeague",
   description: "Your player profile and performance history",
 }
 
