@@ -372,59 +372,94 @@ export function ArbitrageScreen() {
 
       {/* ── Dialog confirmation ───────────────────────────────── */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="bg-card border-border max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-foreground">
               <AlertTriangle className="h-5 w-5 text-primary" />
               Confirmer l&apos;allocation
             </DialogTitle>
             <DialogDescription>
-              Êtes-vous sûr de vouloir valider votre portfolio ? Cette action ne pourra
-              pas être modifiée avant la prochaine fenêtre d&apos;arbitrage.
+              Vérifiez la répartition avant de valider — elle ne pourra pas être modifiée avant la prochaine fenêtre.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="my-2 rounded-lg bg-secondary/50 p-3 space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Actions sélectionnées</span>
-              <span className="font-semibold text-foreground">
-                {Object.values(allocations).filter((v) => v > 0).length}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Investi en actions</span>
-              <span className="font-semibold text-foreground">{totalAllocation}%</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Conservé en cash</span>
-              <span className={`font-semibold ${cashPct > 0 ? "text-green-500" : "text-muted-foreground"}`}>
-                {cashPct}%
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm border-t border-border pt-2">
-              <span className="text-muted-foreground">Fenêtre se ferme dans</span>
-              <span className="font-mono font-semibold text-foreground">
-                {arbitrage.timeUntilClose}
-              </span>
-            </div>
+          {/* ── Répartition détaillée ── */}
+          <div className="flex-1 overflow-y-auto my-2 space-y-1.5 pr-1">
+            {TICKERS
+              .filter((t) => (allocations[t.ticker] ?? 0) > 0)
+              .sort((a, b) => (allocations[b.ticker] ?? 0) - (allocations[a.ticker] ?? 0))
+              .map((t) => {
+                const pct = allocations[t.ticker] ?? 0
+                return (
+                  <div key={t.ticker} className="flex items-center gap-3">
+                    {/* Pastille ticker */}
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary text-[10px] font-bold text-foreground">
+                      {t.ticker.replace(".", "").slice(0, 2)}
+                    </div>
+                    {/* Nom */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs font-semibold text-foreground truncate">{t.ticker}</span>
+                        <span className="text-xs font-bold text-foreground tabular-nums ml-2">{pct}%</span>
+                      </div>
+                      {/* Mini barre */}
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${(pct / 50) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            }
+
+            {/* Ligne Cash si > 0 */}
+            {cashPct > 0 && (
+              <div className="flex items-center gap-3 pt-1 border-t border-border mt-2">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-green-500/15 text-[10px] font-bold text-green-500">
+                  💵
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-xs font-semibold text-green-500">Cash</span>
+                    <span className="text-xs font-bold text-green-500 tabular-nums ml-2">{cashPct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-full rounded-full bg-green-500/60"
+                      style={{ width: `${cashPct}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowConfirmDialog(false)}
-              disabled={isSubmitting}
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={handleConfirm}
-              disabled={isSubmitting}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {isSubmitting ? "Validation…" : "Confirmer"}
-            </Button>
-          </DialogFooter>
+          {/* ── Pied : timer + boutons ── */}
+          <div className="border-t border-border pt-3 space-y-3">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Fenêtre se ferme dans</span>
+              <span className="font-mono font-semibold text-foreground">{arbitrage.timeUntilClose}</span>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowConfirmDialog(false)}
+                disabled={isSubmitting}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleConfirm}
+                disabled={isSubmitting}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {isSubmitting ? "Validation…" : "Confirmer"}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </main>
