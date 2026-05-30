@@ -55,7 +55,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
       </div>
 
       {/* ── Cards perf semaine / mois / saison ───────────────── */}
-      <div className="grid grid-cols-3 gap-3 px-4 pb-4">
+      <div className="grid grid-cols-3 gap-2 px-4 pb-3">
         {(
           [
             { label: "Semaine", value: perf.week   },
@@ -64,11 +64,11 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
           ] as const
         ).map(({ label, value }) => (
           <Card key={label} className="bg-card border-border">
-            <CardContent className="flex flex-col items-center gap-1 p-3">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            <CardContent className="flex flex-col items-center gap-0.5 px-2 py-2">
+              <span className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
                 {label}
               </span>
-              <span className={`text-lg font-bold tabular-nums ${perfColor(value)}`}>
+              <span className={`text-base font-bold tabular-nums ${perfColor(value)}`}>
                 {fmtPerf(value)}
               </span>
             </CardContent>
