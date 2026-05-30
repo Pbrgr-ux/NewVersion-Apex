@@ -139,26 +139,38 @@ export function ArbitrageScreen() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Non connecté")
 
-      // 2. Créer / récupérer le portfolio de la saison courante
-      const { data: portfolio, error: pErr } = await supabase
-        .from("portfolios")
-        .upsert(
-          { user_id: user.id, saison: CURRENT_SAISON, cash: 0 },
-          { onConflict: "user_id,saison" }
-        )
-        .select("id")
-        .single()
+      // 2. Récupérer ou créer le portfolio de la saison courante
+      let portfolioId: string
 
-      if (pErr || !portfolio) throw new Error("Erreur portfolio")
+      const { data: existing } = await supabase
+        .from("portfolios")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("saison", CURRENT_SAISON)
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (existing) {
+        portfolioId = existing.id
+      } else {
+        const { data: created, error: cErr } = await supabase
+          .from("portfolios")
+          .insert({ user_id: user.id, saison: CURRENT_SAISON, cash: 0 })
+          .select("id")
+          .single()
+        if (cErr || !created) throw new Error("Erreur création portfolio")
+        portfolioId = created.id
+      }
 
       // 3. Supprimer les anciennes positions
-      await supabase.from("positions").delete().eq("portfolio_id", portfolio.id)
+      await supabase.from("positions").delete().eq("portfolio_id", portfolioId)
 
       // 4. Insérer les nouvelles positions (allocation > 0 uniquement)
       const newPositions = TICKERS
         .filter((t) => (allocations[t.ticker] ?? 0) > 0)
         .map((t) => ({
-          portfolio_id:   portfolio.id,
+          portfolio_id:   portfolioId,
           ticker:         t.ticker,
           allocation_pct: allocations[t.ticker],
           prix_achat:     MOCK_MARKET[t.ticker]?.price ?? 100,

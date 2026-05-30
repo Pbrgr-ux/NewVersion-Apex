@@ -70,14 +70,16 @@ export async function getDashboardData(): Promise<DashboardData> {
   if (!user) return empty
 
   // ── 1. Portfolio + positions ────────────────────────────────
-  const { data: portfolio, error: portErr } = await supabase
+  const { data: portfolios, error: portErr } = await supabase
     .from("portfolios")
     .select("id, positions ( ticker, allocation_pct, prix_achat )")
     .eq("user_id", user.id)
     .eq("saison", CURRENT_SAISON)
-    .single()
+    .order("id", { ascending: false })  // le plus récent en premier si doublon
 
-  if (portErr || !portfolio) return empty
+  if (portErr || !portfolios || portfolios.length === 0) return empty
+
+  const portfolio = portfolios[0]
 
   type RawPosition = { ticker: string; allocation_pct: number; prix_achat: number }
   const rawPositions = (portfolio.positions ?? []) as RawPosition[]
