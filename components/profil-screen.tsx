@@ -17,6 +17,7 @@ import {
   User,
   ChevronRight,
   Loader2,
+  KeyRound,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -311,6 +312,17 @@ export function ProfilScreen() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Button>
           )}
+          <Button
+            variant="outline"
+            className="h-12 justify-between border-border bg-card text-foreground hover:bg-secondary"
+            onClick={() => router.push("/profil/changer-mot-de-passe")}
+          >
+            <div className="flex items-center gap-3">
+              <KeyRound className="h-5 w-5 text-muted-foreground" />
+              <span>Changer le mot de passe</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Button>
           <Button
             variant="outline"
             onClick={handleLogOut}
