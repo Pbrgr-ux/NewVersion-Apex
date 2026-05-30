@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Clock,
@@ -83,6 +84,7 @@ const TABS: { label: string; region: Region }[] = [
 export function ArbitrageScreen() {
   const arbitrage = useArbitrageWindow()
   const supabase  = createClient()
+  const router    = useRouter()
 
   const [activeTab, setActiveTab] = useState<Region>("US")
   const [isLocked, setIsLocked]   = useState(false)
@@ -171,8 +173,8 @@ export function ArbitrageScreen() {
       if (arbitrage.windowCloseISO) {
         localStorage.setItem(LS_KEY, arbitrage.windowCloseISO)
       }
-      setIsLocked(true)
       setShowConfirmDialog(false)
+      router.push("/dashboard")
 
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Erreur inconnue")
