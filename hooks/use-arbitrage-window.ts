@@ -3,16 +3,14 @@
 /**
  * useArbitrageWindow()
  *
- * Retourne l'état de la fenêtre d'arbitrage APEX en temps réel.
- * Fenêtre ouverte : samedi 08:00 → dimanche 21:00 (Europe/Paris)
+ * Retourne l'état de la fenêtre d'arbitrage en temps réel.
+ *
+ * ⚠️  MODE TEST — fenêtre journalière : 21:00 → 23:00 (Europe/Paris)
+ * TODO : repasser en mode hebdo (sam 08:00 → dim 21:00) après les tests
+ *        en restaurant la section « Constantes » et « computeState » d'origine.
  *
  * Toute la logique utilise Intl.DateTimeFormat avec le fuseau "Europe/Paris"
  * pour gérer correctement CET (UTC+1) et CEST (UTC+2) automatiquement.
- *
- * Retour :
- *   isOpen        — true si on est dans la fenêtre
- *   timeUntilOpen — compte à rebours avant la prochaine ouverture  (ex: "4j 22h 30m")
- *   timeUntilClose — compte à rebours avant la fermeture            (ex: "12:45:23")
  */
 
 import { useState, useEffect } from "react"
@@ -32,18 +30,14 @@ const INITIAL: ArbitrageWindowState = {
   windowCloseISO: null,
 }
 
-// ── Constantes ────────────────────────────────────────────────
-const OPEN_SOD  = 8  * 3600   // samedi  08:00:00 (secondes depuis minuit)
-const CLOSE_SOD = 21 * 3600   // dimanche 21:00:00
-
-const DAY_SHORT: Record<string, number> = {
-  Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
-}
+// ── Constantes — MODE TEST (journalier 21h→23h) ───────────────
+// TODO hebdo : OPEN_SOD = 8*3600 (sam 08:00) / CLOSE_SOD = 21*3600 (dim 21:00)
+const OPEN_SOD  = 21 * 3600   // 21:00:00 (secondes depuis minuit)
+const CLOSE_SOD = 23 * 3600   // 23:00:00
 
 // ── Intl formatters (créés une seule fois) ─────────────────────
 const parisFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "Europe/Paris",
-  weekday:  "short",
   hour:     "numeric",
   minute:   "numeric",
   second:   "numeric",
@@ -53,14 +47,11 @@ const parisFormatter = new Intl.DateTimeFormat("en-US", {
 /** Extrait les composantes de l'heure courante en Europe/Paris */
 function getParisComponents(now: Date) {
   const parts = parisFormatter.formatToParts(now)
-  const get   = (type: string) => parts.find((p) => p.type === type)?.value ?? "0"
-
-  const weekdayStr = parts.find((p) => p.type === "weekday")?.value ?? "Mon"
+  const get   = (type: string) => parseInt(parts.find((p) => p.type === type)?.value ?? "0", 10)
   return {
-    day:    DAY_SHORT[weekdayStr] ?? 1,
-    hour:   parseInt(get("hour"),   10),
-    minute: parseInt(get("minute"), 10),
-    second: parseInt(get("second"), 10),
+    hour:   get("hour"),
+    minute: get("minute"),
+    second: get("second"),
   }
 }
 
@@ -79,20 +70,14 @@ function formatDuration(totalSec: number): string {
 
 /** Calcule l'état complet de la fenêtre pour un instant donné */
 function computeState(now: Date): ArbitrageWindowState {
-  const { day, hour, minute, second } = getParisComponents(now)
+  const { hour, minute, second } = getParisComponents(now)
   const currentSod = hour * 3600 + minute * 60 + second
 
-  // Fenêtre ouverte : Samedi >= 08:00 OU Dimanche < 21:00
-  const isOpen =
-    (day === 6 && currentSod >= OPEN_SOD) ||
-    (day === 0 && currentSod < CLOSE_SOD)
+  // Fenêtre ouverte chaque jour entre OPEN_SOD et CLOSE_SOD
+  const isOpen = currentSod >= OPEN_SOD && currentSod < CLOSE_SOD
 
   if (isOpen) {
-    const secUntilClose =
-      day === 6
-        ? (86400 - currentSod) + CLOSE_SOD
-        : CLOSE_SOD - currentSod
-
+    const secUntilClose  = CLOSE_SOD - currentSod
     const windowCloseISO = new Date(now.getTime() + secUntilClose * 1000).toISOString()
 
     return {
@@ -103,19 +88,10 @@ function computeState(now: Date): ArbitrageWindowState {
     }
   }
 
-  // Temps jusqu'à la prochaine ouverture (Samedi 08:00)
-  let secUntilOpen: number
-  if (day === 6) {
-    // Samedi avant 08:00
-    secUntilOpen = OPEN_SOD - currentSod
-  } else if (day === 0) {
-    // Dimanche après 21:00 → prochain samedi (6 jours)
-    secUntilOpen = (86400 - currentSod) + 5 * 86400 + OPEN_SOD
-  } else {
-    // Lundi(1) → Vendredi(5)
-    const daysLeft = 6 - day   // jours jusqu'au samedi
-    secUntilOpen = (86400 - currentSod) + (daysLeft - 1) * 86400 + OPEN_SOD
-  }
+  // Temps jusqu'à la prochaine ouverture (21:00 aujourd'hui ou demain)
+  const secUntilOpen = currentSod < OPEN_SOD
+    ? OPEN_SOD - currentSod                   // plus tard aujourd'hui
+    : (86400 - currentSod) + OPEN_SOD         // demain à 21:00
 
   return {
     isOpen:          false,
@@ -130,7 +106,6 @@ export function useArbitrageWindow(): ArbitrageWindowState {
   const [state, setState] = useState<ArbitrageWindowState>(INITIAL)
 
   useEffect(() => {
-    // Tick initial dès le montage côté client
     setState(computeState(new Date()))
     const id = setInterval(() => setState(computeState(new Date())), 1000)
     return () => clearInterval(id)
