@@ -11,8 +11,9 @@ import { createClient } from "@/lib/supabase/server"
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get("code")
-  const error = searchParams.get("error")
+  const code             = searchParams.get("code")
+  const type             = searchParams.get("type")          // "signup" | "recovery" | null
+  const error            = searchParams.get("error")
   const errorDescription = searchParams.get("error_description")
 
   // Erreur Supabase (lien expiré, déjà utilisé…)
@@ -26,7 +27,11 @@ export async function GET(request: NextRequest) {
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!exchangeError) {
-      // Succès → page de confirmation avec message 2s
+      // Reset de mot de passe → page de changement
+      if (type === "recovery") {
+        return NextResponse.redirect(`${origin}/profil/changer-mot-de-passe`)
+      }
+      // Confirmation d'inscription → page de succès 2s
       return NextResponse.redirect(`${origin}/auth/confirmed`)
     }
   }

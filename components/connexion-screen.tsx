@@ -92,10 +92,10 @@ export function ConnexionScreen() {
                 Password
               </label>
               <Link
-                href="/forgot-password"
+                href="/mot-de-passe-oublie"
                 className="text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
               >
-                Forgot password?
+                Mot de passe oublié ?
               </Link>
             </div>
             <input
