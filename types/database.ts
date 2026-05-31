@@ -14,6 +14,7 @@ export type Database = {
           email:      string
           pseudo:     string
           is_pro:     boolean
+          is_admin:   boolean
           created_at: string
         }
         Insert: {
@@ -21,11 +22,13 @@ export type Database = {
           email:       string
           pseudo:      string
           is_pro?:     boolean
+          is_admin?:   boolean
           created_at?: string
         }
         Update: {
-          pseudo?:     string
-          is_pro?:     boolean
+          pseudo?:   string
+          is_pro?:   boolean
+          is_admin?: boolean
         }
         Relationships: []
       }
@@ -33,22 +36,51 @@ export type Database = {
       // ── saisons ────────────────────────────────────────────
       saisons: {
         Row: {
-          id:          number
-          saison_code: string       // "S1", "S2", "S3", "S4"
-          debut_date:  string       // DATE "YYYY-MM-DD"
-          fin_date:    string
-          statut:      string       // "active" | "terminee" | "a_venir"
-          created_at:  string
+          id:                  number
+          saison_code:         string
+          nom:                 string | null
+          type:                string        // "trimestrielle" | "speciale"
+          debut_date:          string
+          fin_date:            string
+          statut:              string        // "active" | "terminee" | "a_venir"
+          capital_initial:     number
+          max_allocation_pct:  number
+          tickers_autorises:   string[] | null   // null = les 65
+          fenetre_jours:       number[] | null   // [6,0] = sam+dim
+          fenetre_heure_debut: number
+          fenetre_heure_fin:   number
+          inscription_requise: boolean
+          created_at:          string
         }
         Insert: {
-          saison_code: string
-          debut_date:  string
-          fin_date:    string
-          statut?:     string
-          created_at?: string
+          saison_code:          string
+          nom?:                 string | null
+          type?:                string
+          debut_date:           string
+          fin_date:             string
+          statut?:              string
+          capital_initial?:     number
+          max_allocation_pct?:  number
+          tickers_autorises?:   string[] | null
+          fenetre_jours?:       number[] | null
+          fenetre_heure_debut?: number
+          fenetre_heure_fin?:   number
+          inscription_requise?: boolean
+          created_at?:          string
         }
         Update: {
-          statut?: string
+          nom?:                 string | null
+          type?:                string
+          debut_date?:          string
+          fin_date?:            string
+          statut?:              string
+          capital_initial?:     number
+          max_allocation_pct?:  number
+          tickers_autorises?:   string[] | null
+          fenetre_jours?:       number[] | null
+          fenetre_heure_debut?: number
+          fenetre_heure_fin?:   number
+          inscription_requise?: boolean
         }
         Relationships: []
       }

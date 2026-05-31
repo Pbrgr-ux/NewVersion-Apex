@@ -45,6 +45,7 @@ export type ProfilData = {
     email:       string
     memberSince: string   // "YYYY-MM-DD"
     isPro:       boolean
+    isAdmin:     boolean
   }
   saison: {
     rang:        number | null
@@ -74,10 +75,11 @@ export async function getProfilData(): Promise<ProfilData | null> {
     .eq("id", user.id)
     .maybeSingle()
 
-  const pseudo      = dbUser?.pseudo ?? (user.user_metadata?.pseudo as string | undefined) ?? user.email?.split("@")[0] ?? "Trader"
-  const email       = dbUser?.email  ?? user.email ?? ""
+  const pseudo      = dbUser?.pseudo    ?? (user.user_metadata?.pseudo as string | undefined) ?? user.email?.split("@")[0] ?? "Trader"
+  const email       = dbUser?.email     ?? user.email ?? ""
   const memberSince = (dbUser?.created_at ?? user.created_at).split("T")[0]
-  const isPro       = dbUser?.is_pro  ?? false
+  const isPro       = dbUser?.is_pro    ?? false
+  const isAdmin     = (dbUser as { is_admin?: boolean } | null)?.is_admin ?? false
 
   const CURRENT_SAISON = getCurrentSeasonId()
 
@@ -185,7 +187,7 @@ export async function getProfilData(): Promise<ProfilData | null> {
   }
 
   return {
-    user: { pseudo, email, memberSince, isPro },
+    user: { pseudo, email, memberSince, isPro, isAdmin },
     saison: {
       rang:          saisonCourante?.rang ?? null,
       perf_totale:   saisonCourante ? Number(saisonCourante.perf_totale) : null,

@@ -4,10 +4,10 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
-  Crown, LogOut, CreditCard, Calendar, Trophy,
+  Crown, LogOut, Calendar, Trophy,
   Zap, Home, BarChart3, User, ChevronRight,
   Loader2, KeyRound, TrendingUp, TrendingDown,
-  Wallet,
+  Wallet, Settings,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button }            from "@/components/ui/button"
@@ -39,7 +39,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
   const [loggingOut, setLoggingOut] = useState(false)
 
   const { user, saison, historique, positions, hasPortfolio } = data
-  const { isPro } = user
+  const { isPro, isAdmin } = user
 
   const initials    = user.pseudo.slice(0, 2).toUpperCase()
   const memberDate  = new Date(user.memberSince).toLocaleDateString("fr-FR", {
@@ -209,6 +209,19 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
           Compte
         </h3>
         <div className="flex flex-col gap-2">
+          {isAdmin && (
+            <Button
+              variant="outline"
+              className="h-12 justify-between border-border bg-card text-foreground hover:bg-secondary"
+              onClick={() => router.push("/admin")}
+            >
+              <div className="flex items-center gap-3">
+                <Settings className="h-5 w-5 text-primary" />
+                <span>Administration</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          )}
           <Button
             variant="outline"
             className="h-12 justify-between border-border bg-card text-foreground hover:bg-secondary"
