@@ -1,20 +1,20 @@
 /**
  * GET /api/update-cours
  *
- * Cron Vercel quotidien — 22h30 UTC (00h30 Paris)
- * Schedule vercel.json : "30 22 * * 1-5"  (lun-ven, après clôture US)
- *
- * Avec Vercel Pro, passez au schedule "0,15,30,45 7-22 * * 1-5" pour des
- * mises à jour toutes les 15 minutes pendant les heures de marché.
+ * Cron Vercel quotidien — 22h30 UTC (lun-ven, après clôture US)
+ * Schedule vercel.json : "30 22 * * 1-5"
  *
  * Étapes :
- *  1. Sync des cours via Yahoo Finance (batch, ~1-3 s, gratuit)
- *  2. Lecture de tous les portfolios + positions de la saison courante
- *  3. Calcul de la perf_totale pondérée pour chaque portfolio
- *  4. Upsert dans `classement` avec les rangs triés
+ *  1. Sync des cours via Yahoo Finance
+ *  2. Récupération indices CAC40 + S&P500 (via Yahoo Finance)
+ *  3. Lecture portfolios + positions de la saison courante
+ *  4. Calcul perf_totale pondérée + perf vs indices
+ *  5. Upsert classement avec rangs + statuts joueurs
  *
- * Protection : Authorization: Bearer <CRON_SECRET>
- *              ou ?secret=<CRON_SECRET>
+ * Wild Card : les rookies (inscrits en cours de saison) ont un capital_ajuste
+ * différent → leur perf est calculée sur la base de capital_ajuste.
+ *
+ * Protection : Authorization: Bearer <CRON_SECRET> ou ?secret=<CRON_SECRET>
  */
 
 import { NextRequest, NextResponse } from "next/server"
@@ -22,10 +22,9 @@ import { createClient }              from "@supabase/supabase-js"
 import type { Database }             from "@/types/database"
 import { TICKERS }                   from "@/lib/tickers"
 import { fetchAllPrices, fetchPrices } from "@/lib/yahoo-finance"
+import { getCurrentSeasonId }        from "@/lib/seasons"
 
-export const maxDuration = 60 // suffisant — Yahoo Finance répond en < 5s
-
-const CURRENT_SAISON = 1
+export const maxDuration = 60
 
 // ── Auth ──────────────────────────────────────────────────────
 function isAuthorized(req: NextRequest): boolean {
@@ -34,6 +33,23 @@ function isAuthorized(req: NextRequest): boolean {
   const auth = req.headers.get("authorization")
   if (auth === `Bearer ${secret}`) return true
   return new URL(req.url).searchParams.get("secret") === secret
+}
+
+// ── Fetch indice Yahoo Finance ─────────────────────────────────
+async function fetchIndicePrice(symbol: string): Promise<number | null> {
+  try {
+    // Réutilise yahoo-finance2 via fetch direct (pas d'import circulaire)
+    const res = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`,
+      { headers: { "User-Agent": "Mozilla/5.0" } }
+    )
+    if (!res.ok) return null
+    const json = await res.json()
+    const price = json?.chart?.result?.[0]?.meta?.regularMarketPrice
+    return typeof price === "number" ? price : null
+  } catch {
+    return null
+  }
 }
 
 // ── Handler ───────────────────────────────────────────────────
@@ -51,36 +67,72 @@ export async function GET(request: NextRequest) {
   const limitParam = searchParams.get("limit")
   const limit      = limitParam ? Math.min(parseInt(limitParam, 10), TICKERS.length) : TICKERS.length
 
-  const globalStart = Date.now()
+  const CURRENT_SAISON = getCurrentSeasonId()
+  const today          = new Date().toISOString().split("T")[0]
+  const globalStart    = Date.now()
 
   // ══════════════════════════════════════════════════════════════
-  // ÉTAPE 1 — Sync Yahoo Finance (batch unique, pas de délai)
+  // ÉTAPE 1 — Sync Yahoo Finance (cours actions/ETFs)
   // ══════════════════════════════════════════════════════════════
-  const prices = limit < TICKERS.length
-    ? await fetchPrices(limit)
-    : await fetchAllPrices()
+  const prices = limit < TICKERS.length ? await fetchPrices(limit) : await fetchAllPrices()
 
   let coursOk = 0, coursSkip = 0, coursErrors = 0
-
   for (const price of prices) {
-    const { error } = await supabase
-      .from("cours")
-      .upsert(
-        { ticker: price.ticker, prix: price.prix, date: price.date },
-        { onConflict: "ticker,date" }
-      )
+    const { error } = await supabase.from("cours").upsert(
+      { ticker: price.ticker, prix: price.prix, date: price.date },
+      { onConflict: "ticker,date" }
+    )
     if (error) coursErrors++
     else coursOk++
   }
   coursSkip = limit - prices.length
 
   // ══════════════════════════════════════════════════════════════
-  // ÉTAPE 2 — Lecture portfolios + positions + cours récents
+  // ÉTAPE 2 — Indices CAC40 + S&P500
+  // ══════════════════════════════════════════════════════════════
+  const [cac40Prix, sp500Prix] = await Promise.all([
+    fetchIndicePrice("^FCHI"),   // CAC 40
+    fetchIndicePrice("^GSPC"),   // S&P 500
+  ])
+
+  let indicesOk = false
+  if (cac40Prix && sp500Prix) {
+    // Prix de début de saison pour calculer la variation
+    const { data: debutIndice } = await supabase
+      .from("indices")
+      .select("cac40_prix, sp500_prix")
+      .eq("saison_id", CURRENT_SAISON)
+      .order("date", { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    const cac40Debut  = debutIndice?.cac40_prix  ?? cac40Prix
+    const sp500Debut  = debutIndice?.sp500_prix  ?? sp500Prix
+    const cac40Var    = ((cac40Prix  / Number(cac40Debut))  - 1) * 100
+    const sp500Var    = ((sp500Prix  / Number(sp500Debut))  - 1) * 100
+
+    const { error: idxErr } = await supabase.from("indices").upsert(
+      {
+        date:                    today,
+        saison_id:               CURRENT_SAISON,
+        cac40_prix:              cac40Prix,
+        sp500_prix:              sp500Prix,
+        cac40_variation_saison:  parseFloat(cac40Var.toFixed(4)),
+        sp500_variation_saison:  parseFloat(sp500Var.toFixed(4)),
+        updated_at:              new Date().toISOString(),
+      },
+      { onConflict: "date" }
+    )
+    if (!idxErr) indicesOk = true
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // ÉTAPE 3 — Portfolios + positions + cours récents
   // ══════════════════════════════════════════════════════════════
   const [portfoliosRes, coursRes] = await Promise.all([
     supabase
       .from("portfolios")
-      .select("id, user_id, positions ( ticker, allocation_pct, prix_achat )")
+      .select("id, user_id, statut_joueur, capital_initial, capital_ajuste, positions ( ticker, allocation_pct, prix_achat )")
       .eq("saison", CURRENT_SAISON),
 
     supabase
@@ -91,7 +143,7 @@ export async function GET(request: NextRequest) {
 
   if (portfoliosRes.error || coursRes.error) {
     return NextResponse.json(
-      { error: "Erreur lecture portfolios ou cours", details: portfoliosRes.error ?? coursRes.error },
+      { error: "Erreur lecture", details: portfoliosRes.error ?? coursRes.error },
       { status: 500 }
     )
   }
@@ -102,12 +154,28 @@ export async function GET(request: NextRequest) {
     if (!(c.ticker in prixMap)) prixMap[c.ticker] = Number(c.prix)
   }
 
+  // Indices pour perf vs marché
+  const { data: lastIndice } = await supabase
+    .from("indices")
+    .select("cac40_variation_saison, sp500_variation_saison")
+    .eq("saison_id", CURRENT_SAISON)
+    .order("date", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const cac40Saison = lastIndice?.cac40_variation_saison ?? null
+  const sp500Saison = lastIndice?.sp500_variation_saison ?? null
+
   // ══════════════════════════════════════════════════════════════
-  // ÉTAPE 3 — Calcul de la perf pondérée
-  //
-  // perf_totale (%) = Σ (allocation_pct/100) × (prix_actuel/prix_achat − 1) × 100
+  // ÉTAPE 4 — Calcul perf pondérée
   // ══════════════════════════════════════════════════════════════
-  type Entry = { user_id: string; perf_totale: number }
+  type Entry = {
+    user_id:       string
+    perf_totale:   number
+    statut_joueur: string
+    perf_vs_cac40: number | null
+    perf_vs_sp500: number | null
+  }
   const entries: Entry[] = []
 
   for (const portfolio of portfoliosRes.data ?? []) {
@@ -122,21 +190,27 @@ export async function GET(request: NextRequest) {
       if (!prixActuel || Number(pos.prix_achat) === 0) continue
       perf += (Number(pos.allocation_pct) / 100) * (prixActuel / Number(pos.prix_achat) - 1) * 100
     }
-    entries.push({ user_id: portfolio.user_id, perf_totale: parseFloat(perf.toFixed(4)) })
+
+    const perfFinal = parseFloat(perf.toFixed(4))
+    entries.push({
+      user_id:       portfolio.user_id,
+      perf_totale:   perfFinal,
+      statut_joueur: portfolio.statut_joueur ?? "confirmed",
+      perf_vs_cac40: cac40Saison != null ? parseFloat((perfFinal - Number(cac40Saison)).toFixed(4)) : null,
+      perf_vs_sp500: sp500Saison != null ? parseFloat((perfFinal - Number(sp500Saison)).toFixed(4)) : null,
+    })
   }
 
   // ══════════════════════════════════════════════════════════════
-  // ÉTAPE 4 — Tri + upsert classement
+  // ÉTAPE 5 — Tri par statut + rang séparé confirmed/rookie
   // ══════════════════════════════════════════════════════════════
-  entries.sort((a, b) => b.perf_totale - a.perf_totale)
+  const confirmed = entries.filter((e) => e.statut_joueur === "confirmed").sort((a, b) => b.perf_totale - a.perf_totale)
+  const rookies   = entries.filter((e) => e.statut_joueur === "rookie").sort((a, b) => b.perf_totale - a.perf_totale)
 
-  const classementRows = entries.map((e, i) => ({
-    user_id:     e.user_id,
-    saison:      CURRENT_SAISON,
-    perf_totale: e.perf_totale,
-    rang:        i + 1,
-    updated_at:  new Date().toISOString(),
-  }))
+  const classementRows = [
+    ...confirmed.map((e, i) => ({ ...e, rang: i + 1, saison: CURRENT_SAISON, updated_at: new Date().toISOString() })),
+    ...rookies.map((e, i)   => ({ ...e, rang: i + 1, saison: CURRENT_SAISON, updated_at: new Date().toISOString() })),
+  ]
 
   let classementErrors = 0
   if (classementRows.length > 0) {
@@ -152,9 +226,9 @@ export async function GET(request: NextRequest) {
   const summary = {
     duration_ms: Date.now() - globalStart,
     saison:      CURRENT_SAISON,
-    source:      "yahoo-finance",
-    cours: { tickers_demandes: limit, ok: coursOk, skip: coursSkip, errors: coursErrors },
-    classement:  { portfolios_traites: classementRows.length, errors: classementErrors },
+    cours:       { tickers_demandes: limit, ok: coursOk, skip: coursSkip, errors: coursErrors },
+    indices:     { cac40: cac40Prix, sp500: sp500Prix, ok: indicesOk },
+    classement:  { confirmed: confirmed.length, rookies: rookies.length, errors: classementErrors },
   }
 
   console.log("[update-cours]", JSON.stringify(summary))

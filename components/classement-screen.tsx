@@ -12,13 +12,14 @@ import { Badge }                        from "@/components/ui/badge"
 import type { AllClassementData, LeaderboardEntry } from "@/lib/classement-data"
 
 // ── Types ─────────────────────────────────────────────────────
-type TabId = "saison" | "mois" | "semaine" | "jour"
+type TabId = "confirmed" | "rookie" | "mois" | "semaine" | "jour"
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: "saison",  label: "Saison"  },
-  { id: "mois",    label: "Mois"    },
-  { id: "semaine", label: "Semaine" },
-  { id: "jour",    label: "Jour"    },
+  { id: "confirmed", label: "Général"  },
+  { id: "rookie",    label: "Rookie"   },
+  { id: "mois",      label: "Mois"     },
+  { id: "semaine",   label: "Semaine"  },
+  { id: "jour",      label: "Jour"     },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -181,13 +182,14 @@ function EmptyTab({ tab }: { tab: TabId }) {
 
 // ── Composant principal ───────────────────────────────────────
 export function ClassementScreen({ data }: { data: AllClassementData }) {
-  const [activeTab, setActiveTab] = useState<TabId>("saison")
+  const [activeTab, setActiveTab] = useState<TabId>("confirmed")
 
   const lists: Record<TabId, LeaderboardEntry[]> = {
-    saison:  data.saison,
-    mois:    data.mois,
-    semaine: data.semaine,
-    jour:    data.jour,
+    confirmed: data.confirmed,
+    rookie:    data.rookie,
+    mois:      data.mois,
+    semaine:   data.semaine,
+    jour:      data.jour,
   }
 
   const entries   = lists[activeTab]
@@ -196,20 +198,50 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
   const currentId = data.currentUserId
   const selfEntry = entries.find((e) => e.user_id === currentId)
 
+  const { cac40_variation, sp500_variation } = data.indices
+
+  function fmtPerfColor(v: number | null) {
+    if (v == null) return "text-muted-foreground"
+    return v >= 0 ? "text-green-500" : "text-red-500"
+  }
+
   return (
     <main className="flex min-h-svh flex-col bg-background pb-20">
 
       {/* ── Header ──────────────────────────────────────────── */}
-      <div className="flex flex-col items-center gap-1 px-6 pt-6 pb-3">
+      <div className="flex flex-col items-center gap-1 px-6 pt-6 pb-2">
         <div className="flex items-center gap-2">
           <Trophy className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">Classement</h1>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Saison 1
-          {entries.length > 0 && ` · ${entries.length} joueur${entries.length > 1 ? "s" : ""}`}
-        </p>
+        {entries.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {entries.length} joueur{entries.length > 1 ? "s" : ""}
+          </p>
+        )}
       </div>
+
+      {/* ── Indices marché ──────────────────────────────────── */}
+      {(cac40_variation !== null || sp500_variation !== null) && (
+        <div className="mx-4 mb-2 flex gap-2">
+          {cac40_variation !== null && (
+            <div className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-secondary/60 px-3 py-1.5">
+              <span className="text-[10px] font-medium text-muted-foreground">CAC 40</span>
+              <span className={`text-xs font-bold tabular-nums ${fmtPerfColor(cac40_variation)}`}>
+                {fmtPerf(cac40_variation)}
+              </span>
+            </div>
+          )}
+          {sp500_variation !== null && (
+            <div className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-secondary/60 px-3 py-1.5">
+              <span className="text-[10px] font-medium text-muted-foreground">S&P 500</span>
+              <span className={`text-xs font-bold tabular-nums ${fmtPerfColor(sp500_variation)}`}>
+                {fmtPerf(sp500_variation)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Votre position (sticky) ──────────────────────────── */}
       {selfEntry && (

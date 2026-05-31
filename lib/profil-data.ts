@@ -11,10 +11,9 @@
  *  - positions actuelles avec cours
  */
 
-import { createClient } from "@/lib/supabase/server"
-import { TICKER_MAP }   from "@/lib/tickers"
-
-const CURRENT_SAISON = 1
+import { createClient }          from "@/lib/supabase/server"
+import { TICKER_MAP }            from "@/lib/tickers"
+import { getCurrentSeasonId }    from "@/lib/seasons"
 
 export type ProfilPosition = {
   ticker:         string
@@ -30,6 +29,16 @@ export type ProfilSaisonRow = {
   total:       number   // nb total de joueurs cette saison
 }
 
+export type AllTimeStats = {
+  nb_saisons:           number
+  meilleur_rang:        number | null
+  meilleur_rang_saison: string | null
+  alpha_moyen:          number | null
+  top10_count:          number
+  win_rate:             number | null
+  perf_totale_cumulee:  number
+}
+
 export type ProfilData = {
   user: {
     pseudo:      string
@@ -41,10 +50,12 @@ export type ProfilData = {
     rang:        number | null
     perf_totale: number | null
     total:       number
+    statut_joueur: string
   }
-  historique:  ProfilSaisonRow[]
-  positions:   ProfilPosition[]
+  historique:   ProfilSaisonRow[]
+  positions:    ProfilPosition[]
   hasPortfolio: boolean
+  allTime:      AllTimeStats | null
 }
 
 export async function getProfilData(): Promise<ProfilData | null> {
@@ -68,8 +79,10 @@ export async function getProfilData(): Promise<ProfilData | null> {
   const memberSince = (dbUser?.created_at ?? user.created_at).split("T")[0]
   const isPro       = dbUser?.is_pro  ?? false
 
-  // ── 3. Classement + historique + positions en parallèle ───
-  const [classementRes, portfolioRes, totalRes] = await Promise.all([
+  const CURRENT_SAISON = getCurrentSeasonId()
+
+  // ── 3. Classement + historique + positions + palmares en parallèle ───
+  const [classementRes, portfolioRes, totalRes, palmRes] = await Promise.all([
     // Toutes les entrées classement de l'utilisateur
     supabase
       .from("classement")
@@ -90,6 +103,13 @@ export async function getProfilData(): Promise<ProfilData | null> {
       .from("classement")
       .select("saison, rang")
       .order("saison", { ascending: false }),
+
+    // Palmares all-time
+    supabase
+      .from("palmares_all_time")
+      .select("rang_final, perf_totale, top10, saison_id")
+      .eq("user_id", user.id)
+      .order("saison_id", { ascending: false }),
   ])
 
   // ── 3. Classement saison courante ─────────────────────────
@@ -144,15 +164,37 @@ export async function getProfilData(): Promise<ProfilData | null> {
       }))
   }
 
+  // ── All-Time stats ────────────────────────────────────────
+  let allTime: AllTimeStats | null = null
+  const palmRows = palmRes?.data ?? []
+  if (palmRows.length > 0) {
+    const perfs    = palmRows.map((r) => Number(r.perf_totale))
+    const rangs    = palmRows.map((r) => r.rang_final).filter(Boolean) as number[]
+    const bestRang = rangs.length > 0 ? Math.min(...rangs) : null
+    const bestS    = bestRang != null ? palmRows.find((r) => r.rang_final === bestRang) : null
+
+    allTime = {
+      nb_saisons:           palmRows.length,
+      meilleur_rang:        bestRang,
+      meilleur_rang_saison: bestS ? `S${bestS.saison_id}` : null,
+      alpha_moyen:          perfs.length > 0 ? parseFloat((perfs.reduce((a, b) => a + b, 0) / perfs.length).toFixed(2)) : null,
+      top10_count:          palmRows.filter((r) => r.top10).length,
+      win_rate:             perfs.length > 0 ? parseFloat(((perfs.filter((p) => p > 0).length / perfs.length) * 100).toFixed(1)) : null,
+      perf_totale_cumulee:  parseFloat(perfs.reduce((a, b) => a + b, 0).toFixed(2)),
+    }
+  }
+
   return {
     user: { pseudo, email, memberSince, isPro },
     saison: {
-      rang:        saisonCourante?.rang        ?? null,
-      perf_totale: saisonCourante ? Number(saisonCourante.perf_totale) : null,
-      total:       totalBySaison[CURRENT_SAISON] ?? 0,
+      rang:          saisonCourante?.rang ?? null,
+      perf_totale:   saisonCourante ? Number(saisonCourante.perf_totale) : null,
+      total:         totalBySaison[CURRENT_SAISON] ?? 0,
+      statut_joueur: "confirmed",
     },
     historique,
     positions,
     hasPortfolio,
+    allTime,
   }
 }

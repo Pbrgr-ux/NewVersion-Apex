@@ -1,5 +1,5 @@
 /**
- * Types TypeScript générés depuis le schéma Supabase APEX.
+ * Types TypeScript générés depuis le schéma Supabase TradeLeague.
  * Pour regénérer automatiquement :
  *   npx supabase gen types typescript --project-id <id> > types/database.ts
  */
@@ -30,25 +30,57 @@ export type Database = {
         Relationships: []
       }
 
-      // ── portfolios ─────────────────────────────────────────
-      portfolios: {
+      // ── saisons ────────────────────────────────────────────
+      saisons: {
         Row: {
-          id:         string
-          user_id:    string
-          saison:     number
-          cash:       number
-          created_at: string
+          id:          number
+          saison_code: string       // "S1", "S2", "S3", "S4"
+          debut_date:  string       // DATE "YYYY-MM-DD"
+          fin_date:    string
+          statut:      string       // "active" | "terminee" | "a_venir"
+          created_at:  string
         }
         Insert: {
-          id?:         string
-          user_id:     string
-          saison?:     number
-          cash?:       number
+          saison_code: string
+          debut_date:  string
+          fin_date:    string
+          statut?:     string
           created_at?: string
         }
         Update: {
-          cash?:   number
-          saison?: number
+          statut?: string
+        }
+        Relationships: []
+      }
+
+      // ── portfolios ─────────────────────────────────────────
+      portfolios: {
+        Row: {
+          id:                    string
+          user_id:               string
+          saison:                number
+          cash:                  number
+          capital_initial:       number
+          capital_ajuste:        number
+          statut_joueur:         string    // "confirmed" | "rookie"
+          date_inscription_saison: string
+          created_at:            string
+        }
+        Insert: {
+          id?:                    string
+          user_id:                string
+          saison?:                number
+          cash?:                  number
+          capital_initial?:       number
+          capital_ajuste?:        number
+          statut_joueur?:         string
+          date_inscription_saison?: string
+          created_at?:            string
+        }
+        Update: {
+          cash?:           number
+          capital_ajuste?: number
+          saison?:         number
         }
         Relationships: [
           {
@@ -117,25 +149,34 @@ export type Database = {
       // ── classement ─────────────────────────────────────────
       classement: {
         Row: {
-          id:          string
-          user_id:     string
-          saison:      number
-          perf_totale: number
-          rang:        number
-          updated_at:  string
+          id:             string
+          user_id:        string
+          saison:         number
+          perf_totale:    number
+          rang:           number
+          statut_joueur:  string    // "confirmed" | "rookie"
+          perf_vs_cac40:  number | null
+          perf_vs_sp500:  number | null
+          updated_at:     string
         }
         Insert: {
-          id?:          string
-          user_id:      string
-          saison?:      number
-          perf_totale?: number
-          rang?:        number
-          updated_at?:  string
+          id?:            string
+          user_id:        string
+          saison?:        number
+          perf_totale?:   number
+          rang?:          number
+          statut_joueur?: string
+          perf_vs_cac40?: number | null
+          perf_vs_sp500?: number | null
+          updated_at?:    string
         }
         Update: {
-          perf_totale?: number
-          rang?:        number
-          updated_at?:  string
+          perf_totale?:  number
+          rang?:         number
+          statut_joueur?: string
+          perf_vs_cac40?: number | null
+          perf_vs_sp500?: number | null
+          updated_at?:   string
         }
         Relationships: [
           {
@@ -148,6 +189,69 @@ export type Database = {
         ]
       }
 
+      // ── palmares_all_time ──────────────────────────────────
+      palmares_all_time: {
+        Row: {
+          id:                   number
+          user_id:              string
+          saison_id:            number
+          rang_final:           number
+          perf_totale:          number
+          alpha_positif_weeks:  number
+          top10:                boolean
+          perf_vs_cac40:        number | null
+          perf_vs_sp500:        number | null
+          created_at:           string
+        }
+        Insert: {
+          user_id:             string
+          saison_id:           number
+          rang_final:          number
+          perf_totale:         number
+          alpha_positif_weeks?: number
+          top10?:              boolean
+          perf_vs_cac40?:      number | null
+          perf_vs_sp500?:      number | null
+          created_at?:         string
+        }
+        Update: {
+          rang_final?:  number
+          perf_totale?: number
+        }
+        Relationships: []
+      }
+
+      // ── indices ────────────────────────────────────────────
+      indices: {
+        Row: {
+          id:                      number
+          date:                    string
+          saison_id:               number
+          cac40_prix:              number
+          sp500_prix:              number
+          cac40_variation_saison:  number
+          sp500_variation_saison:  number
+          updated_at:              string
+        }
+        Insert: {
+          date:                    string
+          saison_id:               number
+          cac40_prix:              number
+          sp500_prix:              number
+          cac40_variation_saison:  number
+          sp500_variation_saison:  number
+          updated_at?:             string
+        }
+        Update: {
+          cac40_prix?:             number
+          sp500_prix?:             number
+          cac40_variation_saison?: number
+          sp500_variation_saison?: number
+          updated_at?:             string
+        }
+        Relationships: []
+      }
+
     }
     Views:     { [_ in never]: never }
     Functions: { [_ in never]: never }
@@ -156,8 +260,11 @@ export type Database = {
 }
 
 // ── Alias pratiques ───────────────────────────────────────────
-export type User        = Database["public"]["Tables"]["users"]["Row"]
-export type Portfolio   = Database["public"]["Tables"]["portfolios"]["Row"]
-export type Position    = Database["public"]["Tables"]["positions"]["Row"]
-export type Cours       = Database["public"]["Tables"]["cours"]["Row"]
-export type Classement  = Database["public"]["Tables"]["classement"]["Row"]
+export type User            = Database["public"]["Tables"]["users"]["Row"]
+export type Saison          = Database["public"]["Tables"]["saisons"]["Row"]
+export type Portfolio       = Database["public"]["Tables"]["portfolios"]["Row"]
+export type Position        = Database["public"]["Tables"]["positions"]["Row"]
+export type Cours           = Database["public"]["Tables"]["cours"]["Row"]
+export type Classement      = Database["public"]["Tables"]["classement"]["Row"]
+export type PalmaresAllTime = Database["public"]["Tables"]["palmares_all_time"]["Row"]
+export type Indice          = Database["public"]["Tables"]["indices"]["Row"]
