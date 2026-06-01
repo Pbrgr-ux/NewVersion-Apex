@@ -100,21 +100,14 @@ export function ArbitrageScreen() {
   const [isSubmitting, setIsSubmitting]           = useState(false)
   const [submitError, setSubmitError]             = useState<string | null>(null)
 
-  // ── Vérifier le lock au montage (par utilisateur) ───────────
+  // ── Charger l'allocation existante + vérifier le lock ──────
   useEffect(() => {
-    async function checkLock() {
+    async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
 
-      const lockedUntil = localStorage.getItem(lsKey(user.id))
-      if (!lockedUntil || Date.now() >= new Date(lockedUntil).getTime()) {
-        // Lock expiré ou absent → s'assurer qu'il est nettoyé
-        localStorage.removeItem(lsKey(user.id))
-        return
-      }
-
-      // Lock actif → charger les positions réelles depuis la base
+      // 1. Charger le portfolio + positions existantes
       const { data: portfolios } = await supabase
         .from("portfolios")
         .select("id")
@@ -123,35 +116,41 @@ export function ArbitrageScreen() {
         .order("id", { ascending: false })
         .limit(1)
 
-      if (!portfolios || portfolios.length === 0) {
-        // Pas de portfolio → lock orphelin, débloquer
-        localStorage.removeItem(lsKey(user.id))
-        return
-      }
+      const portfolioId = portfolios?.[0]?.id
+      let hasPositions  = false
 
-      const { data: positions } = await supabase
-        .from("positions")
-        .select("ticker, allocation_pct")
-        .eq("portfolio_id", portfolios[0].id)
+      if (portfolioId) {
+        const { data: positions } = await supabase
+          .from("positions")
+          .select("ticker, allocation_pct")
+          .eq("portfolio_id", portfolioId)
 
-      if (!positions || positions.length === 0) {
-        // Positions vides malgré le lock → débloquer
-        localStorage.removeItem(lsKey(user.id))
-        return
-      }
-
-      // Recharger les allocations soumises pour l'affichage read-only
-      setAllocations((prev) => {
-        const next = { ...prev }
-        for (const p of positions) {
-          next[p.ticker] = Number(p.allocation_pct)
+        if (positions && positions.length > 0) {
+          hasPositions = true
+          // Pré-remplir les sliders avec la répartition actuelle
+          setAllocations((prev) => {
+            const next = { ...prev }
+            for (const p of positions) {
+              next[p.ticker] = Number(p.allocation_pct)
+            }
+            return next
+          })
         }
-        return next
-      })
+      }
 
-      setIsLocked(true)
+      // 2. Vérifier le lock localStorage
+      const lockedUntil = localStorage.getItem(lsKey(user.id))
+      const lockActif   = lockedUntil != null && Date.now() < new Date(lockedUntil).getTime()
+
+      if (lockActif && hasPositions) {
+        // Lock valide + positions existantes → écran verrouillé
+        setIsLocked(true)
+      } else {
+        // Lock expiré, orphelin, ou sans positions → débloquer
+        localStorage.removeItem(lsKey(user.id))
+      }
     }
-    checkLock()
+    init()
   }, [supabase])
 
   const visibleStocks = useMemo(
