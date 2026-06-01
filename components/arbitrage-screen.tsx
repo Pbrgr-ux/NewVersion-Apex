@@ -87,9 +87,10 @@ export function ArbitrageScreen() {
   const supabase  = createClient()
   const router    = useRouter()
 
-  const [activeTab, setActiveTab] = useState<Region>("US")
-  const [isLocked, setIsLocked]   = useState(false)
-  const [userId, setUserId]       = useState<string | null>(null)
+  const [activeTab, setActiveTab]     = useState<Region>("US")
+  const [isLocked, setIsLocked]       = useState(false)
+  const [userId, setUserId]           = useState<string | null>(null)
+  const [sortVersion, setSortVersion] = useState(0)   // force re-tri après chargement initial
 
   const [allocations, setAllocations] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {}
@@ -135,6 +136,8 @@ export function ArbitrageScreen() {
             }
             return next
           })
+          // Re-trier pour positionner les tickers alloués en tête
+          setSortVersion((v) => v + 1)
         }
       }
 
@@ -153,9 +156,20 @@ export function ArbitrageScreen() {
     init()
   }, [supabase])
 
+  // Tri : tickers alloués en tête. Recalculé uniquement au changement
+  // d'onglet ou au chargement initial (pas à chaque mouvement de slider,
+  // pour éviter que les cartes ne sautent pendant l'ajustement).
   const visibleStocks = useMemo(
-    () => TICKERS.filter((t) => t.region === activeTab),
-    [activeTab]
+    () => {
+      const inTab = TICKERS.filter((t) => t.region === activeTab)
+      return [...inTab].sort((a, b) => {
+        const aOn = (allocations[a.ticker] ?? 0) > 0 ? 1 : 0
+        const bOn = (allocations[b.ticker] ?? 0) > 0 ? 1 : 0
+        return bOn - aOn   // alloués (1) avant non-alloués (0)
+      })
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeTab, sortVersion]
   )
 
   const totalAllocation = useMemo(
