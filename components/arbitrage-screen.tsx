@@ -28,8 +28,10 @@ import {
 import { useArbitrageWindow }      from "@/hooks/use-arbitrage-window"
 import { TICKERS }                 from "@/lib/tickers"
 import { createClient }            from "@/lib/supabase/client"
+import { getCurrentSeasonId }      from "@/lib/seasons"
 
-const CURRENT_SAISON = 1
+// Saison courante — doit correspondre à celle lue par le dashboard
+const CURRENT_SAISON = getCurrentSeasonId()
 // Clé localStorage spécifique à l'utilisateur — évite de bloquer les autres
 function lsKey(userId: string) { return `tl_lock_close_${userId}` }
 
