@@ -470,13 +470,13 @@ export function ArbitrageScreen() {
             return (
               <Card
                 key={stock.ticker}
-                className={`border-border overflow-hidden transition-opacity ${
+                className={`border-border overflow-hidden transition-opacity py-0 gap-0 ${
                   arbitrage.isOpen ? "bg-card" : "bg-card opacity-60"
                 }`}
               >
                 <CardContent className="p-0">
                   {/* Ligne infos + prix */}
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+                  <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/50">
                     <div className="flex items-center gap-2">
                       <div className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary text-[10px] font-bold text-foreground">
                         {stock.ticker.replace(".", "").slice(0, 2)}
@@ -499,11 +499,11 @@ export function ArbitrageScreen() {
                   </div>
 
                   {/* Slider allocation */}
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/30">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-secondary/30">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-7 w-7 shrink-0"
+                      className="h-6 w-6 shrink-0"
                       onClick={() => updateAllocation(stock.ticker, alloc - 5)}
                       disabled={!arbitrage.isOpen || alloc === 0}
                     >
@@ -527,7 +527,7 @@ export function ArbitrageScreen() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-7 w-7 shrink-0"
+                      className="h-6 w-6 shrink-0"
                       onClick={() => updateAllocation(stock.ticker, alloc + 5)}
                       disabled={!arbitrage.isOpen || alloc >= 50}
                     >
