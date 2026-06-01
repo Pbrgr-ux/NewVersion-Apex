@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
+import { Analytics }    from '@vercel/analytics/next'
+import { TopHeader }    from '@/components/top-header'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         {/* Conteneur centré sur desktop, plein écran sur mobile */}
         <div className="mx-auto w-full max-w-xl min-h-svh relative bg-background shadow-[0_0_40px_rgba(0,0,0,0.15)]">
+          <TopHeader />
           {children}
         </div>
         {process.env.NODE_ENV === 'production' && <Analytics />}
