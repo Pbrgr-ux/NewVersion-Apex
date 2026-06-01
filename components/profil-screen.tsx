@@ -7,7 +7,7 @@ import {
   Crown, LogOut, Calendar, Trophy,
   Zap, Home, BarChart3, User, ChevronRight,
   Loader2, KeyRound, TrendingUp, TrendingDown,
-  Wallet, Settings,
+  Settings,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button }            from "@/components/ui/button"
@@ -116,51 +116,6 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
         </Card>
       </div>
 
-      {/* ── Positions actuelles ──────────────────────────────── */}
-      <div className="px-4 pb-4">
-        <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-          Mon portefeuille
-        </h3>
-
-        {!hasPortfolio ? (
-          <Card className="border-dashed border-border bg-card">
-            <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
-              <Wallet className="h-8 w-8 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">
-                Aucune position — configure ton portfolio lors de la prochaine fenêtre d&apos;arbitrage.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="bg-card border-border">
-            <CardContent className="divide-y divide-border p-0">
-              {positions.map((pos) => (
-                <div key={pos.ticker} className="flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
-                      {pos.ticker.slice(0, 2)}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-medium text-foreground">{pos.ticker}</span>
-                      <span className="text-xs text-muted-foreground">{pos.name}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-0.5">
-                    <span className="text-sm font-semibold text-foreground">
-                      {pos.allocation_pct}%
-                    </span>
-                    {pos.prix_actuel != null && (
-                      <span className="text-xs text-muted-foreground">
-                        {pos.prix_actuel.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-      </div>
 
       {/* ── Historique des saisons ───────────────────────────── */}
       {historique.length > 0 && (
