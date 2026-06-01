@@ -29,8 +29,8 @@ export function SignupScreen() {
       setError("Le pseudo doit faire au moins 3 caractères.")
       return
     }
-    if (password.length < 6) {
-      setError("Le mot de passe doit faire au moins 6 caractères.")
+    if (password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères.")
       return
     }
 
