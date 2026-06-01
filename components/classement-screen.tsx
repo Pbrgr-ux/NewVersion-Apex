@@ -211,8 +211,8 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="flex flex-col items-center gap-1 px-6 pt-6 pb-2">
         <div className="flex items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Classement</h1>
+          <Trophy className="h-4 w-4 text-primary" />
+          <h1 className="text-sm font-bold text-foreground">Classement</h1>
         </div>
         <p className="text-sm text-muted-foreground">
           {data.currentSaisonNom}

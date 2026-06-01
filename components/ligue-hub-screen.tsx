@@ -51,7 +51,7 @@ export function LigueHubScreen() {
           <Lock className="h-7 w-7 text-primary" />
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground">Ligues Privées</h1>
+          <h1 className="text-sm font-bold text-foreground">Ligues Privées</h1>
           <p className="mt-1 text-sm text-muted-foreground">Compétez entre amis, un seul vainqueur.</p>
         </div>
       </div>
