@@ -8,7 +8,8 @@
 import { createClient }               from "@supabase/supabase-js"
 import type { Database }              from "@/types/database"
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { getCurrentSeasonId, getSaisonsNomMap } from "@/lib/seasons"
+import { getCurrentSeasonId } from "@/lib/seasons"
+import { getSaisonsNomMap }   from "@/lib/seasons-server"
 
 const MAX_ENTRIES = 100
 

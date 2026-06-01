@@ -7,7 +7,8 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { TICKER_MAP }   from "@/lib/tickers"
-import { getCurrentSeasonId, getCurrentSeasonData, getAllSeasonsData, getSaisonsNomMap } from "@/lib/seasons"
+import { getCurrentSeasonId, getCurrentSeasonData, getAllSeasonsData } from "@/lib/seasons"
+import { getSaisonsNomMap } from "@/lib/seasons-server"
 
 // ── Types ─────────────────────────────────────────────────────
 export type PositionRow = {

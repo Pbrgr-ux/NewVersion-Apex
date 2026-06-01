@@ -13,7 +13,8 @@
 
 import { createClient }                        from "@/lib/supabase/server"
 import { TICKER_MAP }                          from "@/lib/tickers"
-import { getCurrentSeasonId, getSaisonsNomMap } from "@/lib/seasons"
+import { getCurrentSeasonId } from "@/lib/seasons"
+import { getSaisonsNomMap }   from "@/lib/seasons-server"
 
 export type ProfilPosition = {
   ticker:         string

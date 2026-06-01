@@ -158,24 +158,3 @@ export function seasonLabel(saisonId: number, year?: number): string {
   const y = year ?? new Date().getFullYear()
   return `S${saisonId} ${y}`
 }
-
-/**
- * Récupère un Map saisonId → nom depuis la table saisons.
- * Fallback sur "Saison {code}" si le nom n'est pas défini.
- * À appeler côté serveur uniquement (utilise le client serveur Supabase).
- */
-export async function getSaisonsNomMap(): Promise<Map<number, string>> {
-  // Import dynamique pour éviter les dépendances circulaires
-  const { createClient } = await import("@/lib/supabase/server")
-  const supabase = await createClient()
-
-  const { data } = await supabase
-    .from("saisons")
-    .select("id, nom, saison_code")
-
-  const map = new Map<number, string>()
-  for (const s of (data ?? []) as Array<{ id: number; nom: string | null; saison_code: string }>) {
-    map.set(s.id, s.nom?.trim() || `Saison ${s.saison_code}`)
-  }
-  return map
-}
