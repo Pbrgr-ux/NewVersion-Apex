@@ -14,7 +14,7 @@ export default function ConfirmedPage() {
       setCountdown((n) => {
         if (n <= 1) {
           clearInterval(interval)
-          router.replace("/dashboard")
+          router.replace("/connexion")
         }
         return n - 1
       })
@@ -50,7 +50,7 @@ export default function ConfirmedPage() {
       </div>
 
       <p className="mt-3 text-xs text-muted-foreground">
-        Redirection vers le dashboard…
+        Redirection vers la connexion…
       </p>
     </main>
   )
