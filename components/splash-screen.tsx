@@ -17,7 +17,7 @@ export function SplashScreen() {
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex w-full max-w-md flex-1 flex-col items-center justify-between px-6 py-16">
+      <div className="relative z-10 flex w-full max-w-xl flex-1 flex-col items-center justify-between px-6 py-16">
         {/* Logo Section - Top Center */}
         <div className="flex flex-col items-center gap-4 pt-8">
           <div className="flex items-center gap-3">

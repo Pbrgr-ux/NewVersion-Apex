@@ -254,8 +254,8 @@ export function StatsProScreen() {
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 border-t border-border bg-card/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-md items-center justify-around py-2">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-50 border-t border-border bg-card/95 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-xl items-center justify-around py-2">
           <Link
             href="/dashboard"
             className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground"
