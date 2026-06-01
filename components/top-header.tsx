@@ -1,8 +1,15 @@
 "use client"
 
-import { TrendingUp } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { TrendingUp }  from "lucide-react"
+
+// Pages qui ont déjà leur propre branding centré → pas de header
+const HIDDEN_PATHS = ["/", "/signup", "/connexion", "/mot-de-passe-oublie", "/auth/confirmed"]
 
 export function TopHeader() {
+  const pathname = usePathname()
+  if (HIDDEN_PATHS.includes(pathname)) return null
+
   return (
     <header className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50 bg-background/95 backdrop-blur-sm">
       <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary">
