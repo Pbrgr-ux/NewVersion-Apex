@@ -101,13 +101,13 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         ] as const).map(({ label, value, icon }) => {
           const pos = (value ?? 0) >= 0
           return (
-            <Card key={label} className="bg-card border-border">
-              <CardContent className="flex flex-col gap-0.5 px-3 py-2.5">
+            <Card key={label} className="bg-card border-border py-0 gap-0">
+              <CardContent className="flex flex-col gap-0 px-3 py-1.5">
                 <div className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
                   {icon && <span className={perfColor(value)}>{icon}</span>}
                   <span className="truncate">{label}</span>
                 </div>
-                <span className={`text-lg font-bold tabular-nums leading-tight ${perfColor(value)}`}>
+                <span className={`text-base font-bold tabular-nums leading-tight ${perfColor(value)}`}>
                   {fmtPerf(value)}
                 </span>
               </CardContent>
