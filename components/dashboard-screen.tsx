@@ -32,52 +32,9 @@ function perfColor(v: number | null): string {
 export function DashboardScreen({ data }: { data: DashboardData }) {
   const arbitrage = useArbitrageWindow()
   const { perf, positions, classement, hasPortfolio, season, capitalAjuste, allTime, indices } = data
-  const dayPositive = (perf.day ?? 0) >= 0
 
   return (
     <main className="flex min-h-svh flex-col bg-background pb-20">
-
-      {/* ── Perf du jour ─────────────────────────────────────── */}
-      <div className="flex flex-col items-center gap-1 px-6 pt-8 pb-3">
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Performance du jour
-        </span>
-        <div className="flex items-center gap-2">
-          {perf.day === null ? (
-            <span className="text-5xl font-bold text-muted-foreground">—</span>
-          ) : (
-            <>
-              {dayPositive
-                ? <TrendingUp   className="h-8 w-8 text-green-500" />
-                : <TrendingDown className="h-8 w-8 text-red-500"  />
-              }
-              <span className={`text-5xl font-bold tabular-nums ${perfColor(perf.day)}`}>
-                {fmtPerf(perf.day)}
-              </span>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── Semaine / Mois / Saison ───────────────────────────── */}
-      <div className="grid grid-cols-3 gap-2 px-4 pb-3">
-        {([
-          { label: "Semaine", value: perf.week   },
-          { label: "Mois",    value: perf.month  },
-          { label: "Saison",  value: perf.season },
-        ] as const).map(({ label, value }) => (
-          <Card key={label} className="bg-card border-border">
-            <CardContent className="flex flex-col items-center gap-0.5 px-2 py-2">
-              <span className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
-                {label}
-              </span>
-              <span className={`text-base font-bold tabular-nums ${perfColor(value)}`}>
-                {fmtPerf(value)}
-              </span>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
       {/* ── Saison en cours ──────────────────────────────────── */}
       <div className="mx-4 mb-3 rounded-xl border border-border bg-card px-4 py-3">
@@ -132,6 +89,31 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* ── Perfs : Jour / Hebdo / Saison / Ever ────────────── */}
+      <div className="grid grid-cols-2 gap-2 px-4 pb-3">
+        {([
+          { label: "Aujourd'hui", value: perf.day,    icon: <TrendingUp className="h-3.5 w-3.5" /> },
+          { label: "Cette semaine", value: perf.week,   icon: null },
+          { label: season.label,  value: perf.season, icon: null },
+          { label: "Ever",        value: allTime?.perf_totale_cumulee ?? null, icon: <Star className="h-3.5 w-3.5" /> },
+        ] as const).map(({ label, value, icon }) => {
+          const pos = (value ?? 0) >= 0
+          return (
+            <Card key={label} className="bg-card border-border">
+              <CardContent className="flex flex-col gap-0.5 px-3 py-2.5">
+                <div className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {icon && <span className={perfColor(value)}>{icon}</span>}
+                  <span className="truncate">{label}</span>
+                </div>
+                <span className={`text-lg font-bold tabular-nums leading-tight ${perfColor(value)}`}>
+                  {fmtPerf(value)}
+                </span>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       {/* ── Indices marché ───────────────────────────────────── */}
