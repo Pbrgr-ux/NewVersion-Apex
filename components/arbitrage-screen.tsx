@@ -114,28 +114,40 @@ export function ArbitrageScreen() {
         return
       }
 
-      // Lock actif → vérifier qu'on a vraiment des positions en base
-      // Si pas de positions → débloquer automatiquement
+      // Lock actif → charger les positions réelles depuis la base
       const { data: portfolios } = await supabase
         .from("portfolios")
         .select("id")
         .eq("user_id", user.id)
         .eq("saison", CURRENT_SAISON)
+        .order("id", { ascending: false })
         .limit(1)
 
-      if (portfolios && portfolios.length > 0) {
-        const { data: positions } = await supabase
-          .from("positions")
-          .select("id")
-          .eq("portfolio_id", portfolios[0].id)
-          .limit(1)
-
-        if (!positions || positions.length === 0) {
-          // Positions vides malgré le lock → débloquer
-          localStorage.removeItem(lsKey(user.id))
-          return
-        }
+      if (!portfolios || portfolios.length === 0) {
+        // Pas de portfolio → lock orphelin, débloquer
+        localStorage.removeItem(lsKey(user.id))
+        return
       }
+
+      const { data: positions } = await supabase
+        .from("positions")
+        .select("ticker, allocation_pct")
+        .eq("portfolio_id", portfolios[0].id)
+
+      if (!positions || positions.length === 0) {
+        // Positions vides malgré le lock → débloquer
+        localStorage.removeItem(lsKey(user.id))
+        return
+      }
+
+      // Recharger les allocations soumises pour l'affichage read-only
+      setAllocations((prev) => {
+        const next = { ...prev }
+        for (const p of positions) {
+          next[p.ticker] = Number(p.allocation_pct)
+        }
+        return next
+      })
 
       setIsLocked(true)
     }
