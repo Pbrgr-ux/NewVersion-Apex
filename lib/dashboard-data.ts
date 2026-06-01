@@ -7,7 +7,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { TICKER_MAP }   from "@/lib/tickers"
-import { getCurrentSeasonId, getCurrentSeasonData, getAllSeasonsData } from "@/lib/seasons"
+import { getCurrentSeasonId, getCurrentSeasonData, getAllSeasonsData, getSaisonsNomMap } from "@/lib/seasons"
 
 // ── Types ─────────────────────────────────────────────────────
 export type PositionRow = {
@@ -79,7 +79,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     perf:          { day: null, week: null, month: null, season: null },
     positions:     [],
     classement:    { rang: null, total: 0, statut_joueur: "confirmed" },
-    season:        seasonData,
+    season:        seasonData,   // sera surchargé après fetch des noms
     capitalAjuste: null,
     allTime:       null,
     indices:       { cac40_variation: null, sp500_variation: null, cac40_prix: null, sp500_prix: null },
@@ -88,7 +88,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   if (!user) return empty
 
   // ── 1. Portfolio + classement + all-time + indices (en parallèle) ─
-  const [portfoliosRes, classementRes, totalRes, palmRes, lastIndice] = await Promise.all([
+  const [portfoliosRes, classementRes, totalRes, palmRes, lastIndice, nomMap] = await Promise.all([
     supabase
       .from("portfolios")
       .select("id, capital_ajuste, statut_joueur, positions ( ticker, allocation_pct, prix_achat )")
@@ -124,7 +124,16 @@ export async function getDashboardData(): Promise<DashboardData> {
       .order("date", { ascending: false })
       .limit(1)
       .maybeSingle(),
+
+    // Noms des saisons depuis la table saisons
+    getSaisonsNomMap(),
   ])
+
+  // ── Nom de la saison depuis DB (override du label calculé) ───
+  const seasonNom = nomMap?.get(CURRENT_SAISON)
+  const seasonWithNom = seasonNom
+    ? { ...seasonData, label: seasonNom }
+    : seasonData
 
   // ── Indices ───────────────────────────────────────────────────
   const indices: IndicesData = {
@@ -148,7 +157,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     allTime = {
       nb_saisons:           palmRows.length,
       meilleur_rang:        bestRang,
-      meilleur_rang_saison: bestSaison ? `S${bestSaison.saison_id}` : null,
+      meilleur_rang_saison: bestSaison ? (nomMap?.get(bestSaison.saison_id) ?? `S${bestSaison.saison_id}`) : null,
       alpha_moyen:          perfs.length > 0 ? parseFloat((perfs.reduce((a, b) => a + b, 0) / perfs.length).toFixed(2)) : null,
       top10_count:          palmRows.filter((r) => r.top10).length,
       win_rate:             perfs.length > 0 ? parseFloat(((perfs.filter((p) => p > 0).length / perfs.length) * 100).toFixed(1)) : null,
@@ -170,7 +179,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       hasPortfolio:  true,
       classement:    { rang: classementRes.data?.rang ?? null, total: totalRes.count ?? 0, statut_joueur: portfolio.statut_joueur ?? "confirmed" },
       capitalAjuste: portfolio.capital_ajuste ? Number(portfolio.capital_ajuste) : null,
-      season:        seasonData,
+      season:        seasonWithNom ?? seasonData,
       allTime,
       indices,
     }
@@ -237,7 +246,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       total:         totalRes.count ?? 0,
       statut_joueur: classementRes.data?.statut_joueur ?? portfolio.statut_joueur ?? "confirmed",
     },
-    season:        seasonData,
+    season:        seasonWithNom ?? seasonData,
     capitalAjuste: portfolio.capital_ajuste ? Number(portfolio.capital_ajuste) : null,
     allTime,
     indices,

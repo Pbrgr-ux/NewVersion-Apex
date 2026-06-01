@@ -28,9 +28,6 @@ function perfColor(v: number | null): string {
   return v >= 0 ? "text-green-500" : "text-red-500"
 }
 
-function saisonLabel(s: number): string {
-  return `Saison ${s}`
-}
 
 // ── Composant ─────────────────────────────────────────────────
 export function ProfilScreen({ data }: { data: ProfilData }) {
@@ -133,7 +130,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-foreground">
-                        {saisonLabel(row.saison)}
+                        {row.nom}
                       </span>
                       {row.rang != null && row.total > 0 && (
                         <span className="text-xs text-muted-foreground">

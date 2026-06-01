@@ -8,7 +8,7 @@
 import { createClient }               from "@supabase/supabase-js"
 import type { Database }              from "@/types/database"
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { getCurrentSeasonId }         from "@/lib/seasons"
+import { getCurrentSeasonId, getSaisonsNomMap } from "@/lib/seasons"
 
 const MAX_ENTRIES = 100
 
@@ -25,12 +25,13 @@ export type LeaderboardEntry = {
 }
 
 export type AllClassementData = {
-  confirmed:     LeaderboardEntry[]
-  rookie:        LeaderboardEntry[]
-  mois:          LeaderboardEntry[]
-  semaine:       LeaderboardEntry[]
-  jour:          LeaderboardEntry[]
-  currentUserId: string | null
+  confirmed:       LeaderboardEntry[]
+  rookie:          LeaderboardEntry[]
+  mois:            LeaderboardEntry[]
+  semaine:         LeaderboardEntry[]
+  jour:            LeaderboardEntry[]
+  currentUserId:   string | null
+  currentSaisonNom: string
   indices: {
     cac40_variation: number | null
     sp500_variation: number | null
@@ -87,7 +88,7 @@ export async function getAllClassementData(): Promise<AllClassementData> {
   const { data: { user: me } } = await serverClient.auth.getUser()
   const currentUserId           = me?.id ?? null
 
-  const [usersRes, classementRes, portfoliosRes, coursRes, lastIndice] = await Promise.all([
+  const [usersRes, classementRes, portfoliosRes, coursRes, lastIndice, nomMap] = await Promise.all([
     admin.from("users").select("id, pseudo, is_pro"),
 
     admin
@@ -115,6 +116,8 @@ export async function getAllClassementData(): Promise<AllClassementData> {
       .order("date", { ascending: false })
       .limit(1)
       .maybeSingle(),
+
+    getSaisonsNomMap(),
   ])
 
   const userMap = new Map<string, { pseudo: string; is_pro: boolean }>()
@@ -203,6 +206,7 @@ export async function getAllClassementData(): Promise<AllClassementData> {
     semaine: sortAndRank(userPerfs.map((u) => ({ ...u, perf: u.semaine })), userMap),
     jour:    sortAndRank(userPerfs.map((u) => ({ ...u, perf: u.jour    })), userMap),
     currentUserId,
+    currentSaisonNom: nomMap?.get(CURRENT_SAISON) ?? `Saison S${CURRENT_SAISON}`,
     indices,
   }
 }

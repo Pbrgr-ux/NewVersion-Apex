@@ -214,11 +214,10 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
           <Trophy className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">Classement</h1>
         </div>
-        {entries.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            {entries.length} joueur{entries.length > 1 ? "s" : ""}
-          </p>
-        )}
+        <p className="text-sm text-muted-foreground">
+          {data.currentSaisonNom}
+          {entries.length > 0 && ` · ${entries.length} joueur${entries.length > 1 ? "s" : ""}`}
+        </p>
       </div>
 
       {/* ── Indices marché ──────────────────────────────────── */}

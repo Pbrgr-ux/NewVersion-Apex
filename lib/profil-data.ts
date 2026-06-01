@@ -11,9 +11,9 @@
  *  - positions actuelles avec cours
  */
 
-import { createClient }          from "@/lib/supabase/server"
-import { TICKER_MAP }            from "@/lib/tickers"
-import { getCurrentSeasonId }    from "@/lib/seasons"
+import { createClient }                        from "@/lib/supabase/server"
+import { TICKER_MAP }                          from "@/lib/tickers"
+import { getCurrentSeasonId, getSaisonsNomMap } from "@/lib/seasons"
 
 export type ProfilPosition = {
   ticker:         string
@@ -24,9 +24,10 @@ export type ProfilPosition = {
 
 export type ProfilSaisonRow = {
   saison:      number
+  nom:         string   // nom admin ou fallback "Saison SX"
   rang:        number | null
   perf_totale: number
-  total:       number   // nb total de joueurs cette saison
+  total:       number
 }
 
 export type AllTimeStats = {
@@ -84,7 +85,7 @@ export async function getProfilData(): Promise<ProfilData | null> {
   const CURRENT_SAISON = getCurrentSeasonId()
 
   // ── 3. Classement + historique + positions + palmares en parallèle ───
-  const [classementRes, portfolioRes, totalRes, palmRes] = await Promise.all([
+  const [classementRes, portfolioRes, totalRes, palmRes, nomMap] = await Promise.all([
     // Toutes les entrées classement de l'utilisateur
     supabase
       .from("classement")
@@ -112,6 +113,9 @@ export async function getProfilData(): Promise<ProfilData | null> {
       .select("rang_final, perf_totale, top10, saison_id")
       .eq("user_id", user.id)
       .order("saison_id", { ascending: false }),
+
+    // Noms des saisons
+    getSaisonsNomMap(),
   ])
 
   // ── 3. Classement saison courante ─────────────────────────
@@ -126,6 +130,7 @@ export async function getProfilData(): Promise<ProfilData | null> {
 
   const historique: ProfilSaisonRow[] = allUserClassement.map((c) => ({
     saison:      c.saison,
+    nom:         nomMap?.get(c.saison) ?? `Saison S${c.saison}`,
     rang:        c.rang,
     perf_totale: Number(c.perf_totale),
     total:       totalBySaison[c.saison] ?? 0,
