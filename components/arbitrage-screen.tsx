@@ -403,7 +403,7 @@ export function ArbitrageScreen() {
           <span className="text-xs text-muted-foreground">Max 50 % par action</span>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {visibleStocks.map((stock) => {
             const market = MOCK_MARKET[stock.ticker] ?? { price: 100, weekChange: 0 }
             const alloc  = allocations[stock.ticker] ?? 0
@@ -416,21 +416,21 @@ export function ArbitrageScreen() {
               >
                 <CardContent className="p-0">
                   {/* Ligne infos + prix */}
-                  <div className="flex items-center justify-between p-3 border-b border-border/50">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-foreground">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary text-[10px] font-bold text-foreground">
                         {stock.ticker.replace(".", "").slice(0, 2)}
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-semibold text-foreground">{stock.ticker}</span>
-                        <span className="text-xs text-muted-foreground">{stock.name}</span>
+                        <span className="text-sm font-semibold text-foreground leading-tight">{stock.ticker}</span>
+                        <span className="text-[10px] text-muted-foreground leading-tight">{stock.name}</span>
                       </div>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="font-medium tabular-nums text-foreground">
+                      <span className="text-sm font-medium tabular-nums text-foreground">
                         {market.price.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
-                      <span className={`text-xs font-medium tabular-nums ${
+                      <span className={`text-[10px] font-medium tabular-nums ${
                         market.weekChange >= 0 ? "text-green-500" : "text-red-500"
                       }`}>
                         {market.weekChange >= 0 ? "+" : ""}{market.weekChange.toFixed(2)}% /7j
@@ -439,18 +439,18 @@ export function ArbitrageScreen() {
                   </div>
 
                   {/* Slider allocation */}
-                  <div className="flex items-center gap-3 p-3 bg-secondary/30">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/30">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8 shrink-0"
+                      className="h-7 w-7 shrink-0"
                       onClick={() => updateAllocation(stock.ticker, alloc - 5)}
                       disabled={!arbitrage.isOpen || alloc === 0}
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-3 w-3" />
                     </Button>
 
-                    <div className="flex flex-1 items-center gap-3">
+                    <div className="flex flex-1 items-center gap-2">
                       <Slider
                         value={[alloc]}
                         onValueChange={([v]) => updateAllocation(stock.ticker, v)}
@@ -459,7 +459,7 @@ export function ArbitrageScreen() {
                         disabled={!arbitrage.isOpen}
                         className="flex-1"
                       />
-                      <span className="w-12 text-right font-mono text-sm font-semibold text-foreground tabular-nums">
+                      <span className="w-10 text-right font-mono text-xs font-semibold text-foreground tabular-nums">
                         {alloc}%
                       </span>
                     </div>
@@ -467,11 +467,11 @@ export function ArbitrageScreen() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8 shrink-0"
+                      className="h-7 w-7 shrink-0"
                       onClick={() => updateAllocation(stock.ticker, alloc + 5)}
                       disabled={!arbitrage.isOpen || alloc >= 50}
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3 w-3" />
                     </Button>
                   </div>
                 </CardContent>
