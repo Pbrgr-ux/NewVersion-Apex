@@ -37,7 +37,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-background">
       <body className="font-sans antialiased">
-        {children}
+        {/* Conteneur centré sur desktop, plein écran sur mobile */}
+        <div className="mx-auto w-full max-w-md min-h-svh relative bg-background shadow-[0_0_40px_rgba(0,0,0,0.15)]">
+          {children}
+        </div>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
