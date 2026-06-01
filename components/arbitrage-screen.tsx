@@ -30,7 +30,8 @@ import { TICKERS }                 from "@/lib/tickers"
 import { createClient }            from "@/lib/supabase/client"
 
 const CURRENT_SAISON = 1
-const LS_KEY         = "tl_lock_close"   // localStorage key
+// Clé localStorage spécifique à l'utilisateur — évite de bloquer les autres
+function lsKey(userId: string) { return `tl_lock_close_${userId}` }
 
 type Region = "US" | "Europe" | "ETF"
 
@@ -88,6 +89,7 @@ export function ArbitrageScreen() {
 
   const [activeTab, setActiveTab] = useState<Region>("US")
   const [isLocked, setIsLocked]   = useState(false)
+  const [userId, setUserId]       = useState<string | null>(null)
 
   const [allocations, setAllocations] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {}
@@ -98,13 +100,47 @@ export function ArbitrageScreen() {
   const [isSubmitting, setIsSubmitting]           = useState(false)
   const [submitError, setSubmitError]             = useState<string | null>(null)
 
-  // ── Vérifier le lock au montage ─────────────────────────────
+  // ── Vérifier le lock au montage (par utilisateur) ───────────
   useEffect(() => {
-    const lockedUntil = localStorage.getItem(LS_KEY)
-    if (lockedUntil && Date.now() < new Date(lockedUntil).getTime()) {
+    async function checkLock() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      setUserId(user.id)
+
+      const lockedUntil = localStorage.getItem(lsKey(user.id))
+      if (!lockedUntil || Date.now() >= new Date(lockedUntil).getTime()) {
+        // Lock expiré ou absent → s'assurer qu'il est nettoyé
+        localStorage.removeItem(lsKey(user.id))
+        return
+      }
+
+      // Lock actif → vérifier qu'on a vraiment des positions en base
+      // Si pas de positions → débloquer automatiquement
+      const { data: portfolios } = await supabase
+        .from("portfolios")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("saison", CURRENT_SAISON)
+        .limit(1)
+
+      if (portfolios && portfolios.length > 0) {
+        const { data: positions } = await supabase
+          .from("positions")
+          .select("id")
+          .eq("portfolio_id", portfolios[0].id)
+          .limit(1)
+
+        if (!positions || positions.length === 0) {
+          // Positions vides malgré le lock → débloquer
+          localStorage.removeItem(lsKey(user.id))
+          return
+        }
+      }
+
       setIsLocked(true)
     }
-  }, [])
+    checkLock()
+  }, [supabase])
 
   const visibleStocks = useMemo(
     () => TICKERS.filter((t) => t.region === activeTab),
@@ -137,7 +173,7 @@ export function ArbitrageScreen() {
     try {
       // 1. Utilisateur connecté
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Non connecté")
+      if (!user) throw new Error("Non connecté — reconnectez-vous")
 
       // 2. Récupérer ou créer le portfolio de la saison courante
       let portfolioId: string
@@ -181,10 +217,11 @@ export function ArbitrageScreen() {
         if (iErr) throw new Error("Erreur enregistrement positions")
       }
 
-      // 5. Verrouiller jusqu'à la fermeture de la fenêtre
+      // 5. Verrouiller jusqu'à la fermeture de la fenêtre (clé par user)
       if (arbitrage.windowCloseISO) {
-        localStorage.setItem(LS_KEY, arbitrage.windowCloseISO)
+        localStorage.setItem(lsKey(user.id), arbitrage.windowCloseISO)
       }
+      setUserId(user.id)
       setShowConfirmDialog(false)
       router.push("/dashboard")
 
@@ -226,11 +263,11 @@ export function ArbitrageScreen() {
         </header>
 
         {/* Bandeau validé */}
-        <div className="mx-4 mt-4 flex items-center gap-3 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/20">
+        <div className="mx-4 mt-4 flex items-start gap-3 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/20 mt-0.5">
             <Lock className="h-4 w-4 text-green-500" />
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-sm font-semibold text-green-500">Portefeuille validé</p>
             <p className="text-xs text-muted-foreground">
               {arbitrage.isOpen
@@ -238,6 +275,18 @@ export function ArbitrageScreen() {
                 : "Modifiable lors de la prochaine fenêtre d'arbitrage."}
             </p>
           </div>
+          {/* Bouton déblocage manuel (si problème technique) */}
+          {arbitrage.isOpen && userId && (
+            <button
+              onClick={() => {
+                localStorage.removeItem(lsKey(userId))
+                setIsLocked(false)
+              }}
+              className="shrink-0 rounded-lg border border-border bg-card px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground"
+            >
+              Modifier
+            </button>
+          )}
         </div>
 
         {/* Récap allocation soumise */}
