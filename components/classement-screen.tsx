@@ -12,11 +12,12 @@ import { Badge }                        from "@/components/ui/badge"
 import type { AllClassementData, LeaderboardEntry } from "@/lib/classement-data"
 
 // ── Types ─────────────────────────────────────────────────────
-type TabId = "confirmed" | "rookie" | "mois" | "semaine" | "jour"
+type TabId = "confirmed" | "rookie" | "allTime" | "mois" | "semaine" | "jour"
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "confirmed", label: "Général"  },
   { id: "rookie",    label: "Rookie"   },
+  { id: "allTime",   label: "All-Time" },
   { id: "mois",      label: "Mois"     },
   { id: "semaine",   label: "Semaine"  },
   { id: "jour",      label: "Jour"     },
@@ -187,6 +188,7 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
   const lists: Record<TabId, LeaderboardEntry[]> = {
     confirmed: data.confirmed,
     rookie:    data.rookie,
+    allTime:   data.allTime,
     mois:      data.mois,
     semaine:   data.semaine,
     jour:      data.jour,

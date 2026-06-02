@@ -28,6 +28,7 @@ export type LeaderboardEntry = {
 export type AllClassementData = {
   confirmed:       LeaderboardEntry[]
   rookie:          LeaderboardEntry[]
+  allTime:         LeaderboardEntry[]
   mois:            LeaderboardEntry[]
   semaine:         LeaderboardEntry[]
   jour:            LeaderboardEntry[]
@@ -97,7 +98,7 @@ export async function getAllClassementData(): Promise<AllClassementData> {
   const { data: { user: me } } = await serverClient.auth.getUser()
   const currentUserId           = me?.id ?? null
 
-  const [usersRes, classementRes, portfoliosRes, coursRes, lastIndice, nomMap] = await Promise.all([
+  const [usersRes, classementRes, portfoliosRes, coursRes, lastIndice, nomMap, palmaresRes] = await Promise.all([
     admin.from("users").select("id, pseudo, is_pro"),
 
     admin
@@ -127,6 +128,11 @@ export async function getAllClassementData(): Promise<AllClassementData> {
       .maybeSingle(),
 
     getSaisonsNomMap(),
+
+    // Palmarès toutes saisons (pour le classement all-time)
+    admin
+      .from("palmares_all_time")
+      .select("user_id, perf_totale"),
   ])
 
   const userMap = new Map<string, { pseudo: string; is_pro: boolean }>()
@@ -209,9 +215,31 @@ export async function getAllClassementData(): Promise<AllClassementData> {
     })
   }
 
+  // ── Classement all-time (variation composée toutes saisons) ──
+  // Produit de (1+perf) sur saisons terminées × saison courante, par joueur.
+  const factorByUser = new Map<string, number>()
+
+  // Saisons terminées (palmarès)
+  for (const p of (palmaresRes.data ?? []) as Array<{ user_id: string; perf_totale: number }>) {
+    const prev = factorByUser.get(p.user_id) ?? 1
+    factorByUser.set(p.user_id, prev * (1 + Number(p.perf_totale) / 100))
+  }
+  // Saison courante (depuis le classement)
+  for (const c of allClassement) {
+    if (c.perf_totale == null) continue
+    const prev = factorByUser.get(c.user_id) ?? 1
+    factorByUser.set(c.user_id, prev * (1 + Number(c.perf_totale) / 100))
+  }
+
+  const allTimeEntries = Array.from(factorByUser.entries()).map(([user_id, factor]) => ({
+    user_id,
+    perf: parseFloat(((factor - 1) * 100).toFixed(2)),
+  }))
+
   return {
     confirmed,
     rookie,
+    allTime: sortAndRank(allTimeEntries, userMap),
     mois:    sortAndRank(userPerfs.map((u) => ({ ...u, perf: u.mois    })), userMap),
     semaine: sortAndRank(userPerfs.map((u) => ({ ...u, perf: u.semaine })), userMap),
     jour:    sortAndRank(userPerfs.map((u) => ({ ...u, perf: u.jour    })), userMap),
