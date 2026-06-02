@@ -206,20 +206,23 @@ export async function getDashboardData(): Promise<DashboardData> {
   const d7  = isoNDaysAgo(7)
   const d30 = isoNDaysAgo(30)
 
-  let dayPerf = 0, weekPerf = 0, monthPerf = 0
-  let hasDayData = false, hasWeekData = false, hasMonthData = false
+  let dayPerf = 0, weekPerf = 0, monthPerf = 0, seasonPerf = 0
+  let hasDayData = false, hasWeekData = false, hasMonthData = false, hasSeasonData = false
 
   const positions: PositionRow[] = rawPositions.map((pos) => {
-    const prices   = pricesByTicker[pos.ticker] ?? []
-    const w        = Number(pos.allocation_pct) / 100
-    const pCurrent = prices.length > 0 ? prices[0].prix : null
-    const p1       = priceOnOrBefore(prices, d1)
-    const p7       = priceOnOrBefore(prices, d7)
-    const p30      = priceOnOrBefore(prices, d30)
+    const prices    = pricesByTicker[pos.ticker] ?? []
+    const w         = Number(pos.allocation_pct) / 100
+    const pCurrent  = prices.length > 0 ? prices[0].prix : null
+    const p1        = priceOnOrBefore(prices, d1)
+    const p7        = priceOnOrBefore(prices, d7)
+    const p30       = priceOnOrBefore(prices, d30)
+    const prixAchat = Number(pos.prix_achat)
 
     if (pCurrent && p1)  { dayPerf   += w * ((pCurrent / p1)  - 1) * 100; hasDayData   = true }
     if (pCurrent && p7)  { weekPerf  += w * ((pCurrent / p7)  - 1) * 100; hasWeekData  = true }
     if (pCurrent && p30) { monthPerf += w * ((pCurrent / p30) - 1) * 100; hasMonthData = true }
+    // Perf saison = depuis le prix d'achat (live, comme le cron)
+    if (pCurrent && prixAchat > 0) { seasonPerf += w * ((pCurrent / prixAchat) - 1) * 100; hasSeasonData = true }
 
     return {
       ticker:         pos.ticker,
@@ -231,15 +234,18 @@ export async function getDashboardData(): Promise<DashboardData> {
     }
   })
 
+  // Perf saison live (depuis prix_achat), fallback sur le classement cron
+  const seasonPerfLive = hasSeasonData
+    ? parseFloat(seasonPerf.toFixed(2))
+    : (classementRes.data?.perf_totale != null ? parseFloat(Number(classementRes.data.perf_totale).toFixed(2)) : null)
+
   return {
     hasPortfolio:  true,
     perf: {
       day:    hasDayData   ? parseFloat(dayPerf.toFixed(2))   : null,
       week:   hasWeekData  ? parseFloat(weekPerf.toFixed(2))  : null,
       month:  hasMonthData ? parseFloat(monthPerf.toFixed(2)) : null,
-      season: classementRes.data?.perf_totale != null
-        ? parseFloat(Number(classementRes.data.perf_totale).toFixed(2))
-        : null,
+      season: seasonPerfLive,
     },
     positions,
     classement: {
@@ -248,14 +254,11 @@ export async function getDashboardData(): Promise<DashboardData> {
       statut_joueur: classementRes.data?.statut_joueur ?? portfolio.statut_joueur ?? "confirmed",
     },
     season:        seasonWithNom ?? seasonData,
-    // Capital courant = capital de départ × (1 + perf saison)
+    // Capital courant = capital de départ × (1 + perf saison live)
     capitalAjuste: (() => {
       const depart = portfolio.capital_ajuste ? Number(portfolio.capital_ajuste) : null
       if (depart == null) return null
-      const seasonPerf = classementRes.data?.perf_totale != null
-        ? Number(classementRes.data.perf_totale)
-        : 0
-      return Math.round(depart * (1 + seasonPerf / 100))
+      return Math.round(depart * (1 + (seasonPerfLive ?? 0) / 100))
     })(),
     allTime,
     indices,
