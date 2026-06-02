@@ -228,15 +228,15 @@ export function LigueHubScreen() {
         <div className="mx-auto flex max-w-xl items-center justify-around py-2">
           <Link href="/dashboard" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
             <Home className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Dashboard</span>
+            <span className="text-xs font-medium">Dashboard</span>
           </Link>
           <Link href="/classement" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
             <BarChart3 className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Classement</span>
+            <span className="text-xs font-medium">Classement</span>
           </Link>
           <Link href="/profil" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
             <User className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Profil</span>
+            <span className="text-xs font-medium">Profil</span>
           </Link>
         </div>
       </nav>

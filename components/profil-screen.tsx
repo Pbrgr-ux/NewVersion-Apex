@@ -83,14 +83,14 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
         <Card className="bg-card border-border">
           <CardContent className="flex flex-col items-center gap-0.5 py-3 px-2">
             <Trophy className="h-5 w-5 text-primary mb-0.5" />
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Classement
             </span>
             <span className="text-xl font-bold text-foreground">
               {saison.rang != null ? `#${saison.rang}` : "—"}
             </span>
             {saison.total > 0 && (
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 sur {saison.total} joueurs
               </span>
             )}
@@ -100,14 +100,14 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
         <Card className="bg-card border-border">
           <CardContent className="flex flex-col items-center gap-0.5 py-3 px-2">
             <Zap className="h-5 w-5 text-primary mb-0.5" />
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Perf. saison
             </span>
             <span className={`text-xl font-bold tabular-nums ${perfColor(saison.perf_totale)}`}>
               {fmtPerf(saison.perf_totale)}
             </span>
             {saison.perf_totale == null && (
-              <span className="text-[10px] text-muted-foreground">Aucune position</span>
+              <span className="text-xs text-muted-foreground">Aucune position</span>
             )}
           </CardContent>
         </Card>
@@ -209,15 +209,15 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
         <div className="mx-auto flex max-w-xl items-center justify-around py-2">
           <Link href="/dashboard" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
             <Home    className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Dashboard</span>
+            <span className="text-xs font-medium">Dashboard</span>
           </Link>
           <Link href="/classement" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
             <BarChart3 className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Classement</span>
+            <span className="text-xs font-medium">Classement</span>
           </Link>
           <Link href="/profil" className="flex flex-col items-center gap-1 px-4 py-2 text-primary">
             <User className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Profil</span>
+            <span className="text-xs font-medium">Profil</span>
           </Link>
         </div>
       </nav>

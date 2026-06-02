@@ -309,7 +309,7 @@ export function ArbitrageScreen() {
                 localStorage.removeItem(lsKey(userId))
                 setIsLocked(false)
               }}
-              className="shrink-0 rounded-lg border border-border bg-card px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground"
+              className="shrink-0 rounded-lg border border-border bg-card px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
             >
               Modifier
             </button>
@@ -369,13 +369,13 @@ export function ArbitrageScreen() {
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-50 border-t border-border bg-card/95 backdrop-blur-sm">
           <div className="mx-auto flex max-w-xl items-center justify-around py-2">
             <Link href="/dashboard" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
-              <Home className="h-5 w-5" /><span className="text-[10px] font-medium">Dashboard</span>
+              <Home className="h-5 w-5" /><span className="text-xs font-medium">Dashboard</span>
             </Link>
             <Link href="/classement" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
-              <BarChart3 className="h-5 w-5" /><span className="text-[10px] font-medium">Classement</span>
+              <BarChart3 className="h-5 w-5" /><span className="text-xs font-medium">Classement</span>
             </Link>
             <Link href="/profil" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
-              <User className="h-5 w-5" /><span className="text-[10px] font-medium">Profil</span>
+              <User className="h-5 w-5" /><span className="text-xs font-medium">Profil</span>
             </Link>
           </div>
         </nav>
@@ -461,7 +461,7 @@ export function ArbitrageScreen() {
               >
                 {tab.label}
                 {tabTotal > 0 && (
-                  <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-bold ${
                     activeTab === tab.region ? "bg-white/20" : "bg-primary/15 text-primary"
                   }`}>
                     {tabTotal}%
@@ -494,19 +494,19 @@ export function ArbitrageScreen() {
                   {/* Ligne infos + prix */}
                   <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/50">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary text-[10px] font-bold text-foreground">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary text-xs font-bold text-foreground">
                         {stock.ticker.replace(".", "").slice(0, 2)}
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold text-foreground leading-tight">{stock.ticker}</span>
-                        <span className="text-[10px] text-muted-foreground leading-tight">{stock.name}</span>
+                        <span className="text-xs text-muted-foreground leading-tight">{stock.name}</span>
                       </div>
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-sm font-medium tabular-nums text-foreground">
                         {market.price.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
-                      <span className={`text-[10px] font-medium tabular-nums ${
+                      <span className={`text-xs font-medium tabular-nums ${
                         market.weekChange >= 0 ? "text-green-500" : "text-red-500"
                       }`}>
                         {market.weekChange >= 0 ? "+" : ""}{market.weekChange.toFixed(2)}% /7j
@@ -614,21 +614,21 @@ export function ArbitrageScreen() {
             className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground"
           >
             <Home className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Dashboard</span>
+            <span className="text-xs font-medium">Dashboard</span>
           </Link>
           <Link
             href="/classement"
             className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground"
           >
             <BarChart3 className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Classement</span>
+            <span className="text-xs font-medium">Classement</span>
           </Link>
           <Link
             href="/profil"
             className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground"
           >
             <User className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Profil</span>
+            <span className="text-xs font-medium">Profil</span>
           </Link>
         </div>
       </nav>
@@ -656,7 +656,7 @@ export function ArbitrageScreen() {
                 return (
                   <div key={t.ticker} className="flex items-center gap-3">
                     {/* Pastille ticker */}
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary text-[10px] font-bold text-foreground">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-bold text-foreground">
                       {t.ticker.replace(".", "").slice(0, 2)}
                     </div>
                     {/* Nom */}
@@ -681,7 +681,7 @@ export function ArbitrageScreen() {
             {/* Ligne Cash si > 0 */}
             {cashPct > 0 && (
               <div className="flex items-center gap-3 pt-1 border-t border-border mt-2">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-green-500/15 text-[10px] font-bold text-green-500">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-green-500/15 text-xs font-bold text-green-500">
                   💵
                 </div>
                 <div className="min-w-0 flex-1">

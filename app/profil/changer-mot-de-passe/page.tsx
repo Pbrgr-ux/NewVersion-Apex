@@ -111,7 +111,7 @@ export default function ChangerMotDePassePage() {
               {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          <p className="text-[11px] text-muted-foreground">Minimum 8 caractères</p>
+          <p className="text-xs text-muted-foreground">Minimum 8 caractères</p>
         </div>
 
         {/* Confirmer */}

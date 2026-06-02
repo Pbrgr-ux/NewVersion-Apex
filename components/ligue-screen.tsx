@@ -75,7 +75,7 @@ function MemberRow({ member, rank, isCurrentUser }: { member: LeagueMember; rank
 
       {/* Avatar */}
       <Avatar className="h-8 w-8 shrink-0">
-        <AvatarFallback className="bg-secondary text-foreground text-[10px] font-semibold">
+        <AvatarFallback className="bg-secondary text-foreground text-xs font-semibold">
           {member.pseudo.slice(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>
@@ -91,7 +91,7 @@ function MemberRow({ member, rank, isCurrentUser }: { member: LeagueMember; rank
           {isCurrentUser && <span className="ml-1 text-xs font-normal text-muted-foreground">(vous)</span>}
         </span>
         {member.isPro && (
-          <Badge variant="secondary" className="bg-primary/20 text-primary text-[10px] px-1.5 py-0 shrink-0">
+          <Badge variant="secondary" className="bg-primary/20 text-primary text-xs px-1.5 py-0 shrink-0">
             PRO
           </Badge>
         )}
@@ -107,7 +107,7 @@ function MemberRow({ member, rank, isCurrentUser }: { member: LeagueMember; rank
             ? <TrendingUp className="h-2.5 w-2.5 text-success" />
             : <TrendingDown className="h-2.5 w-2.5 text-danger" />
           }
-          <span className={`text-[10px] tabular-nums ${member.weekChange >= 0 ? "text-success" : "text-danger"}`}>
+          <span className={`text-xs tabular-nums ${member.weekChange >= 0 ? "text-success" : "text-danger"}`}>
             {member.weekChange >= 0 ? "+" : ""}{member.weekChange.toFixed(2)}%
           </span>
         </div>
@@ -170,7 +170,7 @@ export function LigueScreen({ id }: { id: string }) {
       {/* Invite code */}
       <div className="mx-4 mb-4 flex items-center justify-between rounded-xl border border-primary/25 bg-primary/8 px-4 py-3">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Code d'invitation</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Code d'invitation</p>
           <p className="mt-0.5 font-mono text-lg font-bold tracking-widest text-primary">{league.code}</p>
         </div>
         <button
@@ -259,15 +259,15 @@ export function LigueScreen({ id }: { id: string }) {
         <div className="mx-auto flex max-w-xl items-center justify-around py-2">
           <Link href="/dashboard" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
             <Home className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Dashboard</span>
+            <span className="text-xs font-medium">Dashboard</span>
           </Link>
           <Link href="/classement" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
             <BarChart3 className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Classement</span>
+            <span className="text-xs font-medium">Classement</span>
           </Link>
           <Link href="/profil" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
             <User className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Profil</span>
+            <span className="text-xs font-medium">Profil</span>
           </Link>
         </div>
       </nav>

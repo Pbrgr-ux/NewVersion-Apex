@@ -28,14 +28,14 @@ export function AdminSaisonCard({ saison: s }: Props) {
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="font-bold text-foreground">{s.nom ?? s.saison_code}</span>
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}>
               {s.statut === "active" ? "En cours" : s.statut === "a_venir" ? "À venir" : "Terminée"}
             </span>
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${typeColor}`}>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${typeColor}`}>
               {s.type === "speciale" ? "Spéciale" : "Trimestrielle"}
             </span>
             {s.inscription_requise && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-muted-foreground bg-secondary">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-muted-foreground bg-secondary">
                 Optionnelle
               </span>
             )}
@@ -58,19 +58,19 @@ export function AdminSaisonCard({ saison: s }: Props) {
       <div className="grid grid-cols-3 gap-2 mb-3 text-center">
         <div className="rounded-lg bg-secondary/50 py-1.5">
           <p className="text-lg font-bold text-foreground">{s.nb_joueurs}</p>
-          <p className="text-[10px] text-muted-foreground">Joueurs</p>
+          <p className="text-xs text-muted-foreground">Joueurs</p>
         </div>
         <div className="rounded-lg bg-secondary/50 py-1.5">
           <p className="text-lg font-bold text-foreground">
             {s.capital_initial.toLocaleString("fr-FR")} €
           </p>
-          <p className="text-[10px] text-muted-foreground">Capital</p>
+          <p className="text-xs text-muted-foreground">Capital</p>
         </div>
         <div className="rounded-lg bg-secondary/50 py-1.5">
           <p className={`text-lg font-bold ${s.perf_moyenne != null ? (s.perf_moyenne >= 0 ? "text-green-500" : "text-red-500") : "text-muted-foreground"}`}>
             {s.perf_moyenne != null ? `${s.perf_moyenne >= 0 ? "+" : ""}${s.perf_moyenne}%` : "—"}
           </p>
-          <p className="text-[10px] text-muted-foreground">Perf moy.</p>
+          <p className="text-xs text-muted-foreground">Perf moy.</p>
         </div>
       </div>
 

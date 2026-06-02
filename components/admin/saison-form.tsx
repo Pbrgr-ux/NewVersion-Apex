@@ -246,7 +246,7 @@ export function SaisonForm({ saison, onSubmit }: Props) {
                       key={t.ticker}
                       type="button"
                       onClick={() => toggleTicker(t.ticker)}
-                      className={`px-2 py-0.5 rounded text-[11px] font-medium border transition-colors ${
+                      className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
                         form.tickers_autorises.includes(t.ticker)
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-secondary text-muted-foreground border-border hover:border-primary/40"

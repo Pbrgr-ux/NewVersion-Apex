@@ -71,7 +71,7 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
               {entry.pseudo.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className={`absolute -bottom-1 -right-1 flex ${size === "large" ? "h-6 w-6 text-xs" : "h-5 w-5 text-[10px]"} items-center justify-center rounded-full font-bold text-white ${badgeBg(rank)}`}>
+          <div className={`absolute -bottom-1 -right-1 flex ${size === "large" ? "h-6 w-6 text-xs" : "h-5 w-5 text-xs"} items-center justify-center rounded-full font-bold text-white ${badgeBg(rank)}`}>
             {rank}
           </div>
         </div>
@@ -147,7 +147,7 @@ function LeaderboardRow({
           {isSelf && <span className="ml-1 text-xs font-normal opacity-60">(vous)</span>}
         </span>
         {entry.is_pro && (
-          <Badge variant="secondary" className="shrink-0 bg-primary/20 text-primary text-[10px] px-1.5 py-0 leading-4">
+          <Badge variant="secondary" className="shrink-0 bg-primary/20 text-primary text-xs px-1.5 py-0 leading-4">
             PRO
           </Badge>
         )}
@@ -225,7 +225,7 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
         <div className="mx-4 mb-2 flex gap-2">
           {cac40_variation !== null && (
             <div className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-secondary/60 px-3 py-1.5">
-              <span className="text-[10px] font-medium text-muted-foreground">CAC 40</span>
+              <span className="text-xs font-medium text-muted-foreground">CAC 40</span>
               <span className={`text-xs font-bold tabular-nums ${fmtPerfColor(cac40_variation)}`}>
                 {fmtPerf(cac40_variation)}
               </span>
@@ -233,7 +233,7 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
           )}
           {sp500_variation !== null && (
             <div className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-secondary/60 px-3 py-1.5">
-              <span className="text-[10px] font-medium text-muted-foreground">S&P 500</span>
+              <span className="text-xs font-medium text-muted-foreground">S&P 500</span>
               <span className={`text-xs font-bold tabular-nums ${fmtPerfColor(sp500_variation)}`}>
                 {fmtPerf(sp500_variation)}
               </span>
@@ -291,15 +291,15 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
         <div className="mx-auto flex max-w-xl items-center justify-around py-2">
           <Link href="/dashboard" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
             <Home    className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Dashboard</span>
+            <span className="text-xs font-medium">Dashboard</span>
           </Link>
           <Link href="/classement" className="flex flex-col items-center gap-1 px-4 py-2 text-primary">
             <BarChart3 className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Classement</span>
+            <span className="text-xs font-medium">Classement</span>
           </Link>
           <Link href="/profil" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
             <User  className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Profil</span>
+            <span className="text-xs font-medium">Profil</span>
           </Link>
         </div>
       </nav>

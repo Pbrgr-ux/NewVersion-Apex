@@ -108,7 +108,7 @@ export function PaywallScreen({ returnTo = "/" }: { returnTo?: string }) {
             >
               {/* Best-value badge */}
               {p.badge && (
-                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground whitespace-nowrap">
+                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground whitespace-nowrap">
                   {p.badge}
                 </span>
               )}
@@ -130,10 +130,10 @@ export function PaywallScreen({ returnTo = "/" }: { returnTo?: string }) {
                 </span>
                 <span className={`text-sm ${active ? "text-primary" : "text-muted-foreground"}`}>€</span>
               </div>
-              <span className="text-[11px] text-muted-foreground">{p.unit}</span>
+              <span className="text-xs text-muted-foreground">{p.unit}</span>
 
               {p.sub && (
-                <span className={`mt-1 text-[11px] font-medium ${active ? "text-primary" : "text-muted-foreground/60"}`}>
+                <span className={`mt-1 text-xs font-medium ${active ? "text-primary" : "text-muted-foreground/60"}`}>
                   {p.sub}
                 </span>
               )}
@@ -173,7 +173,7 @@ export function PaywallScreen({ returnTo = "/" }: { returnTo?: string }) {
           Non merci, rester gratuit
         </Link>
 
-        <p className="text-center text-[11px] text-muted-foreground/60 leading-relaxed max-w-xs">
+        <p className="text-center text-xs text-muted-foreground/60 leading-relaxed max-w-xs">
           Résiliable à tout moment, sans engagement.{" "}
           Paiement sécurisé via Stripe. En t'abonnant, tu acceptes nos{" "}
           <Link href="#" className="underline underline-offset-2 hover:text-muted-foreground">

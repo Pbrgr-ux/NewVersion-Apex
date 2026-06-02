@@ -53,13 +53,13 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         </div>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
-            <p className="text-[10px] text-muted-foreground">Perf. saison</p>
+            <p className="text-xs text-muted-foreground">Perf. saison</p>
             <p className={`text-sm font-bold tabular-nums ${perfColor(perf.season)}`}>
               {fmtPerf(perf.season)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] text-muted-foreground">Classement</p>
+            <p className="text-xs text-muted-foreground">Classement</p>
             <p className="text-sm font-bold text-foreground">
               {classement.rang != null ? `#${classement.rang}` : "—"}
               {classement.total > 0 && (
@@ -68,7 +68,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             </p>
           </div>
           <div>
-            <p className="text-[10px] text-muted-foreground">Capital</p>
+            <p className="text-xs text-muted-foreground">Capital</p>
             <p className="text-sm font-bold text-foreground">
               {capitalAjuste ? `${fmtPrix(capitalAjuste)} €` : "—"}
             </p>
@@ -77,7 +77,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         {/* Semaines restantes */}
         {season.statut === "active" && (
           <div className="mt-2">
-            <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
               <span>Semaines restantes : {season.semainesRestantes}</span>
               <span>{season.semaine}/{season.semainesTotal}</span>
             </div>
@@ -103,7 +103,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
           return (
             <Card key={label} className="bg-card border-border py-0 gap-0">
               <CardContent className="flex flex-col gap-0 px-3 py-1.5">
-                <div className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+                <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {icon && <span className={perfColor(value)}>{icon}</span>}
                   <span className="truncate">{label}</span>
                 </div>
@@ -121,23 +121,23 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         <div className="mx-4 mb-3 flex gap-2">
           <Card className="flex-1 bg-card border-border">
             <CardContent className="flex flex-col items-center py-2 px-3">
-              <span className="text-[10px] text-muted-foreground font-medium">CAC 40</span>
+              <span className="text-xs text-muted-foreground font-medium">CAC 40</span>
               <span className={`text-sm font-bold tabular-nums ${perfColor(indices.cac40_variation)}`}>
                 {fmtPerf(indices.cac40_variation)}
               </span>
               {indices.cac40_prix && (
-                <span className="text-[10px] text-muted-foreground">{fmtPrix(indices.cac40_prix)}</span>
+                <span className="text-xs text-muted-foreground">{fmtPrix(indices.cac40_prix)}</span>
               )}
             </CardContent>
           </Card>
           <Card className="flex-1 bg-card border-border">
             <CardContent className="flex flex-col items-center py-2 px-3">
-              <span className="text-[10px] text-muted-foreground font-medium">S&P 500</span>
+              <span className="text-xs text-muted-foreground font-medium">S&P 500</span>
               <span className={`text-sm font-bold tabular-nums ${perfColor(indices.sp500_variation)}`}>
                 {fmtPerf(indices.sp500_variation)}
               </span>
               {indices.sp500_prix && (
-                <span className="text-[10px] text-muted-foreground">{fmtPrix(indices.sp500_prix)}</span>
+                <span className="text-xs text-muted-foreground">{fmtPrix(indices.sp500_prix)}</span>
               )}
             </CardContent>
           </Card>
@@ -248,7 +248,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               <CardContent className="flex flex-col gap-0.5 p-3">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Zap className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Alpha moyen</span>
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Alpha moyen</span>
                 </div>
                 <span className={`text-lg font-bold tabular-nums ${perfColor(allTime.alpha_moyen)}`}>
                   {fmtPerf(allTime.alpha_moyen)} <span className="text-xs font-normal text-muted-foreground">/saison</span>
@@ -259,7 +259,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               <CardContent className="flex flex-col gap-0.5 p-3">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Trophy className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Meilleur rang</span>
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Meilleur rang</span>
                 </div>
                 <span className="text-lg font-bold text-foreground">
                   {allTime.meilleur_rang ? `#${allTime.meilleur_rang}` : "—"}
@@ -273,7 +273,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               <CardContent className="flex flex-col gap-0.5 p-3">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Star className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Saisons jouées</span>
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Saisons jouées</span>
                 </div>
                 <span className="text-lg font-bold text-foreground">{allTime.nb_saisons}</span>
               </CardContent>
@@ -282,7 +282,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               <CardContent className="flex flex-col gap-0.5 p-3">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Globe className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Win rate</span>
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Win rate</span>
                 </div>
                 <span className="text-lg font-bold text-foreground">
                   {allTime.win_rate != null ? `${allTime.win_rate}%` : "—"}
@@ -297,13 +297,13 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-50 border-t border-border bg-card/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-xl items-center justify-around py-2">
           <Link href="/dashboard"  className="flex flex-col items-center gap-1 px-4 py-2 text-primary">
-            <Home      className="h-5 w-5" /><span className="text-[10px] font-medium">Dashboard</span>
+            <Home      className="h-5 w-5" /><span className="text-xs font-medium">Dashboard</span>
           </Link>
           <Link href="/classement" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
-            <BarChart3 className="h-5 w-5" /><span className="text-[10px] font-medium">Classement</span>
+            <BarChart3 className="h-5 w-5" /><span className="text-xs font-medium">Classement</span>
           </Link>
           <Link href="/profil"     className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
-            <User      className="h-5 w-5" /><span className="text-[10px] font-medium">Profil</span>
+            <User      className="h-5 w-5" /><span className="text-xs font-medium">Profil</span>
           </Link>
         </div>
       </nav>

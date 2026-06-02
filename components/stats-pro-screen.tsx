@@ -86,7 +86,7 @@ function HorizontalBar({
       {/* Stock info */}
       <div className="flex w-20 flex-col">
         <span className="text-sm font-semibold text-foreground">{ticker}</span>
-        <span className="text-[10px] text-muted-foreground">{sector}</span>
+        <span className="text-xs text-muted-foreground">{sector}</span>
       </div>
 
       {/* Bar */}
@@ -101,7 +101,7 @@ function HorizontalBar({
             </span>
           </div>
         </div>
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{name}</span>
           <span>Avg. {avgAllocation.toFixed(1)}%</span>
         </div>
@@ -175,21 +175,21 @@ export function StatsProScreen() {
             <CardContent className="flex flex-col items-center gap-1 p-3">
               <Users className="h-5 w-5 text-primary" />
               <span className="text-lg font-bold text-foreground">823</span>
-              <span className="text-[10px] text-muted-foreground">Players</span>
+              <span className="text-xs text-muted-foreground">Players</span>
             </CardContent>
           </Card>
           <Card className="bg-card border-border">
             <CardContent className="flex flex-col items-center gap-1 p-3">
               <TrendingUp className="h-5 w-5 text-success" />
               <span className="text-lg font-bold text-foreground">41.2K</span>
-              <span className="text-[10px] text-muted-foreground">Trades</span>
+              <span className="text-xs text-muted-foreground">Trades</span>
             </CardContent>
           </Card>
           <Card className="bg-card border-border">
             <CardContent className="flex flex-col items-center gap-1 p-3">
               <Sparkles className="h-5 w-5 text-primary" />
               <span className="text-lg font-bold text-foreground">6.3</span>
-              <span className="text-[10px] text-muted-foreground">Avg Stocks</span>
+              <span className="text-xs text-muted-foreground">Avg Stocks</span>
             </CardContent>
           </Card>
         </div>
@@ -261,21 +261,21 @@ export function StatsProScreen() {
             className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground"
           >
             <Home className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Dashboard</span>
+            <span className="text-xs font-medium">Dashboard</span>
           </Link>
           <Link
             href="/classement"
             className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground"
           >
             <BarChart3 className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Classement</span>
+            <span className="text-xs font-medium">Classement</span>
           </Link>
           <Link
             href="/profil"
             className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground"
           >
             <User className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Profil</span>
+            <span className="text-xs font-medium">Profil</span>
           </Link>
         </div>
       </nav>
