@@ -67,6 +67,18 @@ function priceOnOrBefore(prices: PricePoint[], targetDate: string): number | nul
   return found != null ? found.prix : null
 }
 
+/**
+ * Variation pondérée d'une position, avec garde anti-données-corrompues.
+ * Un ratio hors [0.1, 10] (≈ ±900%) sur jour/semaine/mois est impossible
+ * pour une action réelle → donnée erronée, contribution ignorée.
+ */
+function safeContribution(current: number | null, past: number | null, weight: number): number | null {
+  if (current == null || past == null || past <= 0) return null
+  const ratio = current / past
+  if (ratio > 10 || ratio < 0.1) return null   // donnée aberrante
+  return weight * (ratio - 1) * 100
+}
+
 // ── Fetch principal ───────────────────────────────────────────
 export async function getDashboardData(): Promise<DashboardData> {
   const supabase       = await createClient()
@@ -218,18 +230,22 @@ export async function getDashboardData(): Promise<DashboardData> {
     const p30       = priceOnOrBefore(prices, d30)
     const prixAchat = Number(pos.prix_achat)
 
-    if (pCurrent && p1)  { dayPerf   += w * ((pCurrent / p1)  - 1) * 100; hasDayData   = true }
-    if (pCurrent && p7)  { weekPerf  += w * ((pCurrent / p7)  - 1) * 100; hasWeekData  = true }
-    if (pCurrent && p30) { monthPerf += w * ((pCurrent / p30) - 1) * 100; hasMonthData = true }
-    // Perf saison = depuis le prix d'achat (live, comme le cron)
-    if (pCurrent && prixAchat > 0) { seasonPerf += w * ((pCurrent / prixAchat) - 1) * 100; hasSeasonData = true }
+    const cDay    = safeContribution(pCurrent, p1,        w)
+    const cWeek   = safeContribution(pCurrent, p7,        w)
+    const cMonth  = safeContribution(pCurrent, p30,       w)
+    const cSeason = safeContribution(pCurrent, prixAchat, w)
+
+    if (cDay    != null) { dayPerf    += cDay;    hasDayData    = true }
+    if (cWeek   != null) { weekPerf   += cWeek;   hasWeekData   = true }
+    if (cMonth  != null) { monthPerf  += cMonth;  hasMonthData  = true }
+    if (cSeason != null) { seasonPerf += cSeason; hasSeasonData = true }
 
     return {
       ticker:         pos.ticker,
       name:           TICKER_MAP[pos.ticker]?.name ?? pos.ticker,
       allocation_pct: Number(pos.allocation_pct),
       prix_actuel:    pCurrent,
-      variation_day:  pCurrent && p1 ? parseFloat(((pCurrent / p1 - 1) * 100).toFixed(2)) : null,
+      variation_day:  cDay != null && w > 0 ? parseFloat((cDay / w).toFixed(2)) : null,
       sparkline:      prices.slice(0, 7).map((p) => p.prix).reverse(),
     }
   })

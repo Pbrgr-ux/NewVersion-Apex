@@ -60,6 +60,14 @@ function priceOnOrBefore(prices: PricePoint[], targetDate: string): number | nul
   return found != null ? Number(found.prix) : null
 }
 
+/** Variation pondérée avec garde anti-données-corrompues (ratio hors [0.1,10] ignoré). */
+function safeContribution(current: number | null, past: number | null, weight: number): number | null {
+  if (current == null || past == null || past <= 0) return null
+  const ratio = current / past
+  if (ratio > 10 || ratio < 0.1) return null
+  return weight * (ratio - 1) * 100
+}
+
 function sortAndRank(
   entries: Array<{ user_id: string; perf: number | null; statut_joueur?: string; perf_vs_cac40?: number | null; perf_vs_sp500?: number | null }>,
   userMap: Map<string, { pseudo: string; is_pro: boolean }>
@@ -186,9 +194,10 @@ export async function getAllClassementData(): Promise<AllClassementData> {
       const p1 = priceOnOrBefore(prices, d1), p7 = priceOnOrBefore(prices, d7), p30 = priceOnOrBefore(prices, d30)
       const w  = Number(pos.allocation_pct) / 100
 
-      if (pCurrent && p1)  { pJour    += w * (pCurrent / p1  - 1) * 100; hasJour    = true }
-      if (pCurrent && p7)  { pSemaine += w * (pCurrent / p7  - 1) * 100; hasSemaine = true }
-      if (pCurrent && p30) { pMois    += w * (pCurrent / p30 - 1) * 100; hasMois    = true }
+      const cJour = safeContribution(pCurrent, p1, w), cSem = safeContribution(pCurrent, p7, w), cMois = safeContribution(pCurrent, p30, w)
+      if (cJour != null) { pJour    += cJour; hasJour    = true }
+      if (cSem  != null) { pSemaine += cSem;  hasSemaine = true }
+      if (cMois != null) { pMois    += cMois; hasMois    = true }
     }
 
     userPerfs.push({
