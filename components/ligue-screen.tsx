@@ -256,16 +256,16 @@ export function LigueScreen({ id }: { id: string }) {
 
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-50 border-t border-border bg-card/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-xl items-center justify-around py-2">
-          <Link href="/dashboard" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
+        <div className="mx-auto flex max-w-xl items-center justify-around py-1">
+          <Link href="/dashboard" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground">
             <Home className="h-5 w-5" />
             <span className="text-xs font-medium">Dashboard</span>
           </Link>
-          <Link href="/classement" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
+          <Link href="/classement" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground">
             <BarChart3 className="h-5 w-5" />
             <span className="text-xs font-medium">Classement</span>
           </Link>
-          <Link href="/profil" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
+          <Link href="/profil" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground">
             <User className="h-5 w-5" />
             <span className="text-xs font-medium">Profil</span>
           </Link>

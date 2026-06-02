@@ -211,28 +211,20 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
       <div className="px-4 pb-4">
         {arbitrage.isOpen ? (
           <Link href="/arbitrage">
-            <Button size="lg" className="w-full h-16 text-lg font-semibold bg-green-600 text-white hover:bg-green-600/90">
-              <div className="flex flex-col items-center gap-0.5">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  <span>Fenêtre d&apos;arbitrage</span>
-                </div>
-                <span className="text-sm font-normal opacity-90">
-                  Ferme dans {arbitrage.timeUntilClose}
-                </span>
+            <Button className="w-full h-12 text-sm font-semibold bg-green-600 text-white hover:bg-green-600/90">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>Fenêtre d&apos;arbitrage</span>
+                <span className="font-normal opacity-90">· Ferme dans {arbitrage.timeUntilClose}</span>
               </div>
             </Button>
           </Link>
         ) : (
-          <Button size="lg" className="w-full h-14 font-semibold bg-secondary text-secondary-foreground cursor-not-allowed" disabled>
-            <div className="flex flex-col items-center gap-0.5">
-              <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                <span className="text-base">Fenêtre fermée</span>
-              </div>
-              <span className="font-mono text-xs opacity-75">
-                Ouvre dans {arbitrage.timeUntilOpen}
-              </span>
+          <Button className="w-full h-12 text-sm font-semibold bg-secondary text-secondary-foreground cursor-not-allowed" disabled>
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              <span>Fenêtre fermée</span>
+              <span className="font-mono font-normal opacity-75">· Ouvre dans {arbitrage.timeUntilOpen}</span>
             </div>
           </Button>
         )}
@@ -296,14 +288,14 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
 
       {/* ── Navigation ───────────────────────────────────────── */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-50 border-t border-border bg-card/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-xl items-center justify-around py-2">
-          <Link href="/dashboard"  className="flex flex-col items-center gap-1 px-4 py-2 text-primary">
+        <div className="mx-auto flex max-w-xl items-center justify-around py-1">
+          <Link href="/dashboard"  className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-primary">
             <Home      className="h-5 w-5" /><span className="text-xs font-medium">Dashboard</span>
           </Link>
-          <Link href="/classement" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
+          <Link href="/classement" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground">
             <BarChart3 className="h-5 w-5" /><span className="text-xs font-medium">Classement</span>
           </Link>
-          <Link href="/profil"     className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground">
+          <Link href="/profil"     className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground">
             <User      className="h-5 w-5" /><span className="text-xs font-medium">Profil</span>
           </Link>
         </div>
