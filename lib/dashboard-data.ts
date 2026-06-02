@@ -186,12 +186,15 @@ export async function getDashboardData(): Promise<DashboardData> {
   type RawPosition = { ticker: string; allocation_pct: number; prix_achat: number }
   const rawPositions = (portfolio.positions ?? []) as RawPosition[]
 
+  // Richesse all-time sans position courante = 100k × Π(saisons terminées)
+  const wealthBase = palmRows.reduce((w, p) => w * (1 + Number(p.perf_totale) / 100), 100_000)
+
   if (rawPositions.length === 0) {
     return {
       ...empty,
       hasPortfolio:  true,
       classement:    { rang: classementRes.data?.rang ?? null, total: totalRes.count ?? 0, statut_joueur: portfolio.statut_joueur ?? "confirmed" },
-      capitalAjuste: portfolio.capital_ajuste ? Number(portfolio.capital_ajuste) : null,
+      capitalAjuste: Math.round(wealthBase),
       season:        seasonWithNom ?? seasonData,
       allTime,
       indices,
@@ -271,12 +274,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       statut_joueur: classementRes.data?.statut_joueur ?? portfolio.statut_joueur ?? "confirmed",
     },
     season:        seasonWithNom ?? seasonData,
-    // Capital courant = capital de départ × (1 + perf saison live)
-    capitalAjuste: (() => {
-      const depart = portfolio.capital_ajuste ? Number(portfolio.capital_ajuste) : null
-      if (depart == null) return null
-      return Math.round(depart * (1 + (seasonPerfLive ?? 0) / 100))
-    })(),
+    // Capital = richesse all-time cumulée (jamais remise à 100k) :
+    // [100 000 € × Π(saisons terminées)] × (1 + perf saison courante)
+    capitalAjuste: Math.round(wealthBase * (1 + (seasonPerfLive ?? 0) / 100)),
     allTime,
     indices,
   }
