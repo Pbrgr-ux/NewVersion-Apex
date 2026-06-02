@@ -248,7 +248,15 @@ export async function getDashboardData(): Promise<DashboardData> {
       statut_joueur: classementRes.data?.statut_joueur ?? portfolio.statut_joueur ?? "confirmed",
     },
     season:        seasonWithNom ?? seasonData,
-    capitalAjuste: portfolio.capital_ajuste ? Number(portfolio.capital_ajuste) : null,
+    // Capital courant = capital de départ × (1 + perf saison)
+    capitalAjuste: (() => {
+      const depart = portfolio.capital_ajuste ? Number(portfolio.capital_ajuste) : null
+      if (depart == null) return null
+      const seasonPerf = classementRes.data?.perf_totale != null
+        ? Number(classementRes.data.perf_totale)
+        : 0
+      return Math.round(depart * (1 + seasonPerf / 100))
+    })(),
     allTime,
     indices,
   }
