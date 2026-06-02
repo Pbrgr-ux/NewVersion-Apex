@@ -245,7 +245,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       name:           TICKER_MAP[pos.ticker]?.name ?? pos.ticker,
       allocation_pct: Number(pos.allocation_pct),
       prix_actuel:    pCurrent,
-      variation_day:  cDay != null && w > 0 ? parseFloat((cDay / w).toFixed(2)) : null,
+      // Variation depuis le dernier arbitrage (cours actuel vs prix_achat)
+      variation_day:  cSeason != null && w > 0 ? parseFloat((cSeason / w).toFixed(2)) : null,
       sparkline:      prices.slice(0, 7).map((p) => p.prix).reverse(),
     }
   })
