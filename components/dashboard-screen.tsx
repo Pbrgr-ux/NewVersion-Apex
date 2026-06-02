@@ -180,7 +180,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
                         {pos.ticker.replace(".", "").slice(0, 2)}
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-semibold text-foreground leading-tight">{pos.ticker}</span>
+                        <span className="text-sm font-semibold text-foreground leading-tight">{pos.ticker}</span>
                         <span className="text-xs text-muted-foreground">{pos.allocation_pct}%</span>
                       </div>
                     </div>
