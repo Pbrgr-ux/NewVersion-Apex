@@ -229,15 +229,31 @@ export function ArbitrageScreen() {
       // 3. Supprimer les anciennes positions
       await supabase.from("positions").delete().eq("portfolio_id", portfolioId)
 
-      // 4. Insérer les nouvelles positions (allocation > 0 uniquement)
-      const newPositions = TICKERS
+      // 4. prix_achat = cours réel le plus récent (MÊME source que le calcul
+      //    de perf du dashboard) → la perf démarre bien à 0 %.
+      const selectedTickers = TICKERS
         .filter((t) => (allocations[t.ticker] ?? 0) > 0)
-        .map((t) => ({
-          portfolio_id:   portfolioId,
-          ticker:         t.ticker,
-          allocation_pct: allocations[t.ticker],
-          prix_achat:     MOCK_MARKET[t.ticker]?.price ?? 100,
-        }))
+        .map((t) => t.ticker)
+
+      const { data: coursData } = await supabase
+        .from("cours")
+        .select("ticker, prix, date")
+        .in("ticker", selectedTickers)
+        .order("date", { ascending: false })
+
+      // Cours le plus récent par ticker
+      const lastPrix: Record<string, number> = {}
+      for (const c of coursData ?? []) {
+        if (!(c.ticker in lastPrix)) lastPrix[c.ticker] = Number(c.prix)
+      }
+
+      const newPositions = selectedTickers.map((ticker) => ({
+        portfolio_id:   portfolioId,
+        ticker,
+        allocation_pct: allocations[ticker],
+        // Cours réel en base, sinon fallback mock (cohérent avec l'affichage)
+        prix_achat:     lastPrix[ticker] ?? MOCK_MARKET[ticker]?.price ?? 100,
+      }))
 
       if (newPositions.length > 0) {
         const { error: iErr } = await supabase.from("positions").insert(newPositions)
