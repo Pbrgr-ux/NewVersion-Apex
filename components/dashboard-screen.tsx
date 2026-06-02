@@ -18,6 +18,12 @@ function fmtPerf(v: number | null, placeholder = "—"): string {
   return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`
 }
 
+// Une seule décimale (cartes de performance)
+function fmtPerf1(v: number | null, placeholder = "—"): string {
+  if (v === null) return placeholder
+  return `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`
+}
+
 function fmtPrix(v: number | null): string {
   if (v === null) return "—"
   return v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -96,13 +102,13 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             { label: "Saison",        value: perf.season, icon: null },
             { label: "Ever",          value: allTime?.perf_totale_cumulee ?? null, icon: <Star className="h-3.5 w-3.5" /> },
           ] as const).map(({ label, value, icon }) => (
-            <div key={label} className="rounded-lg bg-secondary/40 px-3 py-1.5">
-              <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <div key={label} className="flex flex-col items-center rounded-lg bg-secondary/40 px-3 py-1.5">
+              <div className="flex items-center justify-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {icon && <span className={perfColor(value)}>{icon}</span>}
                 <span className="truncate">{label}</span>
               </div>
-              <span className={`text-base font-bold tabular-nums leading-tight ${perfColor(value)}`}>
-                {fmtPerf(value)}
+              <span className={`text-sm font-bold tabular-nums leading-tight ${perfColor(value)}`}>
+                {fmtPerf1(value)}
               </span>
             </div>
           ))}
@@ -167,10 +173,10 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             {positions.map((pos) => {
               const positive = (pos.variation_day ?? 0) >= 0
               return (
-                <Card key={pos.ticker} className="bg-card border-border">
-                  <CardContent className="flex items-center justify-between p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
+                <Card key={pos.ticker} className="bg-card border-border py-0 gap-0">
+                  <CardContent className="flex items-center justify-between px-3 py-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
                         {pos.ticker.replace(".", "").slice(0, 2)}
                       </div>
                       <div className="flex flex-col">
