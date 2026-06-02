@@ -152,18 +152,15 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         </h3>
 
         {!hasPortfolio || positions.length === 0 ? (
-          <Card className="bg-card border-border border-dashed">
-            <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-              <Wallet className="h-10 w-10 text-muted-foreground/50" />
-              <div>
-                <p className="font-medium text-foreground">Aucune position</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Configurez votre portfolio lors de la prochaine fenêtre d&apos;arbitrage.
-                </p>
-              </div>
+          <Card className="bg-card border-border border-dashed py-0 gap-0">
+            <CardContent className="flex items-center gap-3 px-4 py-3 text-left">
+              <Wallet className="h-6 w-6 shrink-0 text-muted-foreground/50" />
+              <p className="flex-1 text-sm text-muted-foreground">
+                Aucune position — configurez votre portfolio lors de la prochaine fenêtre d&apos;arbitrage.
+              </p>
               {arbitrage.isOpen && (
                 <Link href="/arbitrage">
-                  <Button size="sm" className="mt-1">Configurer maintenant</Button>
+                  <Button size="sm" className="shrink-0">Configurer</Button>
                 </Link>
               )}
             </CardContent>
