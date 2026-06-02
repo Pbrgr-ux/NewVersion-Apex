@@ -174,7 +174,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       alpha_moyen:          perfs.length > 0 ? parseFloat((perfs.reduce((a, b) => a + b, 0) / perfs.length).toFixed(2)) : null,
       top10_count:          palmRows.filter((r) => r.top10).length,
       win_rate:             perfs.length > 0 ? parseFloat(((perfs.filter((p) => p > 0).length / perfs.length) * 100).toFixed(1)) : null,
-      perf_totale_cumulee:  parseFloat(perfs.reduce((a, b) => a + b, 0).toFixed(2)),
+      // Variation composée (cohérente avec la richesse), pas une somme additive
+      perf_totale_cumulee:  parseFloat(((perfs.reduce((acc, p) => acc * (1 + p / 100), 1) - 1) * 100).toFixed(2)),
     }
   }
 
