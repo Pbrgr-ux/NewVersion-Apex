@@ -26,11 +26,11 @@ export function SignupScreen() {
 
     // Validation basique
     if (pseudo.trim().length < 3) {
-      setError("Le pseudo doit faire au moins 3 caractères.")
+      setError("Username must be at least 3 characters.")
       return
     }
     if (password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères.")
+      setError("Password must be at least 8 characters.")
       return
     }
 
@@ -50,9 +50,9 @@ export function SignupScreen() {
     if (authError) {
       // Traduction des erreurs Supabase les plus fréquentes
       if (authError.message.includes("already registered")) {
-        setError("Cet email est déjà utilisé.")
+        setError("This email is already in use.")
       } else if (authError.message.includes("invalid email")) {
-        setError("Adresse email invalide.")
+        setError("Invalid email address.")
       } else {
         setError(authError.message)
       }
@@ -71,9 +71,9 @@ export function SignupScreen() {
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 ring-1 ring-primary/30">
           <TrendingUp className="h-8 w-8 text-primary" />
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Vérifie ta boîte mail</h1>
+        <h1 className="text-2xl font-bold text-foreground">Check your inbox</h1>
         <p className="mt-2 text-sm text-muted-foreground max-w-xs">
-          Un lien de confirmation a été envoyé à{" "}
+          A confirmation link was sent to{" "}
           <span className="font-medium text-foreground">{email}</span>.
           Clique dessus pour activer ton compte.
         </p>
@@ -81,7 +81,7 @@ export function SignupScreen() {
           href="/connexion"
           className="mt-8 text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
-          Aller à la connexion
+          Go to sign in
         </Link>
       </main>
     )
@@ -177,7 +177,7 @@ export function SignupScreen() {
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--signup-blue)] px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-60"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {loading ? "Création en cours…" : "Create Account"}
+            {loading ? "Creating account…" : "Create Account"}
           </button>
         </form>
 

@@ -46,12 +46,12 @@ export default function MotDePasseOubliePage() {
           <Mail className="h-10 w-10 text-primary" strokeWidth={1.5} />
         </div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Email envoyé !
+          Email sent!
         </h1>
         <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-          Un lien de réinitialisation a été envoyé à{" "}
+          A reset link was sent to{" "}
           <span className="font-medium text-foreground">{email}</span>.
-          Vérifie tes spams si tu ne le vois pas.
+          Check your spam folder if you don.t see it.
         </p>
         <Link
           href="/connexion"
@@ -86,10 +86,10 @@ export default function MotDePasseOubliePage() {
 
         <div className="mb-8">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Mot de passe oublié ?
+            Forgot password?
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Saisis ton email et on t&apos;envoie un lien pour le réinitialiser.
+            Enter your email and we.ll send you a reset link.
           </p>
         </div>
 
@@ -123,12 +123,12 @@ export default function MotDePasseOubliePage() {
             className="mt-2 h-12 w-full text-sm font-semibold disabled:opacity-60"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {loading ? "Envoi en cours…" : "Envoyer le lien"}
+            {loading ? "Sending…" : "Send link"}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          Tu te souviens ?{" "}
+          Remember it?{" "}
           <Link href="/connexion" className="font-medium text-foreground underline-offset-4 hover:underline">
             Se connecter
           </Link>

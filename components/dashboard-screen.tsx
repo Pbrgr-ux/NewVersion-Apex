@@ -53,14 +53,14 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             season.statut === "a_venir" ? "bg-primary/15 text-primary" :
             "bg-secondary text-muted-foreground"
           }`}>
-            {season.statut === "active"   ? `Sem. ${season.semaine}/13` :
-             season.statut === "a_venir" ? "À venir" : "Terminée"}
+            {season.statut === "active"   ? `Week ${season.semaine}/13` :
+             season.statut === "a_venir" ? "Upcoming" : "Ended"}
           </span>
         </div>
         {/* Rang + Capital */}
         <div className="grid grid-cols-2 gap-3 text-center mb-3">
           <div>
-            <p className="text-xs text-muted-foreground">Classement</p>
+            <p className="text-xs text-muted-foreground">Ranking</p>
             <p className="text-sm font-bold text-foreground">
               {classement.rang != null ? `#${classement.rang}` : "—"}
               {classement.total > 0 && (
@@ -80,7 +80,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         {season.statut === "active" && (
           <div className="mt-3">
             <div className="flex justify-between text-xs text-muted-foreground mb-1">
-              <span>Semaines restantes : {season.semainesRestantes}</span>
+              <span>Weeks left: {season.semainesRestantes}</span>
               <span>{season.semaine}/{season.semainesTotal}</span>
             </div>
             <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
@@ -97,9 +97,9 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
       <div className="mx-4 mb-3 rounded-xl border border-border bg-card px-4 py-3">
         <div className="grid grid-cols-2 gap-2">
           {([
-            { label: "Aujourd'hui",   value: perf.day,  icon: <TrendingUp className="h-3.5 w-3.5" /> },
-            { label: "Cette semaine", value: perf.week, icon: null },
-            { label: "Saison",        value: perf.season, icon: null },
+            { label: "Today",   value: perf.day,  icon: <TrendingUp className="h-3.5 w-3.5" /> },
+            { label: "This week", value: perf.week, icon: null },
+            { label: "Season",        value: perf.season, icon: null },
             { label: "Ever",          value: allTime?.perf_totale_cumulee ?? null, icon: <Star className="h-3.5 w-3.5" /> },
           ] as const).map(({ label, value, icon }) => (
             <div key={label} className="flex flex-col items-center rounded-lg bg-secondary/40 px-3 py-1.5">
@@ -148,7 +148,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
       {/* ── Positions ─────────────────────────────────────────── */}
       <div className="px-4 pb-4">
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-          Mes positions
+          My positions
         </h3>
 
         {!hasPortfolio || positions.length === 0 ? (
@@ -156,11 +156,11 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             <CardContent className="flex items-center gap-3 px-4 py-3 text-left">
               <Wallet className="h-6 w-6 shrink-0 text-muted-foreground/50" />
               <p className="flex-1 text-sm text-muted-foreground">
-                Aucune position — configurez votre portfolio lors de la prochaine fenêtre d&apos;arbitrage.
+                No position yet — set up your portfolio during the next trading window.
               </p>
               {arbitrage.isOpen && (
                 <Link href="/arbitrage">
-                  <Button size="sm" className="shrink-0">Configurer</Button>
+                  <Button size="sm" className="shrink-0">Set up</Button>
                 </Link>
               )}
             </CardContent>
@@ -211,8 +211,8 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             <Button className="w-full h-12 text-sm font-semibold bg-green-600 text-white hover:bg-green-600/90">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                <span>Fenêtre d&apos;arbitrage</span>
-                <span className="font-normal opacity-90">· Ferme dans {arbitrage.timeUntilClose}</span>
+                <span>Trading window</span>
+                <span className="font-normal opacity-90">· Closes in {arbitrage.timeUntilClose}</span>
               </div>
             </Button>
           </Link>
@@ -220,8 +220,8 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
           <Button className="w-full h-12 text-sm font-semibold bg-secondary text-secondary-foreground cursor-not-allowed" disabled>
             <div className="flex items-center gap-2">
               <Lock className="h-4 w-4" />
-              <span>Fenêtre fermée</span>
-              <span className="font-mono font-normal opacity-75">· Ouvre dans {arbitrage.timeUntilOpen}</span>
+              <span>Window closed</span>
+              <span className="font-mono font-normal opacity-75">· Opens in {arbitrage.timeUntilOpen}</span>
             </div>
           </Button>
         )}
@@ -263,7 +263,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               <CardContent className="flex flex-col gap-0.5 p-3">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Star className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Saisons jouées</span>
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Seasons played</span>
                 </div>
                 <span className="text-lg font-bold text-foreground">{allTime.nb_saisons}</span>
               </CardContent>
@@ -290,10 +290,10 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             <Home      className="h-5 w-5" /><span className="text-xs font-medium">Dashboard</span>
           </Link>
           <Link href="/classement" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground">
-            <BarChart3 className="h-5 w-5" /><span className="text-xs font-medium">Classement</span>
+            <BarChart3 className="h-5 w-5" /><span className="text-xs font-medium">Ranking</span>
           </Link>
           <Link href="/profil"     className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground">
-            <User      className="h-5 w-5" /><span className="text-xs font-medium">Profil</span>
+            <User      className="h-5 w-5" /><span className="text-xs font-medium">Profile</span>
           </Link>
         </div>
       </nav>

@@ -32,9 +32,9 @@ export function ConnexionScreen() {
 
     if (authError) {
       if (authError.message.includes("Invalid login credentials")) {
-        setError("Email ou mot de passe incorrect.")
+        setError("Wrong email or password.")
       } else if (authError.message.includes("Email not confirmed")) {
-        setError("Confirme ton email avant de te connecter.")
+        setError("Please confirm your email before signing in.")
       } else {
         setError(authError.message)
       }
@@ -95,7 +95,7 @@ export function ConnexionScreen() {
                 href="/mot-de-passe-oublie"
                 className="text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
               >
-                Mot de passe oublié ?
+                Forgot password?
               </Link>
             </div>
             <input
@@ -125,7 +125,7 @@ export function ConnexionScreen() {
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-60"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {loading ? "Connexion…" : "Sign In"}
+            {loading ? "Signing in…" : "Sign In"}
           </button>
         </form>
 

@@ -293,13 +293,13 @@ export function ArbitrageScreen() {
             <div className="flex items-center gap-2">
               <Clock className={`h-5 w-5 ${arbitrage.isOpen ? "text-green-500" : "text-muted-foreground"}`} />
               <span className="font-semibold text-foreground">
-                {arbitrage.isOpen ? "Fenêtre ouverte" : "Fenêtre fermée"}
+                {arbitrage.isOpen ? "Window open" : "Window closed"}
               </span>
             </div>
             <span className="font-mono text-sm text-muted-foreground">
               {arbitrage.isOpen
-                ? <span>Ferme dans <span className="font-semibold text-green-500">{arbitrage.timeUntilClose}</span></span>
-                : <span>Ouvre dans <span className="font-semibold">{arbitrage.timeUntilOpen}</span></span>
+                ? <span>Closes in <span className="font-semibold text-green-500">{arbitrage.timeUntilClose}</span></span>
+                : <span>Opens in <span className="font-semibold">{arbitrage.timeUntilOpen}</span></span>
               }
             </span>
           </div>
@@ -311,11 +311,11 @@ export function ArbitrageScreen() {
             <Lock className="h-4 w-4 text-green-500" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-green-500">Portefeuille validé</p>
+            <p className="text-sm font-semibold text-green-500">Portfolio submitted</p>
             <p className="text-xs text-muted-foreground">
               {arbitrage.isOpen
-                ? "Modification impossible jusqu'à la fermeture de la fenêtre."
-                : "Modifiable lors de la prochaine fenêtre d'arbitrage."}
+                ? "Cannot be changed until the window closes."
+                : "Editable during the next trading window."}
             </p>
           </div>
           {/* Bouton déblocage manuel (si problème technique) */}
@@ -335,7 +335,7 @@ export function ArbitrageScreen() {
         {/* Récap allocation soumise */}
         <div className="px-4 py-4 space-y-2">
           <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
-            Répartition soumise
+            Submitted allocation
           </h3>
 
           {submittedPositions.map((t) => {
@@ -388,10 +388,10 @@ export function ArbitrageScreen() {
               <Home className="h-5 w-5" /><span className="text-xs font-medium">Dashboard</span>
             </Link>
             <Link href="/classement" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground">
-              <BarChart3 className="h-5 w-5" /><span className="text-xs font-medium">Classement</span>
+              <BarChart3 className="h-5 w-5" /><span className="text-xs font-medium">Ranking</span>
             </Link>
             <Link href="/profil" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground">
-              <User className="h-5 w-5" /><span className="text-xs font-medium">Profil</span>
+              <User className="h-5 w-5" /><span className="text-xs font-medium">Profile</span>
             </Link>
           </div>
         </nav>
@@ -410,21 +410,21 @@ export function ArbitrageScreen() {
               className={`h-5 w-5 ${arbitrage.isOpen ? "text-success" : "text-danger"}`}
             />
             <span className="font-semibold text-foreground">
-              {arbitrage.isOpen ? "Fenêtre ouverte" : "Fenêtre fermée"}
+              {arbitrage.isOpen ? "Window open" : "Window closed"}
             </span>
           </div>
 
           <span className="font-mono text-sm text-muted-foreground">
             {arbitrage.isOpen ? (
               <>
-                Ferme dans{" "}
+                Closes in{" "}
                 <span className="font-semibold text-success">
                   {arbitrage.timeUntilClose}
                 </span>
               </>
             ) : (
               <>
-                Ouvre dans{" "}
+                Opens in{" "}
                 <span className="font-semibold text-foreground">
                   {arbitrage.timeUntilOpen}
                 </span>
@@ -438,11 +438,11 @@ export function ArbitrageScreen() {
           <div className="flex items-center gap-2 border-t border-border/60 bg-secondary/60 px-4 py-2">
             <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <p className="text-xs text-muted-foreground">
-              Les modifications sont possibles uniquement{" "}
+              Changes are only allowed{" "}
               <span className="font-medium text-foreground">
-                du samedi 08h00 au dimanche 21h00
+                Saturday 8:00am to Sunday 9:00pm
               </span>{" "}
-              (heure de Paris).
+              (Paris time).
             </p>
           </div>
         )}
@@ -451,7 +451,7 @@ export function ArbitrageScreen() {
       {/* ── Solde ──────────────────────────────────────────────── */}
       <div className="flex flex-col items-center gap-1 px-4 py-6 border-b border-border">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Capital disponible
+          Available capital
         </span>
         <span className="text-3xl font-bold tabular-nums text-foreground">
           100 000 €
@@ -492,7 +492,7 @@ export function ArbitrageScreen() {
       {/* ── Liste des actions ──────────────────────────────────── */}
       <div className="flex-1 px-4 py-4">
         <div className="mb-3 flex items-center justify-end">
-          <span className="text-xs text-muted-foreground">Max 50 % par action</span>
+          <span className="text-xs text-muted-foreground">Max 50% per stock</span>
         </div>
 
         <div className="flex flex-col gap-2">
@@ -581,7 +581,7 @@ export function ArbitrageScreen() {
           <div className="mb-2 flex items-center justify-between text-sm">
             <div className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary" />
-              <span className="text-muted-foreground">Investi</span>
+              <span className="text-muted-foreground">Invested</span>
               <span className="font-bold text-foreground tabular-nums">{totalAllocation}%</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -611,12 +611,12 @@ export function ArbitrageScreen() {
             {!arbitrage.isOpen ? (
               <span className="flex items-center gap-2">
                 <Lock className="h-4 w-4" />
-                Ouvre dans {arbitrage.timeUntilOpen}
+                Opens in {arbitrage.timeUntilOpen}
               </span>
             ) : totalAllocation === 0 ? (
-              "Sélectionne au moins 1 action"
+              "Pick at least 1 stock"
             ) : (
-              `Valider — ${totalAllocation}% investi, ${cashPct}% en cash`
+              `Submit — % invested, % cash`
             )}
           </Button>
         </div>
@@ -637,14 +637,14 @@ export function ArbitrageScreen() {
             className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground"
           >
             <BarChart3 className="h-5 w-5" />
-            <span className="text-xs font-medium">Classement</span>
+            <span className="text-xs font-medium">Ranking</span>
           </Link>
           <Link
             href="/profil"
             className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground"
           >
             <User className="h-5 w-5" />
-            <span className="text-xs font-medium">Profil</span>
+            <span className="text-xs font-medium">Profile</span>
           </Link>
         </div>
       </nav>
@@ -655,10 +655,10 @@ export function ArbitrageScreen() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-foreground">
               <AlertTriangle className="h-5 w-5 text-primary" />
-              Confirmer l&apos;allocation
+              Confirm your allocation
             </DialogTitle>
             <DialogDescription>
-              Vérifiez la répartition avant de valider — elle ne pourra pas être modifiée avant la prochaine fenêtre.
+              Check your allocation before submitting — it cannot be changed until the next window.
             </DialogDescription>
           </DialogHeader>
 
@@ -719,7 +719,7 @@ export function ArbitrageScreen() {
           {/* ── Pied : timer + boutons ── */}
           <div className="border-t border-border pt-3 space-y-3">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Fenêtre se ferme dans</span>
+              <span>Window closes in</span>
               <span className="font-mono font-semibold text-foreground">{arbitrage.timeUntilClose}</span>
             </div>
             {submitError && (
@@ -740,7 +740,7 @@ export function ArbitrageScreen() {
                 disabled={isSubmitting}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                {isSubmitting ? "Enregistrement…" : "Confirmer"}
+                {isSubmitting ? "Saving…" : "Confirm"}
               </Button>
             </DialogFooter>
           </div>

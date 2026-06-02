@@ -26,11 +26,11 @@ export default function ChangerMotDePassePage() {
     setError(null)
 
     if (newPassword.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères.")
+      setError("Password must be at least 8 characters.")
       return
     }
     if (newPassword !== confirmPassword) {
-      setError("Les deux mots de passe ne correspondent pas.")
+      setError("The two passwords don.t match.")
       return
     }
 
@@ -56,10 +56,10 @@ export default function ChangerMotDePassePage() {
           <CheckCircle2 className="h-10 w-10 text-green-500" strokeWidth={1.5} />
         </div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Mot de passe modifié !
+          Password updated!
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Retour au profil…
+          Back to profile…
         </p>
       </main>
     )
@@ -76,7 +76,7 @@ export default function ChangerMotDePassePage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <h1 className="text-xl font-semibold text-foreground">Changer le mot de passe</h1>
+        <h1 className="text-xl font-semibold text-foreground">Change password</h1>
       </div>
 
       {/* Icône */}
@@ -90,7 +90,7 @@ export default function ChangerMotDePassePage() {
         {/* Nouveau mot de passe */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            Nouveau mot de passe
+            New password
           </label>
           <div className="relative">
             <input
@@ -111,13 +111,13 @@ export default function ChangerMotDePassePage() {
               {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          <p className="text-xs text-muted-foreground">Minimum 8 caractères</p>
+          <p className="text-xs text-muted-foreground">At least 8 characters</p>
         </div>
 
         {/* Confirmer */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            Confirmer le mot de passe
+            Confirm password
           </label>
           <div className="relative">
             <input
@@ -154,7 +154,7 @@ export default function ChangerMotDePassePage() {
           className="mt-2 h-12 w-full text-sm font-semibold disabled:opacity-60"
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {loading ? "Modification en cours…" : "Enregistrer le nouveau mot de passe"}
+          {loading ? "Updating…" : "Save new password"}
         </Button>
       </form>
     </main>

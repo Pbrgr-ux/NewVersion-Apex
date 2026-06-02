@@ -15,12 +15,12 @@ import type { AllClassementData, LeaderboardEntry } from "@/lib/classement-data"
 type TabId = "confirmed" | "rookie" | "allTime" | "mois" | "semaine" | "jour"
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: "confirmed", label: "Général"  },
+  { id: "confirmed", label: "Overall"  },
   { id: "rookie",    label: "Rookie"   },
   { id: "allTime",   label: "All-Time" },
-  { id: "mois",      label: "Mois"     },
-  { id: "semaine",   label: "Semaine"  },
-  { id: "jour",      label: "Jour"     },
+  { id: "mois",      label: "Month"    },
+  { id: "semaine",   label: "Week"     },
+  { id: "jour",      label: "Day"      },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -145,7 +145,7 @@ function LeaderboardRow({
                           : "text-foreground"
         }`}>
           {entry.pseudo}
-          {isSelf && <span className="ml-1 text-xs font-normal opacity-60">(vous)</span>}
+          {isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
         </span>
         {entry.is_pro && (
           <Badge variant="secondary" className="shrink-0 bg-primary/20 text-primary text-xs px-1.5 py-0 leading-4">
@@ -173,9 +173,9 @@ function EmptyTab({ tab }: { tab: TabId }) {
     <div className="flex flex-col items-center gap-3 py-16 text-center">
       <Trophy className="h-10 w-10 text-muted-foreground/40" />
       <p className="text-sm text-muted-foreground max-w-[240px]">
-        {tab === "saison"
-          ? "Aucun joueur classé pour l'instant."
-          : "Pas encore de données de cours pour calculer ce classement. Lance une synchronisation via /api/sync-cours."}
+        {tab === "confirmed"
+          ? "No ranked player yet."
+          : "Not enough price data yet to compute this ranking."}
       </p>
     </div>
   )
@@ -214,11 +214,11 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
       <div className="flex flex-col items-center gap-1 px-6 pt-6 pb-2">
         <div className="flex items-center gap-2">
           <Trophy className="h-4 w-4 text-primary" />
-          <h1 className="text-sm font-bold text-foreground">Classement</h1>
+          <h1 className="text-sm font-bold text-foreground">Ranking</h1>
         </div>
         <p className="text-sm text-muted-foreground">
           {data.currentSaisonNom}
-          {entries.length > 0 && ` · ${entries.length} joueur${entries.length > 1 ? "s" : ""}`}
+          {entries.length > 0 && ` · ${entries.length} player${entries.length > 1 ? "s" : ""}`}
         </p>
       </div>
 
@@ -247,7 +247,7 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
       {/* ── Votre position (sticky) ──────────────────────────── */}
       {selfEntry && (
         <div className="mx-4 mb-2 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2">
-          <span className="text-sm font-medium text-primary">Votre position</span>
+          <span className="text-sm font-medium text-primary">Your position</span>
           <span className="font-bold text-primary tabular-nums">
             #{selfEntry.rang}
             <span className="ml-2 font-normal text-primary/70">{fmtPerf(selfEntry.perf)}</span>
@@ -297,11 +297,11 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
           </Link>
           <Link href="/classement" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-primary">
             <BarChart3 className="h-5 w-5" />
-            <span className="text-xs font-medium">Classement</span>
+            <span className="text-xs font-medium">Ranking</span>
           </Link>
           <Link href="/profil" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground">
             <User  className="h-5 w-5" />
-            <span className="text-xs font-medium">Profil</span>
+            <span className="text-xs font-medium">Profile</span>
           </Link>
         </div>
       </nav>

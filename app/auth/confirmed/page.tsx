@@ -31,10 +31,10 @@ export default function ConfirmedPage() {
       </div>
 
       <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-        Email confirmé !
+        Email confirmed!
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Ton compte TradeLeague est activé.
+        Your TradeLeague account is active.
       </p>
 
       {/* Barre de progression */}
@@ -50,7 +50,7 @@ export default function ConfirmedPage() {
       </div>
 
       <p className="mt-3 text-xs text-muted-foreground">
-        Redirection vers la connexion…
+        Redirecting to sign in…
       </p>
     </main>
   )

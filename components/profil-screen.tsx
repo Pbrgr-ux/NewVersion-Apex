@@ -73,7 +73,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
           <p className="text-sm text-muted-foreground">{user.email}</p>
           <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
             <Calendar className="h-3.5 w-3.5" />
-            <span>Membre depuis {memberDate}</span>
+            <span>Member since {memberDate}</span>
           </div>
         </div>
       </div>
@@ -84,14 +84,14 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
           <CardContent className="flex flex-col items-center gap-0.5 py-3 px-2">
             <Trophy className="h-5 w-5 text-primary mb-0.5" />
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Classement
+              Ranking
             </span>
             <span className="text-xl font-bold text-foreground">
               {saison.rang != null ? `#${saison.rang}` : "—"}
             </span>
             {saison.total > 0 && (
               <span className="text-xs text-muted-foreground">
-                sur {saison.total} joueurs
+                of {saison.total} players
               </span>
             )}
           </CardContent>
@@ -101,13 +101,13 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
           <CardContent className="flex flex-col items-center gap-0.5 py-3 px-2">
             <Zap className="h-5 w-5 text-primary mb-0.5" />
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Perf. saison
+              Season perf
             </span>
             <span className={`text-xl font-bold tabular-nums ${perfColor(saison.perf_totale)}`}>
               {fmtPerf(saison.perf_totale)}
             </span>
             {saison.perf_totale == null && (
-              <span className="text-xs text-muted-foreground">Aucune position</span>
+              <span className="text-xs text-muted-foreground">No position</span>
             )}
           </CardContent>
         </Card>
@@ -118,7 +118,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
       {historique.length > 0 && (
         <div className="px-4 pb-4">
           <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Historique
+            History
           </h3>
           <div className="flex flex-col gap-2">
             {historique.map((row) => (
@@ -134,7 +134,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
                       </span>
                       {row.rang != null && row.total > 0 && (
                         <span className="text-xs text-muted-foreground">
-                          #{row.rang} / {row.total} joueurs
+                          #{row.rang} / {row.total} players
                         </span>
                       )}
                     </div>
@@ -158,7 +158,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
       {/* ── Account ──────────────────────────────────────────── */}
       <div className="px-4 py-4">
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-          Compte
+          Account
         </h3>
         <div className="flex flex-col gap-2">
           {isAdmin && (
@@ -169,7 +169,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
             >
               <div className="flex items-center gap-3">
                 <Settings className="h-5 w-5 text-primary" />
-                <span>Administration</span>
+                <span>Admin</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Button>
@@ -181,7 +181,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
           >
             <div className="flex items-center gap-3">
               <KeyRound className="h-5 w-5 text-muted-foreground" />
-              <span>Changer le mot de passe</span>
+              <span>Change password</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Button>
@@ -197,7 +197,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
                 ? <Loader2 className="h-5 w-5 animate-spin text-red-500" />
                 : <LogOut  className="h-5 w-5 text-red-500" />
               }
-              <span>{loggingOut ? "Déconnexion…" : "Se déconnecter"}</span>
+              <span>{loggingOut ? "Signing out…" : "Sign out"}</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Button>
@@ -213,11 +213,11 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
           </Link>
           <Link href="/classement" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-muted-foreground hover:text-foreground">
             <BarChart3 className="h-5 w-5" />
-            <span className="text-xs font-medium">Classement</span>
+            <span className="text-xs font-medium">Ranking</span>
           </Link>
           <Link href="/profil" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-primary">
             <User className="h-5 w-5" />
-            <span className="text-xs font-medium">Profil</span>
+            <span className="text-xs font-medium">Profile</span>
           </Link>
         </div>
       </nav>
