@@ -51,13 +51,8 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
              season.statut === "a_venir" ? "À venir" : "Terminée"}
           </span>
         </div>
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <div>
-            <p className="text-xs text-muted-foreground">Perf. saison</p>
-            <p className={`text-sm font-bold tabular-nums ${perfColor(perf.season)}`}>
-              {fmtPerf(perf.season)}
-            </p>
-          </div>
+        {/* Rang + Capital */}
+        <div className="grid grid-cols-2 gap-3 text-center mb-3">
           <div>
             <p className="text-xs text-muted-foreground">Classement</p>
             <p className="text-sm font-bold text-foreground">
@@ -74,9 +69,30 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             </p>
           </div>
         </div>
+
+        {/* Perfs : Aujourd'hui / Cette semaine / Saison / Ever */}
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { label: "Aujourd'hui",   value: perf.day,  icon: <TrendingUp className="h-3.5 w-3.5" /> },
+            { label: "Cette semaine", value: perf.week, icon: null },
+            { label: "Saison",        value: perf.season, icon: null },
+            { label: "Ever",          value: allTime?.perf_totale_cumulee ?? null, icon: <Star className="h-3.5 w-3.5" /> },
+          ] as const).map(({ label, value, icon }) => (
+            <div key={label} className="rounded-lg bg-secondary/40 px-3 py-1.5">
+              <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {icon && <span className={perfColor(value)}>{icon}</span>}
+                <span className="truncate">{label}</span>
+              </div>
+              <span className={`text-base font-bold tabular-nums leading-tight ${perfColor(value)}`}>
+                {fmtPerf(value)}
+              </span>
+            </div>
+          ))}
+        </div>
+
         {/* Semaines restantes */}
         {season.statut === "active" && (
-          <div className="mt-2">
+          <div className="mt-3">
             <div className="flex justify-between text-xs text-muted-foreground mb-1">
               <span>Semaines restantes : {season.semainesRestantes}</span>
               <span>{season.semaine}/{season.semainesTotal}</span>
@@ -89,31 +105,6 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             </div>
           </div>
         )}
-      </div>
-
-      {/* ── Perfs : Jour / Hebdo / Saison / Ever ────────────── */}
-      <div className="grid grid-cols-2 gap-2 px-4 pb-3">
-        {([
-          { label: "Aujourd'hui", value: perf.day,    icon: <TrendingUp className="h-3.5 w-3.5" /> },
-          { label: "Cette semaine", value: perf.week,   icon: null },
-          { label: season.label,  value: perf.season, icon: null },
-          { label: "Ever",        value: allTime?.perf_totale_cumulee ?? null, icon: <Star className="h-3.5 w-3.5" /> },
-        ] as const).map(({ label, value, icon }) => {
-          const pos = (value ?? 0) >= 0
-          return (
-            <Card key={label} className="bg-card border-border py-0 gap-0">
-              <CardContent className="flex flex-col gap-0 px-3 py-1.5">
-                <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {icon && <span className={perfColor(value)}>{icon}</span>}
-                  <span className="truncate">{label}</span>
-                </div>
-                <span className={`text-base font-bold tabular-nums leading-tight ${perfColor(value)}`}>
-                  {fmtPerf(value)}
-                </span>
-              </CardContent>
-            </Card>
-          )
-        })}
       </div>
 
       {/* ── Indices marché ───────────────────────────────────── */}
@@ -144,39 +135,8 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         </div>
       )}
 
-      {/* ── Bouton arbitrage ─────────────────────────────────── */}
-      <div className="px-4 pb-3">
-        {arbitrage.isOpen ? (
-          <Link href="/arbitrage">
-            <Button size="lg" className="w-full h-16 text-lg font-semibold bg-green-600 text-white hover:bg-green-600/90">
-              <div className="flex flex-col items-center gap-0.5">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  <span>Fenêtre d&apos;arbitrage</span>
-                </div>
-                <span className="text-sm font-normal opacity-90">
-                  Ferme dans {arbitrage.timeUntilClose}
-                </span>
-              </div>
-            </Button>
-          </Link>
-        ) : (
-          <Button size="lg" className="w-full h-14 font-semibold bg-secondary text-secondary-foreground cursor-not-allowed" disabled>
-            <div className="flex flex-col items-center gap-0.5">
-              <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                <span className="text-base">Fenêtre fermée</span>
-              </div>
-              <span className="font-mono text-xs opacity-75">
-                Ouvre dans {arbitrage.timeUntilOpen}
-              </span>
-            </div>
-          </Button>
-        )}
-      </div>
-
       {/* ── Positions ─────────────────────────────────────────── */}
-      <div className="flex-1 px-4 pb-4">
+      <div className="px-4 pb-4">
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
           Mes positions
         </h3>
@@ -234,6 +194,37 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               )
             })}
           </div>
+        )}
+      </div>
+
+      {/* ── Bouton arbitrage ─────────────────────────────────── */}
+      <div className="px-4 pb-4">
+        {arbitrage.isOpen ? (
+          <Link href="/arbitrage">
+            <Button size="lg" className="w-full h-16 text-lg font-semibold bg-green-600 text-white hover:bg-green-600/90">
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  <span>Fenêtre d&apos;arbitrage</span>
+                </div>
+                <span className="text-sm font-normal opacity-90">
+                  Ferme dans {arbitrage.timeUntilClose}
+                </span>
+              </div>
+            </Button>
+          </Link>
+        ) : (
+          <Button size="lg" className="w-full h-14 font-semibold bg-secondary text-secondary-foreground cursor-not-allowed" disabled>
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                <span className="text-base">Fenêtre fermée</span>
+              </div>
+              <span className="font-mono text-xs opacity-75">
+                Ouvre dans {arbitrage.timeUntilOpen}
+              </span>
+            </div>
+          </Button>
         )}
       </div>
 
