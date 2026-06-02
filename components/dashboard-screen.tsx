@@ -70,7 +70,25 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
           </div>
         </div>
 
-        {/* Perfs : Aujourd'hui / Cette semaine / Saison / Ever */}
+        {/* Semaines restantes */}
+        {season.statut === "active" && (
+          <div className="mt-3">
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+              <span>Semaines restantes : {season.semainesRestantes}</span>
+              <span>{season.semaine}/{season.semainesTotal}</span>
+            </div>
+            <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${(season.semaine / season.semainesTotal) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Performances (2e container) ──────────────────────── */}
+      <div className="mx-4 mb-3 rounded-xl border border-border bg-card px-4 py-3">
         <div className="grid grid-cols-2 gap-2">
           {([
             { label: "Aujourd'hui",   value: perf.day,  icon: <TrendingUp className="h-3.5 w-3.5" /> },
@@ -89,22 +107,6 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             </div>
           ))}
         </div>
-
-        {/* Semaines restantes */}
-        {season.statut === "active" && (
-          <div className="mt-3">
-            <div className="flex justify-between text-xs text-muted-foreground mb-1">
-              <span>Semaines restantes : {season.semainesRestantes}</span>
-              <span>{season.semaine}/{season.semainesTotal}</span>
-            </div>
-            <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${(season.semaine / season.semainesTotal) * 100}%` }}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── Indices marché ───────────────────────────────────── */}
