@@ -2,8 +2,8 @@ import type { Metadata } from "next"
 import { LigueScreen } from "@/components/ligue-screen"
 
 export const metadata: Metadata = {
-  title: "Ligue Privée - TradeLeague",
-  description: "Classement interne de ta ligue privée.",
+  title: "Private League - TradeLeague",
+  description: "Your private league standings.",
 }
 
 export default async function LigueDetailPage({ params }: { params: Promise<{ id: string }> }) {

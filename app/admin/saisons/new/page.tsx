@@ -30,8 +30,8 @@ export default function NewSaisonPage() {
   return (
     <main className="min-h-svh bg-background px-4 py-8 max-w-xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">Nouvelle saison</h1>
-        <p className="text-sm text-muted-foreground mt-1">Configurez les paramètres de la saison</p>
+        <h1 className="text-2xl font-bold text-foreground">New season</h1>
+        <p className="text-sm text-muted-foreground mt-1">Set up the season parameters</p>
       </div>
       <SaisonForm onSubmit={handleCreate} />
     </main>

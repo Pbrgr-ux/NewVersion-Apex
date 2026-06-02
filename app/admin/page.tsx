@@ -23,14 +23,14 @@ export default async function AdminPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-sm font-bold text-foreground">Administration</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Gestion des saisons TradeLeague</p>
+          <h1 className="text-sm font-bold text-foreground">Admin</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage TradeLeague seasons</p>
         </div>
         <Link
           href="/admin/saisons/new"
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
         >
-          + Nouvelle saison
+          + New season
         </Link>
       </div>
 
@@ -38,7 +38,7 @@ export default async function AdminPage() {
       {active.length > 0 && (
         <section className="mb-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-green-500 mb-3">
-            ● En cours ({active.length})
+            ● Active ({active.length})
           </h2>
           <div className="flex flex-col gap-3">
             {active.map((s) => <AdminSaisonCard key={s.id} saison={s} />)}
@@ -50,7 +50,7 @@ export default async function AdminPage() {
       {aVenir.length > 0 && (
         <section className="mb-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            À venir ({aVenir.length})
+            Upcoming ({aVenir.length})
           </h2>
           <div className="flex flex-col gap-3">
             {aVenir.map((s) => <AdminSaisonCard key={s.id} saison={s} />)}
@@ -62,7 +62,7 @@ export default async function AdminPage() {
       {termines.length > 0 && (
         <section className="mb-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            Terminées ({termines.length})
+            Ended ({termines.length})
           </h2>
           <div className="flex flex-col gap-3">
             {termines.map((s) => <AdminSaisonCard key={s.id} saison={s} />)}
@@ -72,13 +72,13 @@ export default async function AdminPage() {
 
       {saisons.length === 0 && (
         <div className="text-center py-16 text-muted-foreground">
-          Aucune saison — <Link href="/admin/saisons/new" className="text-primary underline">Créer la première</Link>
+          No season yet — <Link href="/admin/saisons/new" className="text-primary underline">Create the first one</Link>
         </div>
       )}
 
       <div className="mt-8 text-center">
         <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
-          ← Retour au dashboard
+          ← Back to dashboard
         </Link>
       </div>
     </main>

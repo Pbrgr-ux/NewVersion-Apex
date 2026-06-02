@@ -182,7 +182,7 @@ export function LigueScreen({ id }: { id: string }) {
           }`}
         >
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-          {copied ? "Copié !" : "Copier"}
+          {copied ? "Copied!" : "Copy"}
         </button>
       </div>
 
@@ -204,7 +204,7 @@ export function LigueScreen({ id }: { id: string }) {
       {/* Leaderboard */}
       <div className="px-4">
         <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-          Classement interne
+          League standings
         </p>
         <div className="flex flex-col gap-2">
           {sorted.map((member, i) => (
@@ -226,12 +226,12 @@ export function LigueScreen({ id }: { id: string }) {
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-danger/30 px-4 py-3 text-sm font-medium text-danger transition-colors hover:bg-danger/10"
           >
             <LogOut className="h-4 w-4" />
-            Quitter la ligue
+            Leave league
           </button>
         ) : (
           <div className="rounded-xl border border-danger/40 bg-danger/8 p-4">
             <p className="text-center text-sm text-foreground font-medium mb-3">
-              Quitter {league.name} ?
+              Leave {league.name}?
             </p>
             <p className="text-center text-xs text-muted-foreground mb-4">
               Tu perdras ta position dans cette ligue.

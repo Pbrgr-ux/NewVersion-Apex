@@ -200,7 +200,7 @@ export function ArbitrageScreen() {
     try {
       // 1. Utilisateur connecté
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Non connecté — reconnectez-vous")
+      if (!user) throw new Error("Not signed in — please sign in again")
 
       // 2. Récupérer ou créer le portfolio de la saison courante
       let portfolioId: string
@@ -222,7 +222,7 @@ export function ArbitrageScreen() {
           .insert({ user_id: user.id, saison: CURRENT_SAISON, cash: 0 })
           .select("id")
           .single()
-        if (cErr || !created) throw new Error("Erreur création portfolio")
+        if (cErr || !created) throw new Error("Could not create portfolio")
         portfolioId = created.id
       }
 
@@ -257,7 +257,7 @@ export function ArbitrageScreen() {
 
       if (newPositions.length > 0) {
         const { error: iErr } = await supabase.from("positions").insert(newPositions)
-        if (iErr) throw new Error("Erreur enregistrement positions")
+        if (iErr) throw new Error("Could not save positions")
       }
 
       // 5. Verrouiller jusqu'à la fermeture de la fenêtre (clé par user)
@@ -269,7 +269,7 @@ export function ArbitrageScreen() {
       router.push("/dashboard")
 
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Erreur inconnue")
+      setSubmitError(err instanceof Error ? err.message : "Unknown error")
     } finally {
       setIsSubmitting(false)
     }

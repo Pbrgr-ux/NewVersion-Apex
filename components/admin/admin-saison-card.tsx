@@ -29,10 +29,10 @@ export function AdminSaisonCard({ saison: s }: Props) {
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="font-bold text-foreground">{s.nom ?? s.saison_code}</span>
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}>
-              {s.statut === "active" ? "En cours" : s.statut === "a_venir" ? "À venir" : "Terminée"}
+              {s.statut === "active" ? "Active" : s.statut === "a_venir" ? "Upcoming" : "Ended"}
             </span>
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${typeColor}`}>
-              {s.type === "speciale" ? "Spéciale" : "Trimestrielle"}
+              {s.type === "speciale" ? "Special" : "Quarterly"}
             </span>
             {s.inscription_requise && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-muted-foreground bg-secondary">
@@ -58,7 +58,7 @@ export function AdminSaisonCard({ saison: s }: Props) {
       <div className="grid grid-cols-3 gap-2 mb-3 text-center">
         <div className="rounded-lg bg-secondary/50 py-1.5">
           <p className="text-lg font-bold text-foreground">{s.nb_joueurs}</p>
-          <p className="text-xs text-muted-foreground">Joueurs</p>
+          <p className="text-xs text-muted-foreground">Players</p>
         </div>
         <div className="rounded-lg bg-secondary/50 py-1.5">
           <p className="text-lg font-bold text-foreground">
@@ -70,7 +70,7 @@ export function AdminSaisonCard({ saison: s }: Props) {
           <p className={`text-lg font-bold ${s.perf_moyenne != null ? (s.perf_moyenne >= 0 ? "text-green-500" : "text-red-500") : "text-muted-foreground"}`}>
             {s.perf_moyenne != null ? `${s.perf_moyenne >= 0 ? "+" : ""}${s.perf_moyenne}%` : "—"}
           </p>
-          <p className="text-xs text-muted-foreground">Perf moy.</p>
+          <p className="text-xs text-muted-foreground">Avg perf</p>
         </div>
       </div>
 
@@ -78,9 +78,9 @@ export function AdminSaisonCard({ saison: s }: Props) {
       <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
         <span>🗓 {jourLabels || "—"}</span>
         <span>🕐 {s.fenetre_heure_debut}h00 → {s.fenetre_heure_fin}h00</span>
-        <span>📊 Max {s.max_allocation_pct}% / action</span>
+        <span>📊 Max {s.max_allocation_pct}% / stock</span>
         {s.tickers_autorises && (
-          <span>🎯 {s.tickers_autorises.length} tickers</span>
+          <span>🎯 {s.tickers_autorises.length} stocks</span>
         )}
       </div>
     </div>

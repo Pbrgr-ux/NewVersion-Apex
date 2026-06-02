@@ -5,7 +5,7 @@ import { getAllClassementData }   from "@/lib/classement-data"
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
-  title:       "Classement | TradeLeague",
+  title:       "Ranking | TradeLeague",
   description: "Leaderboard de la saison en cours",
 }
 

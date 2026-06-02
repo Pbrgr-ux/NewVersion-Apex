@@ -24,7 +24,7 @@ export function LigueHubScreen() {
   function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     if (!leagueName.trim()) {
-      setError("Donne un nom à ta ligue.")
+      setError("Give your league a name.")
       return
     }
     const code = generateCode(leagueName)
@@ -36,7 +36,7 @@ export function LigueHubScreen() {
     e.preventDefault()
     const code = joinCode.trim().toUpperCase()
     if (!code.match(/^[A-Z]{2,4}-\d{2}$/)) {
-      setError("Code invalide. Format attendu : WOLF-42")
+      setError("Invalid code. Expected format: WOLF-42")
       return
     }
     // In prod: verify code in Supabase, get league_id, redirect
@@ -51,8 +51,8 @@ export function LigueHubScreen() {
           <Lock className="h-7 w-7 text-primary" />
         </div>
         <div className="text-center">
-          <h1 className="text-sm font-bold text-foreground">Ligues Privées</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Compétez entre amis, un seul vainqueur.</p>
+          <h1 className="text-sm font-bold text-foreground">Private Leagues</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Compete with friends, one winner.</p>
         </div>
       </div>
 
@@ -69,8 +69,8 @@ export function LigueHubScreen() {
                 <Plus className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-foreground">Créer une ligue</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Génère un code d'invitation · PRO requis</p>
+                <p className="font-semibold text-foreground">Create a league</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Generate an invite code · PRO required</p>
               </div>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -84,8 +84,8 @@ export function LigueHubScreen() {
                 <Users className="h-5 w-5 text-foreground" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-foreground">Rejoindre une ligue</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Entre un code reçu d'un ami</p>
+                <p className="font-semibold text-foreground">Join a league</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Enter a code from a friend</p>
               </div>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -96,7 +96,7 @@ export function LigueHubScreen() {
               className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               <Lock className="h-4 w-4" />
-              Voir ma ligue actuelle
+              View my current league
             </Link>
           </div>
         )}
@@ -109,12 +109,12 @@ export function LigueHubScreen() {
               onClick={() => { setView("choose"); setError("") }}
               className="self-start text-xs text-muted-foreground hover:text-foreground"
             >
-              ← Retour
+              ← Back
             </button>
 
             <div>
-              <h2 className="text-lg font-semibold text-foreground">Nouvelle ligue</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Un code court sera généré automatiquement.</p>
+              <h2 className="text-lg font-semibold text-foreground">New league</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">A short code will be generated automatically.</p>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -134,8 +134,8 @@ export function LigueHubScreen() {
 
             <div className="rounded-lg border border-border bg-secondary/50 px-4 py-3">
               <p className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">Réservé aux membres PRO.</span>{" "}
-                Chaque joueur peut créer jusqu'à 3 ligues par saison.
+                <span className="font-medium text-foreground">PRO members only.</span>{" "}
+                Each player can create up to 3 leagues per season.
               </p>
             </div>
 
@@ -143,7 +143,7 @@ export function LigueHubScreen() {
               type="submit"
               className="mt-1 w-full rounded-lg bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 active:opacity-80"
             >
-              Créer la ligue →
+              Create league →
             </button>
           </form>
         )}
@@ -156,28 +156,28 @@ export function LigueHubScreen() {
             </div>
 
             <div className="text-center">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Ligue créée</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">League created</p>
               <h2 className="text-xl font-bold text-foreground">{leagueName}</h2>
             </div>
 
             <div className="w-full rounded-xl border border-primary/30 bg-primary/10 p-5 text-center">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Code d'invitation</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Invite code</p>
               <p className="text-3xl font-bold tracking-widest text-primary font-mono">{generatedCode}</p>
-              <p className="text-xs text-muted-foreground mt-2">Partage ce code avec tes adversaires</p>
+              <p className="text-xs text-muted-foreground mt-2">Share this code with your rivals</p>
             </div>
 
             <Link
               href="/ligue/alpha-wolves"
               className="w-full rounded-lg bg-primary px-4 py-3.5 text-center text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
-              Accéder à la ligue →
+              Go to league →
             </Link>
 
             <button
               onClick={() => { setView("choose"); setLeagueName(""); setGeneratedCode("") }}
               className="text-xs text-muted-foreground hover:text-foreground"
             >
-              Créer une autre ligue
+              Create another league
             </button>
           </div>
         )}
@@ -190,11 +190,11 @@ export function LigueHubScreen() {
               onClick={() => { setView("choose"); setError("") }}
               className="self-start text-xs text-muted-foreground hover:text-foreground"
             >
-              ← Retour
+              ← Back
             </button>
 
             <div>
-              <h2 className="text-lg font-semibold text-foreground">Rejoindre une ligue</h2>
+              <h2 className="text-lg font-semibold text-foreground">Join a league</h2>
               <p className="text-xs text-muted-foreground mt-0.5">Entre le code reçu d'un membre.</p>
             </div>
 
@@ -217,7 +217,7 @@ export function LigueHubScreen() {
               type="submit"
               className="mt-1 w-full rounded-lg bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 active:opacity-80"
             >
-              Rejoindre →
+              Join →
             </button>
           </form>
         )}

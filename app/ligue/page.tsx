@@ -2,8 +2,8 @@ import type { Metadata } from "next"
 import { LigueHubScreen } from "@/components/ligue-hub-screen"
 
 export const metadata: Metadata = {
-  title: "Ligues Privées - TradeLeague",
-  description: "Crée ou rejoins une ligue privée pour compéter entre amis.",
+  title: "Private Leagues - TradeLeague",
+  description: "Create or join a private league to compete with friends.",
 }
 
 export default function LiguePage() {

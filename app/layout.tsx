@@ -9,7 +9,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: 'TradeLeague - One trade a week. Real rivals.',
-  description: 'Composez votre portefeuille chaque semaine et affrontez vos rivaux sur les vrais marchés.',
+  description: 'Build your portfolio each week and take on your rivals on real markets.',
   generator: 'v0.app',
   icons: {
     icon: [

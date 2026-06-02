@@ -105,7 +105,7 @@ export function SaisonForm({ saison, onSubmit }: Props) {
         router.push("/admin")
         router.refresh()
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur inconnue")
+        setError(err instanceof Error ? err.message : "Unknown error")
       }
     })
   }
@@ -116,23 +116,23 @@ export function SaisonForm({ saison, onSubmit }: Props) {
       {/* Nom + type */}
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
-          <label className={LABEL}>Nom de la saison</label>
+          <label className={LABEL}>Season name</label>
           <input className={INPUT} value={form.nom} onChange={(e) => set("nom", e.target.value)}
-            placeholder="ex: Saison 3 — 2026 / Coupe de Printemps" required />
+            placeholder="e.g. Season 3 — 2026 / Spring Cup" required />
         </div>
         <div>
           <label className={LABEL}>Type</label>
           <select className={INPUT} value={form.type} onChange={(e) => set("type", e.target.value as "trimestrielle" | "speciale")}>
-            <option value="trimestrielle">Trimestrielle</option>
-            <option value="speciale">Spéciale</option>
+            <option value="trimestrielle">Quarterly</option>
+            <option value="speciale">Special</option>
           </select>
         </div>
         <div>
-          <label className={LABEL}>Statut</label>
+          <label className={LABEL}>Status</label>
           <select className={INPUT} value={form.statut} onChange={(e) => set("statut", e.target.value as FormData["statut"])}>
-            <option value="a_venir">À venir</option>
+            <option value="a_venir">Upcoming</option>
             <option value="active">Active</option>
-            <option value="terminee">Terminée</option>
+            <option value="terminee">Ended</option>
           </select>
         </div>
       </div>
@@ -140,12 +140,12 @@ export function SaisonForm({ saison, onSubmit }: Props) {
       {/* Dates */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={LABEL}>Date de début</label>
+          <label className={LABEL}>Start date</label>
           <input className={INPUT} type="date" value={form.debut_date}
             onChange={(e) => set("debut_date", e.target.value)} required />
         </div>
         <div>
-          <label className={LABEL}>Date de fin</label>
+          <label className={LABEL}>End date</label>
           <input className={INPUT} type="date" value={form.fin_date}
             onChange={(e) => set("fin_date", e.target.value)} required />
         </div>
@@ -154,12 +154,12 @@ export function SaisonForm({ saison, onSubmit }: Props) {
       {/* Capital + max allocation */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={LABEL}>Capital initial (€)</label>
+          <label className={LABEL}>Starting capital (€)</label>
           <input className={INPUT} type="number" min={1000} step={1000} value={form.capital_initial}
             onChange={(e) => set("capital_initial", parseInt(e.target.value))} required />
         </div>
         <div>
-          <label className={LABEL}>Max par action (%)</label>
+          <label className={LABEL}>Max per stock (%)</label>
           <input className={INPUT} type="number" min={1} max={100} value={form.max_allocation_pct}
             onChange={(e) => set("max_allocation_pct", parseInt(e.target.value))} required />
         </div>
@@ -167,10 +167,10 @@ export function SaisonForm({ saison, onSubmit }: Props) {
 
       {/* Fenêtre d'arbitrage */}
       <div className="rounded-xl border border-border bg-secondary/30 p-4 space-y-4">
-        <h3 className="text-sm font-semibold text-foreground">Fenêtre d'arbitrage</h3>
+        <h3 className="text-sm font-semibold text-foreground">Trading window</h3>
 
         <div>
-          <label className={LABEL}>Jours d'ouverture</label>
+          <label className={LABEL}>Open days</label>
           <div className="flex gap-2 flex-wrap">
             {JOURS_LABELS.map((label, idx) => (
               <button
@@ -191,7 +191,7 @@ export function SaisonForm({ saison, onSubmit }: Props) {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={LABEL}>Heure d'ouverture</label>
+            <label className={LABEL}>Open time</label>
             <div className="flex items-center gap-2">
               <input className={INPUT} type="number" min={0} max={23} value={form.fenetre_heure_debut}
                 onChange={(e) => set("fenetre_heure_debut", parseInt(e.target.value))} />
@@ -199,7 +199,7 @@ export function SaisonForm({ saison, onSubmit }: Props) {
             </div>
           </div>
           <div>
-            <label className={LABEL}>Heure de fermeture</label>
+            <label className={LABEL}>Close time</label>
             <div className="flex items-center gap-2">
               <input className={INPUT} type="number" min={0} max={23} value={form.fenetre_heure_fin}
                 onChange={(e) => set("fenetre_heure_fin", parseInt(e.target.value))} />
@@ -219,23 +219,23 @@ export function SaisonForm({ saison, onSubmit }: Props) {
           className="h-4 w-4 accent-primary"
         />
         <label htmlFor="inscription" className="text-sm text-foreground">
-          Inscription optionnelle (saison spéciale — le joueur doit rejoindre manuellement)
+          Optional sign-up (special season — players must join manually)
         </label>
       </div>
 
       {/* Tickers */}
       <div className="rounded-xl border border-border bg-secondary/30 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-foreground">Univers de tickers</h3>
+        <h3 className="text-sm font-semibold text-foreground">Stock universe</h3>
         <div className="flex items-center gap-3">
           <input id="tous" type="checkbox" checked={form.tickers_tous}
             onChange={(e) => set("tickers_tous", e.target.checked)} className="h-4 w-4 accent-primary" />
-          <label htmlFor="tous" className="text-sm text-foreground">Tous les 65 tickers</label>
+          <label htmlFor="tous" className="text-sm text-foreground">All 65 stocks</label>
         </div>
 
         {!form.tickers_tous && (
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              {form.tickers_autorises.length} ticker(s) sélectionné(s)
+              {form.tickers_autorises.length} stock(s) selected
             </p>
             {(["US", "Europe", "ETF"] as const).map((region) => (
               <div key={region}>
@@ -281,7 +281,7 @@ export function SaisonForm({ saison, onSubmit }: Props) {
           disabled={isPending}
           className="flex-1 rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
-          {isPending ? "Enregistrement…" : saison ? "Mettre à jour" : "Créer la saison"}
+          {isPending ? "Saving…" : saison ? "Update" : "Create season"}
         </button>
       </div>
     </form>

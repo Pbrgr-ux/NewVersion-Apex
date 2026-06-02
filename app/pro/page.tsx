@@ -2,8 +2,8 @@ import type { Metadata } from "next"
 import { PaywallScreen } from "@/components/paywall-screen"
 
 export const metadata: Metadata = {
-  title: "TradeLeague Pro - Passez au niveau supérieur",
-  description: "Débloquez les stats avancées, les ligues privées et une expérience sans publicité pour 2,99€/mois.",
+  title: "TradeLeague Pro — Level up",
+  description: "Unlock advanced stats, private leagues and an ad-free experience for €2.99/month.",
 }
 
 export default function ProPage({

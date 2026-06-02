@@ -6,7 +6,7 @@ import { getProfilData } from "@/lib/profil-data"
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
-  title: "Profil - TradeLeague",
+  title: "Profile - TradeLeague",
   description: "Your player profile and performance history",
 }
 

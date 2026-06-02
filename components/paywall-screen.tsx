@@ -10,43 +10,43 @@ type Plan = "monthly" | "annual"
 const PLANS = {
   monthly: {
     id: "monthly",
-    label: "Mensuel",
+    label: "Monthly",
     price: "2,99",
-    unit: "/ mois",
+    unit: "/ month",
     sub: null,
     badge: null,
     // In prod: Stripe Price ID for monthly plan
     priceId: "price_monthly_xxx",
-    ctaLabel: "S'abonner pour 2,99€/mois",
+    ctaLabel: "Subscribe for €2.99/month",
   },
   annual: {
     id: "annual",
-    label: "Annuel",
+    label: "Annual",
     price: "19,99",
-    unit: "/ an",
-    sub: "soit 1,67€/mois",
+    unit: "/ year",
+    sub: "i.e. €1.67/month",
     badge: "−44%",
     // In prod: Stripe Price ID for annual plan
     priceId: "price_annual_xxx",
-    ctaLabel: "S'abonner pour 19,99€/an",
+    ctaLabel: "Subscribe for €19.99/year",
   },
 } as const
 
 const FEATURES = [
   {
     icon: Zap,
-    title: "Stats des positions des autres joueurs",
-    description: "Vois où investissent les meilleurs traders chaque semaine.",
+    title: "Other players. positions",
+    description: "See where the best traders invest each week.",
   },
   {
     icon: Users,
-    title: "Ligues privées entre amis",
-    description: "Crée des compétitions exclusives et partage un code d'invitation.",
+    title: "Private leagues with friends",
+    description: "Create exclusive competitions and share an invite code.",
   },
   {
     icon: ShieldCheck,
-    title: "Sans publicité",
-    description: "Une expérience épurée, concentrée sur la performance.",
+    title: "Ad-free",
+    description: "A clean experience, focused on performance.",
   },
 ]
 
@@ -59,7 +59,7 @@ export function PaywallScreen({ returnTo = "/" }: { returnTo?: string }) {
   function handleSubscribe() {
     // In prod: POST /api/stripe/checkout { priceId: plan.priceId }
     // → redirect to Stripe Checkout URL
-    alert(`Stripe Checkout [${plan.priceId}] — à brancher en prod.`)
+    alert(`Stripe Checkout [${plan.priceId}] — to wire in prod.`)
   }
 
   return (
@@ -84,9 +84,9 @@ export function PaywallScreen({ returnTo = "/" }: { returnTo?: string }) {
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">TradeLeague</p>
-          <h1 className="text-3xl font-bold text-foreground">Passez Pro</h1>
+          <h1 className="text-3xl font-bold text-foreground">Go Pro</h1>
           <p className="mt-2 text-sm text-muted-foreground max-w-xs">
-            Accédez à toutes les fonctionnalités pour dominer le classement.
+            Unlock everything to dominate the ranking.
           </p>
         </div>
       </div>
@@ -170,12 +170,12 @@ export function PaywallScreen({ returnTo = "/" }: { returnTo?: string }) {
           href={returnTo}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          Non merci, rester gratuit
+          No thanks, stay free
         </Link>
 
         <p className="text-center text-xs text-muted-foreground/60 leading-relaxed max-w-xs">
-          Résiliable à tout moment, sans engagement.{" "}
-          Paiement sécurisé via Stripe. En t'abonnant, tu acceptes nos{" "}
+          Cancel anytime, no commitment.{" "}
+          Secure payment via Stripe. By subscribing, you accept our{" "}
           <Link href="#" className="underline underline-offset-2 hover:text-muted-foreground">
             Conditions d'utilisation
           </Link>.

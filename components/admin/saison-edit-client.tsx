@@ -27,7 +27,7 @@ export function SaisonEditClient({ saison }: { saison: SaisonRow }) {
     const { error } = await supabase.from("saisons").update({ statut: newStatut }).eq("id", saison.id)
     setToggling(false)
     if (error) { setMsg(error.message); return }
-    setMsg(newStatut === "active" ? "✅ Saison activée" : "✅ Saison archivée")
+    setMsg(newStatut === "active" ? "✅ Season activated" : "✅ Season archived")
     setTimeout(() => { router.push("/admin"); router.refresh() }, 800)
   }
 
@@ -37,12 +37,12 @@ export function SaisonEditClient({ saison }: { saison: SaisonRow }) {
       <div className="flex items-center gap-3 p-4 rounded-xl border border-border bg-secondary/30">
         <div className="flex-1">
           <p className="text-sm font-semibold text-foreground">
-            Statut : <span className={saison.statut === "active" ? "text-green-500" : "text-muted-foreground"}>
-              {saison.statut === "active" ? "Active" : saison.statut === "a_venir" ? "À venir" : "Terminée"}
+            Status: <span className={saison.statut === "active" ? "text-green-500" : "text-muted-foreground"}>
+              {saison.statut === "active" ? "Active" : saison.statut === "a_venir" ? "Upcoming" : "Ended"}
             </span>
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {saison.statut === "active" ? "Cliquez pour archiver la saison" : "Cliquez pour activer la saison"}
+            {saison.statut === "active" ? "Click to archive this season" : "Click to activate this season"}
           </p>
         </div>
         <button
@@ -54,7 +54,7 @@ export function SaisonEditClient({ saison }: { saison: SaisonRow }) {
               : "bg-green-500/10 text-green-500 border border-green-500/20 hover:bg-green-500/20"
           }`}
         >
-          {toggling ? "…" : saison.statut === "active" ? "Archiver" : "Activer"}
+          {toggling ? "…" : saison.statut === "active" ? "Archive" : "Activate"}
         </button>
       </div>
 
