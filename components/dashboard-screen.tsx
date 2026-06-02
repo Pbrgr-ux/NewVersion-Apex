@@ -110,7 +110,9 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
       </div>
 
       {/* ── Indices marché ───────────────────────────────────── */}
-      {(indices.cac40_variation !== null || indices.sp500_variation !== null) && (
+      {/* Masqué pour l'instant — le feed continue d'alimenter `indices`,
+          réactiver en retirant le `false &&` ci-dessous */}
+      {false && (indices.cac40_variation !== null || indices.sp500_variation !== null) && (
         <div className="mx-4 mb-3 flex gap-2">
           <Card className="flex-1 bg-card border-border">
             <CardContent className="flex flex-col items-center py-2 px-3">
