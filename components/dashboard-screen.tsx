@@ -130,6 +130,27 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         ))}
       </div>
 
+      {/* ── Bandeau statut fenêtre d'arbitrage ───────────────── */}
+      <Link href="/arbitrage" className="mx-4 mb-3">
+        <div className={`flex items-center justify-between rounded-xl border px-4 py-2.5 ${
+          arbitrage.isOpen
+            ? "border-green-500/30 bg-green-500/10"
+            : "border-border bg-card"
+        }`}>
+          <div className="flex items-center gap-2">
+            <Clock className={`h-4 w-4 ${arbitrage.isOpen ? "text-green-500" : "text-muted-foreground"}`} />
+            <span className={`text-sm font-semibold ${arbitrage.isOpen ? "text-green-500" : "text-foreground"}`}>
+              {arbitrage.isOpen ? "Window open" : "Window closed"}
+            </span>
+          </div>
+          <span className="font-mono text-xs text-muted-foreground">
+            {arbitrage.isOpen
+              ? <>Closes in <span className="font-semibold text-green-500">{arbitrage.timeUntilClose}</span></>
+              : <>Opens in <span className="font-semibold text-foreground">{arbitrage.timeUntilOpen}</span></>}
+          </span>
+        </div>
+      </Link>
+
       {/* ── Indices marché ───────────────────────────────────── */}
       {/* Masqué pour l'instant — le feed continue d'alimenter `indices`,
           réactiver en retirant le `false &&` ci-dessous */}
