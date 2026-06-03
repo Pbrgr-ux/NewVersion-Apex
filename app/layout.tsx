@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics }    from '@vercel/analytics/next'
 import { TopHeader }    from '@/components/top-header'
+import { BottomNav }    from '@/components/bottom-nav'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -42,6 +43,7 @@ export default function RootLayout({
         <div className="mx-auto w-full max-w-xl min-h-svh relative bg-background shadow-[0_0_40px_rgba(0,0,0,0.15)]">
           <TopHeader />
           {children}
+          <BottomNav />
         </div>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

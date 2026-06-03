@@ -118,7 +118,7 @@ export function StockDetailScreen({ detail }: { detail: StockDetail }) {
   ]
 
   return (
-    <main className="flex min-h-svh flex-col bg-background px-4 pt-2 pb-10">
+    <main className="flex min-h-svh flex-col bg-background px-4 pt-2 pb-24">
 
       {/* Header */}
       <button
