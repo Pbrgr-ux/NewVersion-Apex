@@ -4,10 +4,11 @@ import { SaisonEditClient } from "@/components/admin/saison-edit-client"
 
 export const dynamic = "force-dynamic"
 
-export default async function EditSaisonPage({ params }: { params: { id: string } }) {
+export default async function EditSaisonPage({ params }: { params: Promise<{ id: string }> }) {
   try { await requireAdmin() } catch { redirect("/dashboard") }
 
-  const saison = await getSaisonById(parseInt(params.id, 10))
+  const { id } = await params
+  const saison = await getSaisonById(parseInt(id, 10))
   if (!saison) redirect("/admin")
 
   return (
