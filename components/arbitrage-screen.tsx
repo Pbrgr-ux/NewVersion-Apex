@@ -103,6 +103,8 @@ export function ArbitrageScreen() {
   const [isSubmitting, setIsSubmitting]           = useState(false)
   const [submitError, setSubmitError]             = useState<string | null>(null)
   const [livePrices, setLivePrices]               = useState<Record<string, number>>({})
+  const [capitalAjuste, setCapitalAjuste]         = useState(100_000)
+  const [openPosWealth, setOpenPosWealth]         = useState<Array<{ ticker: string; base_capital: number | null; open_price: number | null; allocation_pct: number }>>([])
 
   // ── Prix temps réel (cohérents avec la fiche action) ───────
   useEffect(() => {
@@ -111,6 +113,22 @@ export function ArbitrageScreen() {
       .then((d) => { if (d?.quotes) setLivePrices(d.quotes) })
       .catch(() => {})
   }, [])
+
+  // ── Capital courant = valeur réelle du portefeuille ────────
+  const currentCapital = useMemo(() => {
+    if (openPosWealth.length === 0) return capitalAjuste
+    const base = openPosWealth[0].base_capital ?? capitalAjuste
+    let r = 0
+    for (const p of openPosWealth) {
+      const live = livePrices[p.ticker]
+      const open = p.open_price
+      if (live != null && open && open > 0) {
+        const ratio = live / open
+        if (ratio <= 10 && ratio >= 0.1) r += (p.allocation_pct / 100) * (ratio - 1)
+      }
+    }
+    return Math.round(base * (1 + r))
+  }, [openPosWealth, livePrices, capitalAjuste])
 
   // ── Charger l'allocation existante + vérifier le lock ──────
   useEffect(() => {
@@ -122,19 +140,22 @@ export function ArbitrageScreen() {
       // 1. Charger le portfolio + positions existantes
       const { data: portfolios } = await supabase
         .from("portfolios")
-        .select("id")
+        .select("id, capital_ajuste")
         .eq("user_id", user.id)
         .eq("saison", CURRENT_SAISON)
         .order("id", { ascending: false })
         .limit(1)
 
       const portfolioId = portfolios?.[0]?.id
+      if (portfolios?.[0]?.capital_ajuste != null) {
+        setCapitalAjuste(Number(portfolios[0].capital_ajuste))
+      }
       let hasPositions  = false
 
       if (portfolioId) {
         const { data: positions } = await supabase
           .from("positions")
-          .select("ticker, allocation_pct")
+          .select("ticker, allocation_pct, base_capital, open_price")
           .eq("portfolio_id", portfolioId)
           .eq("status", "open")
 
@@ -148,6 +169,13 @@ export function ArbitrageScreen() {
             }
             return next
           })
+          // Données pour le calcul de la richesse courante
+          setOpenPosWealth(positions.map((p) => ({
+            ticker:         p.ticker,
+            base_capital:   p.base_capital != null ? Number(p.base_capital) : null,
+            open_price:     p.open_price != null ? Number(p.open_price) : null,
+            allocation_pct: Number(p.allocation_pct),
+          })))
           // Re-trier pour positionner les tickers alloués en tête
           setSortVersion((v) => v + 1)
         }
@@ -414,7 +442,7 @@ export function ArbitrageScreen() {
           Available capital
         </span>
         <span className="text-3xl font-bold tabular-nums text-foreground">
-          100 000 €
+          {currentCapital.toLocaleString("en-US")} €
         </span>
       </div>
 
@@ -691,7 +719,7 @@ export function ArbitrageScreen() {
                 onClick={() => setShowConfirmDialog(false)}
                 disabled={isSubmitting}
               >
-                Annuler
+                Cancel
               </Button>
               <Button
                 onClick={handleConfirm}
