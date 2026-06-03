@@ -37,10 +37,11 @@ function PriceChart({ data, positive }: { data: { date: string; close: number }[
   const range = max - min || 1
   const color = positive ? "#22c55e" : "#ef4444"
 
+  const yFor = (price: number) => PAD + (1 - (price - min) / range) * (H - 2 * PAD)
+
   const pts = data.map((d, i) => {
     const x = PAD + (i / (data.length - 1)) * (W - 2 * PAD)
-    const y = PAD + (1 - (d.close - min) / range) * (H - 2 * PAD)
-    return `${x.toFixed(1)},${y.toFixed(1)}`
+    return `${x.toFixed(1)},${yFor(d.close).toFixed(1)}`
   })
 
   const line = pts.join(" ")
@@ -49,19 +50,43 @@ function PriceChart({ data, positive }: { data: { date: string; close: number }[
   // Repères de dates (premier, milieu, dernier)
   const ticks = [0, Math.floor(data.length / 2), data.length - 1]
 
+  // Lignes de repère horizontales (2 niveaux à 1/3 et 2/3 de l'amplitude)
+  const fmtLvl = (v: number) => v >= 100 ? v.toFixed(0) : v.toFixed(2)
+  const levels = [min + range * (2 / 3), min + range * (1 / 3)].map((price) => ({
+    price,
+    topPct: (yFor(price) / H) * 100,
+  }))
+
   return (
     <div className="w-full">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none" style={{ height: 180 }}>
-        <defs>
-          <linearGradient id="stockGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.25" />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <polygon points={area} fill="url(#stockGrad)" />
-        <polyline points={line} fill="none" stroke={color} strokeWidth="1.5"
-          strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-      </svg>
+      <div className="relative" style={{ height: 180 }}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="stockGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+              <stop offset="100%" stopColor={color} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {/* Lignes de repère pointillées */}
+          {levels.map((lvl, i) => (
+            <line key={i}
+              x1={PAD} x2={W - PAD} y1={yFor(lvl.price)} y2={yFor(lvl.price)}
+              stroke="currentColor" strokeWidth="0.5" strokeDasharray="3 3"
+              className="text-muted-foreground/40" vectorEffect="non-scaling-stroke" />
+          ))}
+          <polygon points={area} fill="url(#stockGrad)" />
+          <polyline points={line} fill="none" stroke={color} strokeWidth="1.5"
+            strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        </svg>
+        {/* Labels des niveaux (HTML, non déformés) */}
+        {levels.map((lvl, i) => (
+          <span key={i}
+            className="absolute right-0 -translate-y-1/2 bg-card/80 px-1 text-[10px] tabular-nums text-muted-foreground"
+            style={{ top: `${lvl.topPct}%` }}>
+            {fmtLvl(lvl.price)}
+          </span>
+        ))}
+      </div>
       <div className="flex justify-between px-1 mt-1 text-[10px] text-muted-foreground">
         {ticks.map((i) => (
           <span key={i}>
