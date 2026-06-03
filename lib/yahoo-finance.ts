@@ -25,6 +25,8 @@ const yf = new (YahooFinanceClass as unknown as new (opts?: object) => {
     queryOptions?: object,
     moduleOptions?: object
   ): Promise<unknown>
+  chart(symbol: string, queryOptions?: object, moduleOptions?: object): Promise<unknown>
+  quoteSummary(symbol: string, queryOptions?: object, moduleOptions?: object): Promise<unknown>
 })({ suppressNotices: ["yahooSurvey"] })
 
 export type FetchedPrice = {
@@ -104,4 +106,89 @@ async function fetchBySymbols(symbols: string[]): Promise<FetchedPrice[]> {
   }
 
   return results
+}
+
+// ── Historique + ratios (fiche action) ────────────────────────
+
+export type PricePoint = { date: string; close: number }
+
+export type StockStats = {
+  price:          number | null
+  currency:       string | null
+  dayChangePct:   number | null
+  marketCap:      number | null
+  trailingPE:     number | null
+  dividendYield:  number | null   // en %
+  fiftyTwoHigh:   number | null
+  fiftyTwoLow:    number | null
+  volume:         number | null
+}
+
+/** Historique des cours (close) sur une période, ex: "6mo". */
+export async function fetchHistory(yahooSymbol: string, range = "6mo"): Promise<PricePoint[]> {
+  try {
+    const now     = new Date()
+    const period1 = new Date(now)
+    period1.setMonth(period1.getMonth() - 6)
+
+    const raw = await yf.chart(yahooSymbol, {
+      period1,
+      period2:  now,
+      interval: "1d",
+    }) as { quotes?: Array<{ date: Date | string; close: number | null }> }
+
+    return (raw?.quotes ?? [])
+      .filter((q) => q.close != null)
+      .map((q) => ({
+        date:  (q.date instanceof Date ? q.date : new Date(q.date)).toISOString().split("T")[0],
+        close: Number(q.close),
+      }))
+  } catch (err) {
+    console.error("[yahoo-finance] fetchHistory:", err)
+    return []
+  }
+}
+
+/** Ratios clés via quoteSummary. */
+export async function fetchKeyStats(yahooSymbol: string): Promise<StockStats> {
+  const empty: StockStats = {
+    price: null, currency: null, dayChangePct: null, marketCap: null,
+    trailingPE: null, dividendYield: null, fiftyTwoHigh: null, fiftyTwoLow: null, volume: null,
+  }
+  try {
+    const raw = await yf.quoteSummary(yahooSymbol, {
+      modules: ["price", "summaryDetail"],
+    }) as {
+      price?: {
+        regularMarketPrice?: number | null
+        regularMarketChangePercent?: number | null
+        currency?: string | null
+        marketCap?: number | null
+        regularMarketVolume?: number | null
+      }
+      summaryDetail?: {
+        trailingPE?: number | null
+        dividendYield?: number | null
+        fiftyTwoWeekHigh?: number | null
+        fiftyTwoWeekLow?: number | null
+      }
+    }
+
+    const p = raw?.price ?? {}
+    const s = raw?.summaryDetail ?? {}
+    return {
+      price:         p.regularMarketPrice ?? null,
+      currency:      p.currency ?? null,
+      dayChangePct:  p.regularMarketChangePercent != null ? p.regularMarketChangePercent * 100 : null,
+      marketCap:     p.marketCap ?? null,
+      trailingPE:    s.trailingPE ?? null,
+      dividendYield: s.dividendYield != null ? s.dividendYield * 100 : null,
+      fiftyTwoHigh:  s.fiftyTwoWeekHigh ?? null,
+      fiftyTwoLow:   s.fiftyTwoWeekLow ?? null,
+      volume:        p.regularMarketVolume ?? null,
+    }
+  } catch (err) {
+    console.error("[yahoo-finance] fetchKeyStats:", err)
+    return empty
+  }
 }

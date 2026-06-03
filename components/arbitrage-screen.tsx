@@ -465,7 +465,9 @@ export function ArbitrageScreen() {
                         {stock.ticker.replace(".", "").slice(0, 2)}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-foreground leading-tight">{stock.ticker}</span>
+                        <Link href={`/stock/${encodeURIComponent(stock.ticker)}`} className="text-sm font-semibold text-foreground leading-tight hover:text-primary hover:underline">
+                          {stock.ticker}
+                        </Link>
                         <span className="text-xs text-muted-foreground leading-tight">{stock.name}</span>
                       </div>
                     </div>

@@ -169,7 +169,8 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             {positions.map((pos) => {
               const positive = (pos.variation_day ?? 0) >= 0
               return (
-                <Card key={pos.ticker} className="bg-card border-border py-0 gap-0">
+                <Link key={pos.ticker} href={`/stock/${encodeURIComponent(pos.ticker)}`}>
+                <Card className="bg-card border-border py-0 gap-0 transition-colors hover:border-primary/40">
                   <CardContent className="flex items-center justify-between px-3 py-2">
                     <div className="flex items-center gap-2.5">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
@@ -206,6 +207,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
                     </div>
                   </CardContent>
                 </Card>
+                </Link>
               )
             })}
           </div>
