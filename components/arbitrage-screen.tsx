@@ -102,6 +102,15 @@ export function ArbitrageScreen() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [isSubmitting, setIsSubmitting]           = useState(false)
   const [submitError, setSubmitError]             = useState<string | null>(null)
+  const [livePrices, setLivePrices]               = useState<Record<string, number>>({})
+
+  // ── Prix temps réel (cohérents avec la fiche action) ───────
+  useEffect(() => {
+    fetch("/api/quotes")
+      .then((r) => r.json())
+      .then((d) => { if (d?.quotes) setLivePrices(d.quotes) })
+      .catch(() => {})
+  }, [])
 
   // ── Charger l'allocation existante + vérifier le lock ──────
   useEffect(() => {
@@ -448,7 +457,8 @@ export function ArbitrageScreen() {
 
         <div className="flex flex-col gap-2">
           {visibleStocks.map((stock) => {
-            const market = MOCK_MARKET[stock.ticker] ?? { price: 100, weekChange: 0 }
+            const mock   = MOCK_MARKET[stock.ticker] ?? { price: 100, weekChange: 0 }
+            const price  = livePrices[stock.ticker] ?? mock.price   // prix réel si dispo
             const alloc  = allocations[stock.ticker] ?? 0
             return (
               <Card
@@ -473,12 +483,7 @@ export function ArbitrageScreen() {
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-sm font-medium tabular-nums text-foreground">
-                        {market.price.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                      <span className={`text-xs font-medium tabular-nums ${
-                        market.weekChange >= 0 ? "text-green-500" : "text-red-500"
-                      }`}>
-                        {market.weekChange >= 0 ? "+" : ""}{market.weekChange.toFixed(2)}% /7j
+                        {price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                   </div>
