@@ -167,19 +167,41 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         </h3>
 
         {!hasPortfolio || positions.length === 0 ? (
-          <Card className="bg-card border-border border-dashed py-0 gap-0">
-            <CardContent className="flex items-center gap-3 px-4 py-3 text-left">
-              <Wallet className="h-6 w-6 shrink-0 text-muted-foreground/50" />
-              <p className="flex-1 text-sm text-muted-foreground">
-                No position yet — set up your portfolio during the next trading window.
-              </p>
-              {arbitrage.isOpen && (
-                <Link href="/arbitrage">
-                  <Button size="sm" className="shrink-0">Set up</Button>
-                </Link>
-              )}
-            </CardContent>
-          </Card>
+          /* ── Onboarding nouveau joueur ── */
+          <div className="rounded-2xl border border-border bg-card px-4 py-5">
+            <p className="text-base font-bold text-foreground">Welcome to TradeLeague 👋</p>
+            <p className="text-sm text-muted-foreground mt-0.5 mb-4">
+              Build your portfolio, beat your rivals.
+            </p>
+
+            <div className="flex flex-col gap-3 mb-5">
+              {([
+                { n: "1", icon: <Wallet className="h-4 w-4" />,    title: "Pick your stocks",  desc: "During the weekly window, split your capital across up to 65 stocks." },
+                { n: "2", icon: <TrendingUp className="h-4 w-4" />, title: "Real markets",      desc: "Live prices. Your performance tracks the real market." },
+                { n: "3", icon: <Trophy className="h-4 w-4" />,     title: "Climb the ranking", desc: "13-week seasons. Compete against everyone." },
+              ] as const).map((step) => (
+                <div key={step.n} className="flex items-start gap-3">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                    {step.icon}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground leading-tight">{step.title}</p>
+                    <p className="text-xs text-muted-foreground">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {arbitrage.isOpen ? (
+              <Link href="/arbitrage">
+                <Button className="w-full h-11 font-semibold">Build my portfolio →</Button>
+              </Link>
+            ) : (
+              <Button className="w-full h-11 font-semibold bg-secondary text-secondary-foreground cursor-not-allowed" disabled>
+                <Lock className="h-4 w-4 mr-2" /> Opens in {arbitrage.timeUntilOpen}
+              </Button>
+            )}
+          </div>
         ) : (
           <div className="flex flex-col gap-2">
             {positions.map((pos) => {
