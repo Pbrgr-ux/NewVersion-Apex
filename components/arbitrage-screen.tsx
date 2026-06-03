@@ -567,7 +567,7 @@ export function ArbitrageScreen() {
             ) : totalAllocation === 0 ? (
               "Pick at least 1 stock"
             ) : (
-              `Submit — % invested, % cash`
+              `Submit — ${totalAllocation}% invested, ${cashPct}% cash`
             )}
           </Button>
         </div>

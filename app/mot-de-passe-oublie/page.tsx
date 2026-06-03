@@ -57,7 +57,7 @@ export default function MotDePasseOubliePage() {
           href="/connexion"
           className="mt-8 text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
-          Retour à la connexion
+          Back to sign in
         </Link>
       </main>
     )
@@ -81,7 +81,7 @@ export default function MotDePasseOubliePage() {
           className="mb-6 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour
+          Back
         </button>
 
         <div className="mb-8">
@@ -130,7 +130,7 @@ export default function MotDePasseOubliePage() {
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Remember it?{" "}
           <Link href="/connexion" className="font-medium text-foreground underline-offset-4 hover:underline">
-            Se connecter
+            Sign in
           </Link>
         </p>
       </div>
