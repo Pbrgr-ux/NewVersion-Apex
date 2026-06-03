@@ -140,6 +140,7 @@ export type Database = {
           opened_at:      string | null
           close_price:    number | null
           closed_at:      string | null
+          base_capital:   number | null  // valeur portefeuille à l'arbitrage
           created_at:     string
         }
         Insert: {
@@ -155,6 +156,7 @@ export type Database = {
           opened_at?:      string | null
           close_price?:    number | null
           closed_at?:      string | null
+          base_capital?:   number | null
           created_at?:     string
         }
         Update: {
@@ -165,6 +167,7 @@ export type Database = {
           opened_at?:      string | null
           close_price?:    number | null
           closed_at?:      string | null
+          base_capital?:   number | null
         }
         Relationships: [
           {

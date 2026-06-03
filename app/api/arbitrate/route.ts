@@ -52,14 +52,12 @@ export async function POST(req: NextRequest) {
   const saison  = getCurrentSeasonId()
   const nowISO  = new Date().toISOString()
 
-  // 2. Prix temps réel pour les tickers sélectionnés
-  const quotes = await getLiveQuotes(selected.map((s) => s.ticker))
-
-  // 3. Récupérer ou créer le portfolio
+  // 2. Récupérer ou créer le portfolio
   let portfolioId: string
+  let capitalDepart = 100_000
   const { data: existing } = await db
     .from("portfolios")
-    .select("id")
+    .select("id, capital_ajuste")
     .eq("user_id", user.id)
     .eq("saison", saison)
     .order("id", { ascending: false })
@@ -67,7 +65,8 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (existing) {
-    portfolioId = existing.id
+    portfolioId   = existing.id
+    capitalDepart = existing.capital_ajuste ? Number(existing.capital_ajuste) : 100_000
   } else {
     const { data: created, error: cErr } = await db
       .from("portfolios")
@@ -78,26 +77,55 @@ export async function POST(req: NextRequest) {
     portfolioId = created.id
   }
 
-  // 4. Fermer les positions ouvertes existantes
+  // 3. Positions ouvertes existantes (à fermer)
   const { data: openPositions } = await db
     .from("positions")
-    .select("id, ticker")
+    .select("id, ticker, allocation_pct, open_price, base_capital")
     .eq("portfolio_id", portfolioId)
     .eq("status", "open")
 
+  // 4. Prix temps réel — tickers sélectionnés + tickers à fermer
+  const allTickers = Array.from(new Set([
+    ...selected.map((s) => s.ticker),
+    ...(openPositions ?? []).map((p) => p.ticker),
+  ]))
+  const quotes = await getLiveQuotes(allTickers)
+
+  // 5. Calculer la base du nouveau batch = valeur du portefeuille MAINTENANT
+  //    new_base = base_du_batch_ouvert × (1 + rendement réalisé à la clôture)
+  let newBase = capitalDepart
+  if (openPositions && openPositions.length > 0) {
+    const openBase = openPositions[0].base_capital != null
+      ? Number(openPositions[0].base_capital)
+      : capitalDepart
+    let r = 0
+    for (const p of openPositions) {
+      const close = quotes.get(p.ticker)
+      const open  = p.open_price != null ? Number(p.open_price) : null
+      if (close != null && open && open > 0) {
+        const ratio = close / open
+        if (ratio <= 10 && ratio >= 0.1) {           // garde anti-corruption
+          r += (Number(p.allocation_pct) / 100) * (ratio - 1)
+        }
+      }
+    }
+    newBase = openBase * (1 + r)
+  }
+
+  // 6. Fermer les positions ouvertes
   for (const pos of openPositions ?? []) {
-    const closePrice = quotes.get(pos.ticker) ?? null
     await db
       .from("positions")
       .update({
         status:      "closed",
-        close_price: closePrice,
+        close_price: quotes.get(pos.ticker) ?? null,
         closed_at:   nowISO,
       })
       .eq("id", pos.id)
   }
 
-  // 5. Ouvrir les nouvelles positions
+  // 7. Ouvrir les nouvelles positions avec la base figée
+  const baseRounded = Math.round(newBase)
   const newRows = selected.map((s) => {
     const price = quotes.get(s.ticker) ?? 0
     return {
@@ -106,15 +134,21 @@ export async function POST(req: NextRequest) {
       saison,
       ticker:         s.ticker,
       allocation_pct: s.pct,
-      prix_achat:     price,        // compat ascendante
+      prix_achat:     price,
       open_price:     price,
       opened_at:      nowISO,
       status:         "open",
+      base_capital:   baseRounded,
     }
   })
 
   const { error: insErr } = await db.from("positions").insert(newRows)
   if (insErr) return NextResponse.json({ error: "Could not save positions" }, { status: 500 })
 
-  return NextResponse.json({ ok: true, opened: newRows.length, closed: (openPositions ?? []).length })
+  return NextResponse.json({
+    ok:          true,
+    opened:      newRows.length,
+    closed:      (openPositions ?? []).length,
+    base_capital: baseRounded,
+  })
 }

@@ -13,13 +13,15 @@ import { getLiveQuotes }    from "@/lib/live-quotes"
 
 // ── Types ─────────────────────────────────────────────────────
 export type PositionRow = {
-  ticker:        string
-  name:          string
+  ticker:         string
+  name:           string
   allocation_pct: number
-  open_price:    number | null   // prix moyen d'acquisition
-  prix_actuel:   number | null
-  variation_day: number | null   // plus-value latente % (depuis l'acquisition)
-  sparkline:     number[]
+  open_price:     number | null   // prix moyen d'acquisition
+  prix_actuel:    number | null
+  variation_day:  number | null   // plus-value latente % (depuis l'acquisition)
+  invested_eur:   number | null   // montant investi (base × alloc%)
+  pnl_eur:        number | null   // plus-value latente en €
+  sparkline:      number[]
 }
 
 export type AllTimeStats = {
@@ -193,7 +195,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   // ── 2. Positions de la saison (ouvertes + fermées pour la perf chaînée) ─
   const { data: allPositions } = await supabase
     .from("positions")
-    .select("ticker, allocation_pct, open_price, opened_at, close_price, status")
+    .select("ticker, allocation_pct, open_price, opened_at, close_price, status, base_capital")
     .eq("portfolio_id", portfolio.id)
 
   const openPositions = (allPositions ?? []).filter((p) => p.status === "open")
@@ -256,13 +258,23 @@ export async function getDashboardData(): Promise<DashboardData> {
     if (cWeek  != null) { weekPerf  += cWeek;  hasWeekData  = true }
     if (cMonth != null) { monthPerf += cMonth; hasMonthData = true }
 
+    // Montants en € à partir de la base du batch
+    const base        = pos.base_capital != null ? Number(pos.base_capital) : null
+    const investedEur = base != null ? base * w : null
+    const variationPct = sinceOpen != null && w > 0 ? sinceOpen / w : null
+    const pnlEur      = investedEur != null && variationPct != null
+      ? investedEur * (variationPct / 100)
+      : null
+
     return {
       ticker:         pos.ticker,
       name:           TICKER_MAP[pos.ticker]?.name ?? pos.ticker,
       allocation_pct: Number(pos.allocation_pct),
       open_price:     openPrice,
       prix_actuel:    live,
-      variation_day:  sinceOpen != null && w > 0 ? parseFloat((sinceOpen / w).toFixed(2)) : null,
+      variation_day:  variationPct != null ? parseFloat(variationPct.toFixed(2)) : null,
+      invested_eur:   investedEur != null ? Math.round(investedEur) : null,
+      pnl_eur:        pnlEur != null ? Math.round(pnlEur) : null,
       sparkline:      prices.slice(0, 7).map((p) => p.prix).reverse(),
     }
   })

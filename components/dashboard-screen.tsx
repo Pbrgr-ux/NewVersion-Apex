@@ -190,13 +190,17 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
                           {pos.prix_actuel != null ? pos.prix_actuel.toFixed(2) : "—"}
                         </span>
                       </div>
-                      {/* Plus-value latente */}
-                      <div className="flex flex-col items-end leading-tight w-16">
-                        <span className="text-xs text-muted-foreground">P&L</span>
+                      {/* Plus-value latente : % et € */}
+                      <div className="flex flex-col items-end leading-tight w-20">
                         <span className={`text-sm font-bold tabular-nums ${
                           pos.variation_day === null ? "text-muted-foreground" : positive ? "text-green-500" : "text-red-500"
                         }`}>
                           {pos.variation_day === null ? "—" : fmtPerf(pos.variation_day)}
+                        </span>
+                        <span className={`text-xs font-medium tabular-nums ${
+                          pos.pnl_eur === null ? "text-muted-foreground" : positive ? "text-green-500" : "text-red-500"
+                        }`}>
+                          {pos.pnl_eur === null ? "—" : `${pos.pnl_eur >= 0 ? "+" : ""}${fmtPrix(pos.pnl_eur)} €`}
                         </span>
                       </div>
                     </div>
