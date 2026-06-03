@@ -127,6 +127,7 @@ export function ArbitrageScreen() {
           .from("positions")
           .select("ticker, allocation_pct")
           .eq("portfolio_id", portfolioId)
+          .eq("status", "open")
 
         if (positions && positions.length > 0) {
           hasPositions = true
@@ -198,73 +199,23 @@ export function ArbitrageScreen() {
     setSubmitError(null)
 
     try {
-      // 1. Utilisateur connecté
+      // Tout est fait côté serveur : prix temps réel + fermeture/ouverture
+      // historisée des positions (voir /api/arbitrate).
+      const res = await fetch("/api/arbitrate", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ allocations }),
+      })
+
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json?.error ?? "Could not save")
+
+      // Verrouiller jusqu'à la fermeture de la fenêtre (clé par user)
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Not signed in — please sign in again")
-
-      // 2. Récupérer ou créer le portfolio de la saison courante
-      let portfolioId: string
-
-      const { data: existing } = await supabase
-        .from("portfolios")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("saison", CURRENT_SAISON)
-        .order("id", { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (existing) {
-        portfolioId = existing.id
-      } else {
-        const { data: created, error: cErr } = await supabase
-          .from("portfolios")
-          .insert({ user_id: user.id, saison: CURRENT_SAISON, cash: 0 })
-          .select("id")
-          .single()
-        if (cErr || !created) throw new Error("Could not create portfolio")
-        portfolioId = created.id
-      }
-
-      // 3. Supprimer les anciennes positions
-      await supabase.from("positions").delete().eq("portfolio_id", portfolioId)
-
-      // 4. prix_achat = cours réel le plus récent (MÊME source que le calcul
-      //    de perf du dashboard) → la perf démarre bien à 0 %.
-      const selectedTickers = TICKERS
-        .filter((t) => (allocations[t.ticker] ?? 0) > 0)
-        .map((t) => t.ticker)
-
-      const { data: coursData } = await supabase
-        .from("cours")
-        .select("ticker, prix, date")
-        .in("ticker", selectedTickers)
-        .order("date", { ascending: false })
-
-      // Cours le plus récent par ticker
-      const lastPrix: Record<string, number> = {}
-      for (const c of coursData ?? []) {
-        if (!(c.ticker in lastPrix)) lastPrix[c.ticker] = Number(c.prix)
-      }
-
-      const newPositions = selectedTickers.map((ticker) => ({
-        portfolio_id:   portfolioId,
-        ticker,
-        allocation_pct: allocations[ticker],
-        // Cours réel en base, sinon fallback mock (cohérent avec l'affichage)
-        prix_achat:     lastPrix[ticker] ?? MOCK_MARKET[ticker]?.price ?? 100,
-      }))
-
-      if (newPositions.length > 0) {
-        const { error: iErr } = await supabase.from("positions").insert(newPositions)
-        if (iErr) throw new Error("Could not save positions")
-      }
-
-      // 5. Verrouiller jusqu'à la fermeture de la fenêtre (clé par user)
-      if (arbitrage.windowCloseISO) {
+      if (user && arbitrage.windowCloseISO) {
         localStorage.setItem(lsKey(user.id), arbitrage.windowCloseISO)
+        setUserId(user.id)
       }
-      setUserId(user.id)
       setShowConfirmDialog(false)
       router.push("/dashboard")
 

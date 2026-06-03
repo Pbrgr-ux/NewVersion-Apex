@@ -110,7 +110,7 @@ export async function getAllClassementData(): Promise<AllClassementData> {
 
     admin
       .from("portfolios")
-      .select("user_id, statut_joueur, positions ( ticker, allocation_pct )")
+      .select("user_id, statut_joueur, positions ( ticker, allocation_pct, status, open_price )")
       .eq("saison", CURRENT_SAISON),
 
     admin
@@ -187,8 +187,8 @@ export async function getAllClassementData(): Promise<AllClassementData> {
   const userPerfs: UserPerf[] = []
 
   for (const portfolio of portfoliosRes.data ?? []) {
-    type RawPos = { ticker: string; allocation_pct: number }
-    const positions = (portfolio.positions ?? []) as RawPos[]
+    type RawPos = { ticker: string; allocation_pct: number; status?: string }
+    const positions = ((portfolio.positions ?? []) as RawPos[]).filter((p) => (p.status ?? "open") === "open")
     if (positions.length === 0) continue
 
     let pJour = 0, pSemaine = 0, pMois = 0

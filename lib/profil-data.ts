@@ -97,7 +97,7 @@ export async function getProfilData(): Promise<ProfilData | null> {
     // Portfolio + positions de la saison courante
     supabase
       .from("portfolios")
-      .select("id, positions ( ticker, allocation_pct )")
+      .select("id, positions ( ticker, allocation_pct, status )")
       .eq("user_id", user.id)
       .eq("saison", CURRENT_SAISON)
       .maybeSingle(),
@@ -137,11 +137,12 @@ export async function getProfilData(): Promise<ProfilData | null> {
     total:       totalBySaison[c.saison] ?? 0,
   }))
 
-  // ── 4. Positions + cours actuels ──────────────────────────
-  const rawPositions = (portfolioRes.data?.positions ?? []) as Array<{
+  // ── 4. Positions + cours actuels (ouvertes uniquement) ─────
+  const rawPositions = ((portfolioRes.data?.positions ?? []) as Array<{
     ticker: string
     allocation_pct: number
-  }>
+    status?: string
+  }>).filter((p) => (p.status ?? "open") === "open")
 
   const hasPortfolio = rawPositions.length > 0
 

@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
   const [portfoliosRes, coursRes] = await Promise.all([
     supabase
       .from("portfolios")
-      .select("id, user_id, statut_joueur, capital_initial, capital_ajuste, positions ( ticker, allocation_pct, prix_achat )")
+      .select("id, user_id, statut_joueur, capital_initial, capital_ajuste, positions ( ticker, allocation_pct, prix_achat, open_price, status )")
       .eq("saison", CURRENT_SAISON),
 
     supabase
@@ -179,16 +179,19 @@ export async function GET(request: NextRequest) {
   const entries: Entry[] = []
 
   for (const portfolio of portfoliosRes.data ?? []) {
-    const positions = (portfolio.positions ?? []) as Array<{
-      ticker: string; allocation_pct: number; prix_achat: number
-    }>
+    const positions = ((portfolio.positions ?? []) as Array<{
+      ticker: string; allocation_pct: number; prix_achat: number; open_price: number | null; status?: string
+    }>).filter((p) => (p.status ?? "open") === "open")
     if (positions.length === 0) continue
 
     let perf = 0
     for (const pos of positions) {
       const prixActuel = prixMap[pos.ticker]
-      if (!prixActuel || Number(pos.prix_achat) === 0) continue
-      perf += (Number(pos.allocation_pct) / 100) * (prixActuel / Number(pos.prix_achat) - 1) * 100
+      const base       = pos.open_price != null ? Number(pos.open_price) : Number(pos.prix_achat)
+      if (!prixActuel || base === 0) continue
+      const ratio = prixActuel / base
+      if (ratio > 10 || ratio < 0.1) continue   // garde anti-données-corrompues
+      perf += (Number(pos.allocation_pct) / 100) * (ratio - 1) * 100
     }
 
     const perfFinal = parseFloat(perf.toFixed(4))

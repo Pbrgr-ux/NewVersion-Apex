@@ -130,22 +130,41 @@ export type Database = {
         Row: {
           id:             string
           portfolio_id:   string
+          user_id:        string | null
+          saison:         number | null
           ticker:         string
           allocation_pct: number
           prix_achat:     number
+          status:         string         // 'open' | 'closed'
+          open_price:     number | null
+          opened_at:      string | null
+          close_price:    number | null
+          closed_at:      string | null
           created_at:     string
         }
         Insert: {
           id?:             string
           portfolio_id:    string
+          user_id?:        string | null
+          saison?:         number | null
           ticker:          string
           allocation_pct:  number
           prix_achat:      number
+          status?:         string
+          open_price?:     number | null
+          opened_at?:      string | null
+          close_price?:    number | null
+          closed_at?:      string | null
           created_at?:     string
         }
         Update: {
           allocation_pct?: number
           prix_achat?:     number
+          status?:         string
+          open_price?:     number | null
+          opened_at?:      string | null
+          close_price?:    number | null
+          closed_at?:      string | null
         }
         Relationships: [
           {
@@ -156,6 +175,25 @@ export type Database = {
             referencedColumns: ["id"]
           }
         ]
+      }
+
+      // ── quotes_live ────────────────────────────────────────
+      quotes_live: {
+        Row: {
+          ticker:     string
+          prix:       number
+          fetched_at: string
+        }
+        Insert: {
+          ticker:      string
+          prix:        number
+          fetched_at?: string
+        }
+        Update: {
+          prix?:       number
+          fetched_at?: string
+        }
+        Relationships: []
       }
 
       // ── cours ──────────────────────────────────────────────

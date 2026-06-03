@@ -71,6 +71,11 @@ export async function fetchPrices(limit: number): Promise<FetchedPrice[]> {
   return fetchBySymbols(yahooSymbols)
 }
 
+/** Variante publique : fetch un sous-ensemble de symboles Yahoo précis. */
+export async function fetchBySymbolsPublic(symbols: string[]): Promise<FetchedPrice[]> {
+  return fetchBySymbols(symbols)
+}
+
 async function fetchBySymbols(symbols: string[]): Promise<FetchedPrice[]> {
   if (symbols.length === 0) return []
 
