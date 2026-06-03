@@ -51,7 +51,7 @@ export default function MotDePasseOubliePage() {
         <p className="mt-3 max-w-xs text-sm text-muted-foreground">
           A reset link was sent to{" "}
           <span className="font-medium text-foreground">{email}</span>.
-          Check your spam folder if you don.t see it.
+          Check your spam folder if you can't see it.
         </p>
         <Link
           href="/connexion"
@@ -89,7 +89,7 @@ export default function MotDePasseOubliePage() {
             Forgot password?
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Enter your email and we.ll send you a reset link.
+            Enter your email and we'll send you a reset link.
           </p>
         </div>
 

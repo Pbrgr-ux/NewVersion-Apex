@@ -77,7 +77,7 @@ export function AdminSaisonCard({ saison: s }: Props) {
       {/* Config fenêtre */}
       <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
         <span>🗓 {jourLabels || "—"}</span>
-        <span>🕐 {s.fenetre_heure_debut}h00 → {s.fenetre_heure_fin}h00</span>
+        <span>🕐 {s.fenetre_heure_debut}:00 → {s.fenetre_heure_fin}:00</span>
         <span>📊 Max {s.max_allocation_pct}% / stock</span>
         {s.tickers_autorises && (
           <span>🎯 {s.tickers_autorises.length} stocks</span>
