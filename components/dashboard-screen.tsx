@@ -8,7 +8,6 @@ import {
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button }            from "@/components/ui/button"
-import { MiniSparkline }     from "@/components/mini-sparkline"
 import { useArbitrageWindow } from "@/hooks/use-arbitrage-window"
 import type { DashboardData } from "@/lib/dashboard-data"
 
@@ -181,15 +180,20 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
                         <span className="text-xs text-muted-foreground">{pos.allocation_pct}%</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {pos.sparkline.length >= 2 && (
-                        <MiniSparkline data={pos.sparkline} positive={positive} />
-                      )}
-                      <div className="flex flex-col items-end">
-                        <span className="font-medium tabular-nums text-foreground">
+                    <div className="flex items-center gap-4">
+                      {/* Prix acquisition → prix actuel */}
+                      <div className="flex flex-col items-end leading-tight">
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          Acq {pos.open_price != null ? pos.open_price.toFixed(2) : "—"}
+                        </span>
+                        <span className="text-sm font-medium tabular-nums text-foreground">
                           {pos.prix_actuel != null ? pos.prix_actuel.toFixed(2) : "—"}
                         </span>
-                        <span className={`text-xs font-medium tabular-nums ${
+                      </div>
+                      {/* Plus-value latente */}
+                      <div className="flex flex-col items-end leading-tight w-16">
+                        <span className="text-xs text-muted-foreground">P&L</span>
+                        <span className={`text-sm font-bold tabular-nums ${
                           pos.variation_day === null ? "text-muted-foreground" : positive ? "text-green-500" : "text-red-500"
                         }`}>
                           {pos.variation_day === null ? "—" : fmtPerf(pos.variation_day)}

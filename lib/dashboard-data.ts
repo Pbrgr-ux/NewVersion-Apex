@@ -16,8 +16,9 @@ export type PositionRow = {
   ticker:        string
   name:          string
   allocation_pct: number
+  open_price:    number | null   // prix moyen d'acquisition
   prix_actuel:   number | null
-  variation_day: number | null
+  variation_day: number | null   // plus-value latente % (depuis l'acquisition)
   sparkline:     number[]
 }
 
@@ -259,6 +260,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       ticker:         pos.ticker,
       name:           TICKER_MAP[pos.ticker]?.name ?? pos.ticker,
       allocation_pct: Number(pos.allocation_pct),
+      open_price:     openPrice,
       prix_actuel:    live,
       variation_day:  sinceOpen != null && w > 0 ? parseFloat((sinceOpen / w).toFixed(2)) : null,
       sparkline:      prices.slice(0, 7).map((p) => p.prix).reverse(),
