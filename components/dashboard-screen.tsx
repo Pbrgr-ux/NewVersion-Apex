@@ -230,7 +230,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
       )}
 
       {/* ── Positions ─────────────────────────────────────────── */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pt-2 pb-4">
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
           My positions
         </h3>
