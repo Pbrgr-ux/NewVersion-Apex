@@ -106,7 +106,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
 
             {leaderboard.toPass && leaderboard.toPass.delta > 0 && (
               <p className="mt-2 text-xs text-foreground">
-                You&apos;re <span className="font-bold text-amber-500">+{leaderboard.toPass.delta}%</span> from {leaderboard.toPass.pseudo}
+                You&apos;re <span className="font-bold text-primary">+{leaderboard.toPass.delta}%</span> from {leaderboard.toPass.pseudo}
               </p>
             )}
           </div>
