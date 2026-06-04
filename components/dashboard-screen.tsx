@@ -4,6 +4,7 @@ import Link from "next/link"
 import {
   TrendingUp, TrendingDown, Clock, Trophy,
   Lock, Wallet, Star, ChevronRight, Zap, Globe,
+  Medal, Users,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button }            from "@/components/ui/button"
@@ -56,74 +57,85 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
   return (
     <main className="flex min-h-svh flex-col bg-background pb-20">
 
-      {/* ── HERO : perf saison en grand ──────────────────────── */}
-      <div className="mx-4 mt-2 mb-3 rounded-2xl border border-border bg-card px-4 pt-3 pb-4">
-        {/* Contexte saison */}
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {season.label}
-          </span>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-            season.statut === "active"  ? "bg-green-500/15 text-green-500" :
-            season.statut === "a_venir" ? "bg-primary/15 text-primary" :
-            "bg-secondary text-muted-foreground"
-          }`}>
-            {season.statut === "active"  ? `Week ${season.semaine}/13` :
-             season.statut === "a_venir" ? "Upcoming" : "Ended"}
-          </span>
+      {/* ── Titre saison ─────────────────────────────────────── */}
+      <div className="px-5 pt-2 pb-3">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-foreground uppercase">{season.label}</h1>
+          {season.statut === "active" && <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />}
         </div>
+        <p className="text-sm text-muted-foreground">
+          {season.statut === "active" ? `Week ${season.semaine} / ${season.semainesTotal}`
+           : season.statut === "a_venir" ? "Upcoming" : "Ended"}
+        </p>
+      </div>
 
-        {/* Perf saison — chiffre héro */}
-        <div className="flex flex-col items-center">
-          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-0.5">
-            Season performance
-          </span>
-          <div className="flex items-center gap-2">
-            {perf.season != null && (
-              (perf.season >= 0)
-                ? <TrendingUp   className="h-7 w-7 text-green-500" />
-                : <TrendingDown className="h-7 w-7 text-red-500" />
+      {/* ── HERO : rang + capital + perf (façon maquette) ─────── */}
+      <div className="mx-4 mb-3 rounded-2xl border border-border bg-card p-4">
+        <div className="grid grid-cols-2 gap-4">
+
+          {/* Colonne gauche : médaille + rang + écart + semaines */}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold ${
+                classement.rang === 1 ? "bg-amber-400 text-black" :
+                classement.rang === 2 ? "bg-slate-300 text-black" :
+                classement.rang === 3 ? "bg-orange-500 text-white" :
+                "bg-secondary text-muted-foreground"
+              }`}>
+                {classement.rang != null ? <Medal className="h-6 w-6" /> : "—"}
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rank</p>
+                <p className="text-3xl font-bold leading-none text-foreground">
+                  {classement.rang != null ? `#${classement.rang}` : "—"}
+                  {classement.total > 0 && (
+                    <span className="text-base font-normal text-muted-foreground"> /{classement.total}</span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {leaderboard.toPass && leaderboard.toPass.delta > 0 && (
+              <p className="mt-3 text-sm text-foreground">
+                You&apos;re <span className="font-bold text-amber-500">+{leaderboard.toPass.delta}%</span> from {leaderboard.toPass.pseudo}
+              </p>
             )}
-            <span className={`text-5xl font-bold tabular-nums ${perfColor(perf.season)}`}>
-              {fmtPerf1(perf.season)}
-            </span>
-          </div>
-        </div>
 
-        {/* Capital + Rang */}
-        <div className="grid grid-cols-2 gap-3 text-center mt-4">
-          <div className="rounded-lg bg-secondary/40 py-2">
-            <p className="text-xs text-muted-foreground">Capital</p>
-            <p className="text-lg font-bold text-foreground tabular-nums">
+            {season.statut === "active" && (
+              <div className="mt-auto pt-3 flex items-center gap-1.5 text-sm text-green-500">
+                <Users className="h-4 w-4" />
+                <span>{season.semainesRestantes} weeks left</span>
+              </div>
+            )}
+          </div>
+
+          {/* Colonne droite : capital + perf saison encadrée + barre */}
+          <div className="flex flex-col">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Capital</p>
+            <p className="text-2xl font-bold leading-tight text-foreground tabular-nums">
               {capitalAjuste ? `${fmtPrix(capitalAjuste)} €` : "—"}
             </p>
-          </div>
-          <div className="rounded-lg bg-secondary/40 py-2">
-            <p className="text-xs text-muted-foreground">Ranking</p>
-            <p className="text-lg font-bold text-foreground tabular-nums">
-              {classement.rang != null ? `#${classement.rang}` : "—"}
-              {classement.total > 0 && (
-                <span className="text-sm font-normal text-muted-foreground">/{classement.total}</span>
-              )}
-            </p>
+
+            <div className="mt-3 rounded-xl border border-border bg-secondary/30 px-3 py-2 text-center">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Season perf</p>
+              <p className={`text-2xl font-bold tabular-nums ${perfColor(perf.season)}`}>
+                {fmtPerf1(perf.season)}
+              </p>
+            </div>
+
+            {season.statut === "active" && (
+              <div className="mt-3">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                  <div className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${(season.semaine / season.semainesTotal) * 100}%` }} />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {classement.rang && classement.rang > 1 ? `Goal: Top ${classement.rang - 1}` : "Season progress"}
+                </p>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Semaines restantes */}
-        {season.statut === "active" && (
-          <div className="mt-3">
-            <div className="flex justify-between text-xs text-muted-foreground mb-1">
-              <span>Weeks left: {season.semainesRestantes}</span>
-              <span>{season.semaine}/{season.semainesTotal}</span>
-            </div>
-            <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${(season.semaine / season.semainesTotal) * 100}%` }}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── Perfs secondaires (Today / Week / Ever) ──────────── */}
