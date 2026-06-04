@@ -15,7 +15,7 @@ import type { DashboardData, LeaderRow } from "@/lib/dashboard-data"
 function LeaderLine({ r }: { r: LeaderRow }) {
   const medal = r.rang === 1 ? "bg-amber-400 text-black" : r.rang === 2 ? "bg-slate-300 text-black" : r.rang === 3 ? "bg-orange-500 text-white" : "bg-secondary text-muted-foreground"
   return (
-    <div className={`flex items-center gap-2.5 rounded-lg px-2 py-1 ${r.isSelf ? "bg-green-600/10" : ""}`}>
+    <div className={`flex items-center gap-2.5 px-2 py-1 ${r.isSelf ? "rounded-[4px] bg-green-600/10" : ""}`}>
       <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${medal}`}>{r.rang}</span>
       <span className={`flex-1 truncate text-sm ${r.isSelf ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
         {r.pseudo}{r.isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
