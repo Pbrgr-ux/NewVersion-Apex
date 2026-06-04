@@ -58,10 +58,10 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
     <main className="flex min-h-svh flex-col bg-background pb-20">
 
       {/* ── HERO : titre saison + rang + capital + perf ──────── */}
-      <div className="mx-4 mt-2 mb-5 rounded-2xl border border-border bg-card px-4 py-3">
+      <div className="mx-4 mt-2 mb-5 rounded-2xl border border-border bg-card px-4 py-2.5">
 
         {/* Titre saison (en tête du container) */}
-        <div className="mb-3 pb-2 border-b border-border/60">
+        <div className="mb-2 pb-2 border-b border-border/60">
           <div className="flex items-center justify-center gap-2">
             <h1 className="text-base font-bold tracking-tight text-foreground uppercase">{season.label}</h1>
             {season.statut === "active" && <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />}
@@ -80,7 +80,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
 
           {/* Colonne gauche : médaille + rang + écart + semaines */}
           <div className="flex flex-col justify-center">
