@@ -74,7 +74,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         <div className="grid grid-cols-2 gap-4">
 
           {/* Colonne gauche : médaille + rang + écart + semaines */}
-          <div className="flex flex-col">
+          <div className="flex flex-col justify-center">
             <div className="flex items-center gap-3">
               <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold ${
                 classement.rang === 1 ? "bg-amber-400 text-black" :
@@ -102,7 +102,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             )}
 
             {season.statut === "active" && (
-              <div className="mt-auto pt-3 flex items-center gap-1.5 text-sm text-green-500">
+              <div className="mt-3 flex items-center gap-1.5 text-sm text-green-500">
                 <Users className="h-4 w-4" />
                 <span>{season.semainesRestantes} weeks left</span>
               </div>
