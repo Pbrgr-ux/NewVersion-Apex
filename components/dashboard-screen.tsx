@@ -20,7 +20,7 @@ function LeaderLine({ r }: { r: LeaderRow }) {
       <span className={`flex-1 truncate text-sm ${r.isSelf ? "font-bold text-primary" : "font-medium text-foreground"}`}>
         {r.pseudo}{r.isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
       </span>
-      <span className={`text-sm font-bold tabular-nums ${r.perf >= 0 ? "text-green-500" : "text-red-500"}`}>
+      <span className={`text-sm font-bold tabular-nums ${r.perf >= 0 ? "text-green-600" : "text-red-600"}`}>
         {r.perf >= 0 ? "+" : ""}{r.perf.toFixed(1)}%
       </span>
     </div>
@@ -46,7 +46,7 @@ function fmtPrix(v: number | null): string {
 
 function perfColor(v: number | null): string {
   if (v === null) return "text-muted-foreground"
-  return v >= 0 ? "text-green-500" : "text-red-500"
+  return v >= 0 ? "text-green-600" : "text-red-600"
 }
 
 // ── Composant ─────────────────────────────────────────────────
@@ -72,7 +72,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
                : season.statut === "a_venir" ? "Upcoming" : "Ended"}
             </span>
             {season.statut === "active" && (
-              <span className="flex items-center gap-1 text-green-500">
+              <span className="flex items-center gap-1 text-green-600">
                 <Users className="h-3.5 w-3.5" />
                 {season.semainesRestantes} weeks left
               </span>
@@ -178,27 +178,6 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         </div>
       )}
 
-      {/* ── Bandeau statut fenêtre d'arbitrage ───────────────── */}
-      <Link href="/arbitrage" className="mx-4 mb-3">
-        <div className={`flex items-center justify-between rounded-xl border px-4 py-2.5 ${
-          arbitrage.isOpen
-            ? "border-green-500/30 bg-green-500/10"
-            : "border-border bg-card"
-        }`}>
-          <div className="flex items-center gap-2">
-            <Clock className={`h-4 w-4 ${arbitrage.isOpen ? "text-green-500" : "text-muted-foreground"}`} />
-            <span className={`text-sm font-semibold ${arbitrage.isOpen ? "text-green-500" : "text-foreground"}`}>
-              {arbitrage.isOpen ? "Window open" : "Window closed"}
-            </span>
-          </div>
-          <span className="font-mono text-xs text-muted-foreground">
-            {arbitrage.isOpen
-              ? <>Closes in <span className="font-semibold text-green-500">{arbitrage.timeUntilClose}</span></>
-              : <>Opens in <span className="font-semibold text-foreground">{arbitrage.timeUntilOpen}</span></>}
-          </span>
-        </div>
-      </Link>
-
       {/* ── Indices marché ───────────────────────────────────── */}
       {/* Masqué pour l'instant — le feed continue d'alimenter `indices`,
           réactiver en retirant le `false &&` ci-dessous */}
@@ -301,12 +280,12 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
                       {/* Plus-value latente : % et € */}
                       <div className="flex flex-col items-end leading-tight w-20">
                         <span className={`text-sm font-bold tabular-nums ${
-                          pos.variation_day === null ? "text-muted-foreground" : positive ? "text-green-500" : "text-red-500"
+                          pos.variation_day === null ? "text-muted-foreground" : positive ? "text-green-600" : "text-red-600"
                         }`}>
                           {pos.variation_day === null ? "—" : fmtPerf(pos.variation_day)}
                         </span>
                         <span className={`text-xs font-medium tabular-nums ${
-                          pos.pnl_eur === null ? "text-muted-foreground" : positive ? "text-green-500" : "text-red-500"
+                          pos.pnl_eur === null ? "text-muted-foreground" : positive ? "text-green-600" : "text-red-600"
                         }`}>
                           {pos.pnl_eur === null ? "—" : `${pos.pnl_eur >= 0 ? "+" : ""}${fmtPrix(pos.pnl_eur)} €`}
                         </span>
@@ -329,8 +308,8 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         </h3>
         <div className="grid grid-cols-4 gap-2">
           {([
-            { label: "Best",     value: tradingStats.bestTrade  != null ? fmtPerf1(tradingStats.bestTrade)  : "—", color: "text-green-500" },
-            { label: "Worst",    value: tradingStats.worstTrade != null ? fmtPerf1(tradingStats.worstTrade) : "—", color: "text-red-500" },
+            { label: "Best",     value: tradingStats.bestTrade  != null ? fmtPerf1(tradingStats.bestTrade)  : "—", color: "text-green-600" },
+            { label: "Worst",    value: tradingStats.worstTrade != null ? fmtPerf1(tradingStats.worstTrade) : "—", color: "text-red-600" },
             { label: "Win rate", value: tradingStats.winRate    != null ? `${tradingStats.winRate}%` : "—",       color: "text-foreground" },
             { label: "Trades",   value: `${tradingStats.tradesCount}`,                                            color: "text-foreground" },
           ] as const).map((s) => (
