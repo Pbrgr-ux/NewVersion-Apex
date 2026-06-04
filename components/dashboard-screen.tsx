@@ -85,13 +85,13 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
           {/* Colonne gauche : médaille + rang + écart + semaines */}
           <div className="flex flex-col justify-center">
             <div className="flex items-center gap-3">
-              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold ${
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                 classement.rang === 1 ? "bg-amber-400 text-black" :
                 classement.rang === 2 ? "bg-slate-300 text-black" :
                 classement.rang === 3 ? "bg-orange-500 text-white" :
                 "bg-secondary text-muted-foreground"
               }`}>
-                {classement.rang != null ? <Medal className="h-6 w-6" /> : "—"}
+                {classement.rang != null ? <Medal className="h-5 w-5" /> : "—"}
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rank</p>
