@@ -66,10 +66,21 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             <h1 className="text-xl font-bold tracking-tight text-foreground uppercase">{season.label}</h1>
             {season.statut === "active" && <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />}
           </div>
-          <p className="text-sm text-muted-foreground">
-            {season.statut === "active" ? `Week ${season.semaine} / ${season.semainesTotal}`
-             : season.statut === "a_venir" ? "Upcoming" : "Ended"}
-          </p>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>
+              {season.statut === "active" ? `Week ${season.semaine} / ${season.semainesTotal}`
+               : season.statut === "a_venir" ? "Upcoming" : "Ended"}
+            </span>
+            {season.statut === "active" && (
+              <>
+                <span className="text-border">·</span>
+                <span className="flex items-center gap-1 text-green-500">
+                  <Users className="h-3.5 w-3.5" />
+                  {season.semainesRestantes} weeks left
+                </span>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -100,13 +111,6 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               <p className="mt-3 text-sm text-foreground">
                 You&apos;re <span className="font-bold text-amber-500">+{leaderboard.toPass.delta}%</span> from {leaderboard.toPass.pseudo}
               </p>
-            )}
-
-            {season.statut === "active" && (
-              <div className="mt-3 flex items-center gap-1.5 text-sm text-green-500">
-                <Users className="h-4 w-4" />
-                <span>{season.semainesRestantes} weeks left</span>
-              </div>
             )}
           </div>
 
