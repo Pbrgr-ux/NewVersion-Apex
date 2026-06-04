@@ -15,6 +15,7 @@ export type Database = {
           pseudo:     string
           is_pro:     boolean
           is_admin:   boolean
+          avatar:     string | null
           created_at: string
         }
         Insert: {
@@ -23,12 +24,14 @@ export type Database = {
           pseudo:      string
           is_pro?:     boolean
           is_admin?:   boolean
+          avatar?:     string | null
           created_at?: string
         }
         Update: {
           pseudo?:   string
           is_pro?:   boolean
           is_admin?: boolean
+          avatar?:   string | null
         }
         Relationships: []
       }

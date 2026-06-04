@@ -48,6 +48,7 @@ export type ProfilData = {
     memberSince: string   // "YYYY-MM-DD"
     isPro:       boolean
     isAdmin:     boolean
+    avatar:      string | null
   }
   saison: {
     rang:        number | null
@@ -73,7 +74,7 @@ export async function getProfilData(): Promise<ProfilData | null> {
   // Fallback sur user_metadata si la ligne n'existe pas encore
   const { data: dbUser } = await supabase
     .from("users")
-    .select("pseudo, is_pro, email, created_at")
+    .select("pseudo, is_pro, email, created_at, avatar")
     .eq("id", user.id)
     .maybeSingle()
 
@@ -82,6 +83,7 @@ export async function getProfilData(): Promise<ProfilData | null> {
   const memberSince = (dbUser?.created_at ?? user.created_at).split("T")[0]
   const isPro       = dbUser?.is_pro    ?? false
   const isAdmin     = (dbUser as { is_admin?: boolean } | null)?.is_admin ?? false
+  const avatar      = dbUser?.avatar ?? null
 
   const CURRENT_SAISON = getCurrentSeasonId()
 
@@ -195,7 +197,7 @@ export async function getProfilData(): Promise<ProfilData | null> {
   }
 
   return {
-    user: { pseudo, email, memberSince, isPro, isAdmin },
+    user: { pseudo, email, memberSince, isPro, isAdmin, avatar },
     saison: {
       rang:          saisonCourante?.rang ?? null,
       perf_totale:   saisonCourante ? Number(saisonCourante.perf_totale) : null,

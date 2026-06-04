@@ -5,16 +5,17 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Crown, LogOut, Calendar, Trophy,
-  Zap, Home, BarChart3, User, ChevronRight,
+  Zap, ChevronRight,
   Loader2, KeyRound, TrendingUp, TrendingDown,
-  Settings,
+  Settings, Pencil,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button }            from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge }             from "@/components/ui/badge"
 import { createClient }      from "@/lib/supabase/client"
 import type { ProfilData }   from "@/lib/profil-data"
+import { AVATAR_PRESETS, resolvePreset, isImageUrl } from "@/lib/avatars"
 
 // ── Helpers ───────────────────────────────────────────────────
 function fmtPerf(v: number | null): string {
@@ -34,6 +35,8 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
   const router   = useRouter()
   const supabase = createClient()
   const [loggingOut, setLoggingOut] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [avatar, setAvatar]         = useState<string | null>(data.user.avatar)
 
   const { user, saison, historique, positions, hasPortfolio } = data
   const { isPro, isAdmin } = user
@@ -42,6 +45,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
   const memberDate  = new Date(user.memberSince).toLocaleDateString("fr-FR", {
     month: "long", year: "numeric",
   })
+  const preset = resolvePreset(avatar)
 
   async function handleLogOut() {
     setLoggingOut(true)
@@ -50,16 +54,55 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
     router.refresh()
   }
 
+  async function chooseAvatar(presetId: string) {
+    const value = `preset:${presetId}`
+    setAvatar(value)
+    setPickerOpen(false)
+    const { data: { user: u } } = await supabase.auth.getUser()
+    if (u) await supabase.from("users").update({ avatar: value }).eq("id", u.id)
+  }
+
   return (
     <main className="flex min-h-svh flex-col bg-background pb-20">
 
       {/* ── Header avatar ────────────────────────────────────── */}
       <div className="flex flex-col items-center gap-4 px-6 pt-10 pb-6">
-        <Avatar className="h-24 w-24 border-2 border-primary">
-          <AvatarFallback className="bg-secondary text-2xl font-bold text-foreground">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+        <button onClick={() => setPickerOpen(true)} className="relative">
+          <Avatar className={`h-24 w-24 border-2 border-primary ${preset ? preset.bg : ""}`}>
+            {isImageUrl(avatar) && <AvatarImage src={avatar!} alt={user.pseudo} />}
+            <AvatarFallback className={`text-2xl font-bold text-foreground ${preset ? preset.bg : "bg-secondary"}`}>
+              {preset ? <span className="text-4xl">{preset.emoji}</span> : initials}
+            </AvatarFallback>
+          </Avatar>
+          <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground border-2 border-background">
+            <Pencil className="h-3.5 w-3.5" />
+          </span>
+        </button>
+
+        {/* Sélecteur d'avatar */}
+        {pickerOpen && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setPickerOpen(false)}>
+            <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl border border-border bg-card p-5" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-sm font-semibold text-foreground mb-3">Choose your avatar</h3>
+              <div className="grid grid-cols-4 gap-3">
+                {AVATAR_PRESETS.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => chooseAvatar(p.id)}
+                    className={`flex aspect-square items-center justify-center rounded-full text-2xl transition-transform active:scale-90 ${p.bg} ${
+                      avatar === `preset:${p.id}` ? "ring-2 ring-primary" : ""
+                    }`}
+                  >
+                    {p.emoji}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setPickerOpen(false)} className="mt-4 w-full rounded-lg bg-secondary py-2.5 text-sm font-semibold text-foreground">
+                Close
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col items-center gap-1.5">
           <div className="flex items-center gap-2">
