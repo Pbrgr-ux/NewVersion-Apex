@@ -58,7 +58,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
     <main className="flex min-h-svh flex-col bg-background pb-20">
 
       {/* ── HERO : titre saison + rang + capital + perf ──────── */}
-      <div className="mx-4 mt-2 mb-3 rounded-2xl border border-border bg-card px-4 py-3">
+      <div className="mx-4 mt-2 mb-5 rounded-2xl border border-border bg-card px-4 py-3">
 
         {/* Titre saison (en tête du container) */}
         <div className="mb-3 pb-2 border-b border-border/60">
@@ -127,7 +127,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
       </div>
 
       {/* ── Perfs secondaires (Today / Week / Ever) ──────────── */}
-      <div className="grid grid-cols-3 gap-2 px-4 mb-3">
+      <div className="grid grid-cols-3 gap-2 px-4 mb-5">
         {([
           { label: "Today",     value: perf.day,  icon: <TrendingUp className="h-3 w-3" /> },
           { label: "This week", value: perf.week, icon: null },
@@ -147,7 +147,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
 
       {/* ── Classement (top 3 + moi + écart) ─────────────────── */}
       {leaderboard.top.length > 0 && (
-        <div className="mx-4 mb-3 rounded-xl border border-border bg-card px-4 py-3">
+        <div className="mx-4 mb-5 rounded-xl border border-border bg-card px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ranking</span>
             <Link href="/classement" className="flex items-center gap-0.5 text-xs font-semibold text-primary">
@@ -209,7 +209,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
       )}
 
       {/* ── Positions ─────────────────────────────────────────── */}
-      <div className="px-4 pt-2 pb-4">
+      <div className="px-4 pt-1 pb-5">
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
           My positions
         </h3>
@@ -302,7 +302,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
 
       {/* ── Stats de trading (sous les positions) ────────────── */}
       {tradingStats && tradingStats.tradesCount > 0 && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-5">
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
           My stats
         </h3>
@@ -323,7 +323,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
       )}
 
       {/* ── Bouton arbitrage ─────────────────────────────────── */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-5">
         {arbitrage.isOpen ? (
           <Link href="/arbitrage">
             <Button className="w-full h-12 text-sm font-semibold bg-green-600 text-white hover:bg-green-600/90">
@@ -347,7 +347,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
 
       {/* ── All-Time ─────────────────────────────────────────── */}
       {allTime && allTime.nb_saisons > 0 && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-5">
           <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
             All-Time
           </h3>
