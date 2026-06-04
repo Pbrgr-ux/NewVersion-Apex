@@ -323,7 +323,11 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
 
       {/* ── Stats de trading (sous les positions) ────────────── */}
       {tradingStats && tradingStats.tradesCount > 0 && (
-        <div className="mx-4 mb-3 grid grid-cols-4 gap-2">
+        <div className="px-4 pb-4">
+        <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          My stats
+        </h3>
+        <div className="grid grid-cols-4 gap-2">
           {([
             { label: "Best",     value: tradingStats.bestTrade  != null ? fmtPerf1(tradingStats.bestTrade)  : "—", color: "text-green-500" },
             { label: "Worst",    value: tradingStats.worstTrade != null ? fmtPerf1(tradingStats.worstTrade) : "—", color: "text-red-500" },
@@ -335,6 +339,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               <span className={`text-sm font-bold tabular-nums ${s.color}`}>{s.value}</span>
             </div>
           ))}
+        </div>
         </div>
       )}
 
