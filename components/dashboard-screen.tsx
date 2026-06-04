@@ -58,7 +58,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
     <main className="flex min-h-svh flex-col bg-background pb-20">
 
       {/* ── HERO : titre saison + rang + capital + perf ──────── */}
-      <div className="mx-4 mt-2 mb-3 rounded-2xl border border-border bg-card p-4">
+      <div className="mx-4 mt-2 mb-3 rounded-2xl border border-border bg-card px-4 py-3">
 
         {/* Titre saison (en tête du container) */}
         <div className="mb-4 pb-3 border-b border-border/60">
