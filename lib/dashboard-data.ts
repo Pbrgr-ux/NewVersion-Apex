@@ -5,11 +5,20 @@
  * Returns: perf, positions, classement, season info, all-time stats, indices.
  */
 
-import { createClient } from "@/lib/supabase/server"
-import { TICKER_MAP }   from "@/lib/tickers"
+import { createClient }       from "@/lib/supabase/server"
+import { createClient as createAdmin } from "@supabase/supabase-js"
+import type { Database }      from "@/types/database"
+import { TICKER_MAP }         from "@/lib/tickers"
 import { getCurrentSeasonId, getCurrentSeasonData, getAllSeasonsData } from "@/lib/seasons"
-import { getSaisonsNomMap } from "@/lib/seasons-server"
-import { getLiveQuotes }    from "@/lib/live-quotes"
+import { getSaisonsNomMap }   from "@/lib/seasons-server"
+import { getLiveQuotes }      from "@/lib/live-quotes"
+
+function admin() {
+  return createAdmin<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 // ── Types ─────────────────────────────────────────────────────
 export type PositionRow = {
@@ -41,6 +50,21 @@ export type IndicesData = {
   sp500_prix:       number | null
 }
 
+export type LeaderRow = { pseudo: string; perf: number; rang: number; isSelf: boolean }
+
+export type LeaderboardPreview = {
+  top:       LeaderRow[]                              // top 3
+  self:      LeaderRow | null                         // ma ligne (si hors top 3)
+  toPass:    { pseudo: string; delta: number } | null // % pour dépasser le rang au-dessus
+}
+
+export type TradingStats = {
+  bestTrade:   number | null
+  worstTrade:  number | null
+  winRate:     number | null
+  tradesCount: number
+}
+
 export type DashboardData = {
   hasPortfolio: boolean
   perf: {
@@ -55,7 +79,11 @@ export type DashboardData = {
   capitalAjuste: number | null
   allTime:      AllTimeStats | null
   indices:      IndicesData
+  leaderboard:  LeaderboardPreview
+  tradingStats: TradingStats | null
 }
+
+const EMPTY_LEADERBOARD: LeaderboardPreview = { top: [], self: null, toPass: null }
 
 // ── Helpers ───────────────────────────────────────────────────
 function isoNDaysAgo(n: number): string {
@@ -83,6 +111,46 @@ function safeContribution(current: number | null, past: number | null, weight: n
   return weight * (ratio - 1) * 100
 }
 
+// ── Leaderboard preview (top 3 + ma position + écart au rang sup.) ─
+async function getLeaderboardPreview(saisonId: number, userId: string): Promise<LeaderboardPreview> {
+  const db = admin()
+  const [usersRes, classRes] = await Promise.all([
+    db.from("users").select("id, pseudo"),
+    db.from("classement")
+      .select("user_id, rang, perf_totale")
+      .eq("saison", saisonId)
+      .eq("statut_joueur", "confirmed")
+      .order("perf_totale", { ascending: false }),
+  ])
+
+  const pseudoOf = new Map<string, string>()
+  for (const u of usersRes.data ?? []) pseudoOf.set(u.id, u.pseudo)
+
+  const rows = (classRes.data ?? []).map((c, i) => ({
+    user_id: c.user_id,
+    pseudo:  pseudoOf.get(c.user_id) ?? c.user_id,
+    perf:    c.perf_totale != null ? parseFloat(Number(c.perf_totale).toFixed(2)) : 0,
+    rang:    i + 1,
+    isSelf:  c.user_id === userId,
+  }))
+
+  if (rows.length === 0) return EMPTY_LEADERBOARD
+
+  const top  = rows.slice(0, 3).map(({ pseudo, perf, rang, isSelf }) => ({ pseudo, perf, rang, isSelf }))
+  const meIdx = rows.findIndex((r) => r.isSelf)
+  const me    = meIdx >= 0 ? rows[meIdx] : null
+  const self  = me && me.rang > 3 ? { pseudo: me.pseudo, perf: me.perf, rang: me.rang, isSelf: true } : null
+
+  // Écart pour dépasser le joueur juste au-dessus
+  let toPass: { pseudo: string; delta: number } | null = null
+  if (me && meIdx > 0) {
+    const above = rows[meIdx - 1]
+    toPass = { pseudo: above.pseudo, delta: parseFloat((above.perf - me.perf).toFixed(2)) }
+  }
+
+  return { top, self, toPass }
+}
+
 // ── Fetch principal ───────────────────────────────────────────
 export async function getDashboardData(): Promise<DashboardData> {
   const supabase       = await createClient()
@@ -100,9 +168,13 @@ export async function getDashboardData(): Promise<DashboardData> {
     capitalAjuste: null,
     allTime:       null,
     indices:       { cac40_variation: null, sp500_variation: null, cac40_prix: null, sp500_prix: null },
+    leaderboard:   EMPTY_LEADERBOARD,
+    tradingStats:  null,
   }
 
   if (!user) return empty
+
+  const leaderboard = await getLeaderboardPreview(CURRENT_SAISON, user.id)
 
   // ── 1. Portfolio + classement + all-time + indices (en parallèle) ─
   const [portfoliosRes, classementRes, totalRes, palmRes, lastIndice, nomMap] = await Promise.all([
@@ -184,7 +256,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   }
 
   if (!portfoliosRes.data || portfoliosRes.data.length === 0) {
-    return { ...empty, indices, allTime }
+    return { ...empty, indices, allTime, leaderboard }
   }
 
   const portfolio = portfoliosRes.data[0]
@@ -209,6 +281,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       season:        seasonWithNom ?? seasonData,
       allTime,
       indices,
+      leaderboard,
     }
   }
 
@@ -281,7 +354,8 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   // ── 5. Perf saison CHAÎNÉE : Π(1 + rendement de chaque arbitrage) − 1 ─
   // Chaque "batch" = positions ouvertes au même instant (opened_at).
-  const batches = new Map<string, typeof allPositions>()
+  type PosRow = NonNullable<typeof allPositions>[number]
+  const batches = new Map<string, PosRow[]>()
   for (const p of allPositions ?? []) {
     const key = p.opened_at ?? "—"
     if (!batches.has(key)) batches.set(key, [])
@@ -310,6 +384,25 @@ export async function getDashboardData(): Promise<DashboardData> {
     ? parseFloat(((seasonFactor - 1) * 100).toFixed(2))
     : (classementRes.data?.perf_totale != null ? parseFloat(Number(classementRes.data.perf_totale).toFixed(2)) : null)
 
+  // ── Stats de trading (chaque position = un trade) ────────────
+  const tradeReturns: number[] = []
+  for (const p of allPositions ?? []) {
+    const open = p.open_price != null ? Number(p.open_price) : null
+    const end  = p.status === "closed"
+      ? (p.close_price != null ? Number(p.close_price) : null)
+      : (liveQuotes.get(p.ticker) ?? null)
+    if (open && open > 0 && end != null) {
+      const ratio = end / open
+      if (ratio <= 10 && ratio >= 0.1) tradeReturns.push((ratio - 1) * 100)
+    }
+  }
+  const tradingStats: TradingStats = {
+    bestTrade:   tradeReturns.length ? parseFloat(Math.max(...tradeReturns).toFixed(2)) : null,
+    worstTrade:  tradeReturns.length ? parseFloat(Math.min(...tradeReturns).toFixed(2)) : null,
+    winRate:     tradeReturns.length ? parseFloat(((tradeReturns.filter((r) => r > 0).length / tradeReturns.length) * 100).toFixed(0)) : null,
+    tradesCount: tradeReturns.length,
+  }
+
   return {
     hasPortfolio:  true,
     perf: {
@@ -329,5 +422,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     capitalAjuste: Math.round(wealthBase * (1 + (seasonPerfLive ?? 0) / 100)),
     allTime,
     indices,
+    leaderboard,
+    tradingStats,
   }
 }

@@ -3,13 +3,28 @@
 import Link from "next/link"
 import {
   TrendingUp, TrendingDown, Clock, Trophy,
-  BarChart3, User, Home, Lock, Wallet,
-  Star, Zap, Globe,
+  Lock, Wallet, Star, ChevronRight, Zap, Globe,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button }            from "@/components/ui/button"
 import { useArbitrageWindow } from "@/hooks/use-arbitrage-window"
-import type { DashboardData } from "@/lib/dashboard-data"
+import type { DashboardData, LeaderRow } from "@/lib/dashboard-data"
+
+// Ligne de classement compacte (top 3 + moi)
+function LeaderLine({ r }: { r: LeaderRow }) {
+  const medal = r.rang === 1 ? "bg-amber-400 text-black" : r.rang === 2 ? "bg-slate-300 text-black" : r.rang === 3 ? "bg-orange-500 text-white" : "bg-secondary text-muted-foreground"
+  return (
+    <div className={`flex items-center gap-2.5 rounded-lg px-2 py-1 ${r.isSelf ? "bg-primary/10 border border-primary/30" : ""}`}>
+      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${medal}`}>{r.rang}</span>
+      <span className={`flex-1 truncate text-sm ${r.isSelf ? "font-bold text-primary" : "font-medium text-foreground"}`}>
+        {r.pseudo}{r.isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
+      </span>
+      <span className={`text-sm font-bold tabular-nums ${r.perf >= 0 ? "text-green-500" : "text-red-500"}`}>
+        {r.perf >= 0 ? "+" : ""}{r.perf.toFixed(1)}%
+      </span>
+    </div>
+  )
+}
 
 // ── Helpers ───────────────────────────────────────────────────
 function fmtPerf(v: number | null, placeholder = "—"): string {
@@ -36,7 +51,7 @@ function perfColor(v: number | null): string {
 // ── Composant ─────────────────────────────────────────────────
 export function DashboardScreen({ data }: { data: DashboardData }) {
   const arbitrage = useArbitrageWindow()
-  const { perf, positions, classement, hasPortfolio, season, capitalAjuste, allTime, indices } = data
+  const { perf, positions, classement, hasPortfolio, season, capitalAjuste, allTime, indices, leaderboard, tradingStats } = data
 
   return (
     <main className="flex min-h-svh flex-col bg-background pb-20">
@@ -129,6 +144,56 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
           </div>
         ))}
       </div>
+
+      {/* ── Classement (top 3 + moi + écart) ─────────────────── */}
+      {leaderboard.top.length > 0 && (
+        <div className="mx-4 mb-3 rounded-xl border border-border bg-card px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ranking</span>
+            <Link href="/classement" className="flex items-center gap-0.5 text-xs font-semibold text-primary">
+              See ranking <ChevronRight className="h-3 w-3" />
+            </Link>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            {leaderboard.top.map((r) => (
+              <LeaderLine key={r.rang} r={r} />
+            ))}
+            {leaderboard.self && (
+              <>
+                <div className="text-center text-xs text-muted-foreground">···</div>
+                <LeaderLine r={leaderboard.self} />
+              </>
+            )}
+          </div>
+
+          {leaderboard.toPass && leaderboard.toPass.delta > 0 && (
+            <div className="mt-2 flex items-center justify-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs text-foreground">
+              <Trophy className="h-3.5 w-3.5 text-primary" />
+              <span>
+                <span className="font-bold text-primary">+{leaderboard.toPass.delta}%</span> to pass {leaderboard.toPass.pseudo}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Stats de trading ─────────────────────────────────── */}
+      {tradingStats && tradingStats.tradesCount > 0 && (
+        <div className="mx-4 mb-3 grid grid-cols-4 gap-2">
+          {([
+            { label: "Best",     value: tradingStats.bestTrade  != null ? fmtPerf1(tradingStats.bestTrade)  : "—", color: "text-green-500" },
+            { label: "Worst",    value: tradingStats.worstTrade != null ? fmtPerf1(tradingStats.worstTrade) : "—", color: "text-red-500" },
+            { label: "Win rate", value: tradingStats.winRate    != null ? `${tradingStats.winRate}%` : "—",       color: "text-foreground" },
+            { label: "Trades",   value: `${tradingStats.tradesCount}`,                                            color: "text-foreground" },
+          ] as const).map((s) => (
+            <div key={s.label} className="flex flex-col items-center rounded-lg bg-secondary/30 px-1 py-1.5">
+              <span className="text-xs text-muted-foreground text-center leading-tight">{s.label}</span>
+              <span className={`text-sm font-bold tabular-nums ${s.color}`}>{s.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Bandeau statut fenêtre d'arbitrage ───────────────── */}
       <Link href="/arbitrage" className="mx-4 mb-3">
