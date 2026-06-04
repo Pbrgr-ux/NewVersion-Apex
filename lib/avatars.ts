@@ -1,35 +1,39 @@
 /**
  * lib/avatars.ts
  *
- * Avatars prédéfinis : emoji sur fond coloré.
+ * Avatars prédéfinis : illustrations SVG (public/avatars/).
  * Stockés en base sous la forme "preset:{id}".
  * (Une URL d'image uploadée est aussi acceptée dans le champ avatar.)
  */
 
 export type AvatarPreset = {
-  id:    string
-  emoji: string
-  bg:    string   // classe Tailwind de fond
+  id:  string
+  src: string   // chemin public de l'illustration SVG
 }
 
-export const AVATAR_PRESETS: AvatarPreset[] = [
-  { id: "fox",     emoji: "🦊", bg: "bg-orange-500/20" },
-  { id: "wolf",    emoji: "🐺", bg: "bg-slate-500/20" },
-  { id: "lion",    emoji: "🦁", bg: "bg-amber-500/20" },
-  { id: "dragon",  emoji: "🐉", bg: "bg-emerald-500/20" },
-  { id: "bull",    emoji: "🐂", bg: "bg-red-500/20" },
-  { id: "eagle",   emoji: "🦅", bg: "bg-blue-500/20" },
-  { id: "shark",   emoji: "🦈", bg: "bg-cyan-500/20" },
-  { id: "rocket",  emoji: "🚀", bg: "bg-indigo-500/20" },
-  { id: "chart",   emoji: "📈", bg: "bg-green-500/20" },
-  { id: "diamond", emoji: "💎", bg: "bg-sky-500/20" },
-  { id: "fire",    emoji: "🔥", bg: "bg-rose-500/20" },
-  { id: "bolt",    emoji: "⚡", bg: "bg-yellow-500/20" },
-  { id: "target",  emoji: "🎯", bg: "bg-red-400/20" },
-  { id: "trophy",  emoji: "🏆", bg: "bg-amber-400/20" },
-  { id: "crown",   emoji: "👑", bg: "bg-yellow-400/20" },
-  { id: "brain",   emoji: "🧠", bg: "bg-purple-500/20" },
+const FILES = [
+  "avatar_01_young_hoodie",
+  "avatar_02_woman_wavy",
+  "avatar_03_glasses",
+  "avatar_04_dark_skin_hoodie",
+  "avatar_05_hijab",
+  "avatar_06_blond_hoodie",
+  "avatar_07_suit_beard",
+  "avatar_08_bob",
+  "avatar_09_senior_glasses",
+  "avatar_10_afro",
+  "avatar_11_turban",
+  "avatar_12_curly",
+  "avatar_13_east_asian",
+  "avatar_14_red_hair",
+  "avatar_15_senior_woman",
+  "avatar_16_keffiyeh",
 ]
+
+export const AVATAR_PRESETS: AvatarPreset[] = FILES.map((id) => ({
+  id,
+  src: `/avatars/${id}.svg`,
+}))
 
 const PRESET_MAP = Object.fromEntries(AVATAR_PRESETS.map((p) => [p.id, p]))
 
@@ -39,7 +43,7 @@ export function resolvePreset(avatar: string | null | undefined): AvatarPreset |
   return PRESET_MAP[avatar.slice(7)] ?? null
 }
 
-/** True si le champ avatar est une URL d'image. */
+/** True si le champ avatar est une URL d'image uploadée. */
 export function isImageUrl(avatar: string | null | undefined): boolean {
   return !!avatar && (avatar.startsWith("http://") || avatar.startsWith("https://"))
 }

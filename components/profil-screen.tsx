@@ -68,10 +68,11 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
       {/* ── Header avatar ────────────────────────────────────── */}
       <div className="flex flex-col items-center gap-4 px-6 pt-10 pb-6">
         <button onClick={() => setPickerOpen(true)} className="relative">
-          <Avatar className={`h-24 w-24 border-2 border-primary ${preset ? preset.bg : ""}`}>
-            {isImageUrl(avatar) && <AvatarImage src={avatar!} alt={user.pseudo} />}
-            <AvatarFallback className={`text-2xl font-bold text-foreground ${preset ? preset.bg : "bg-secondary"}`}>
-              {preset ? <span className="text-4xl">{preset.emoji}</span> : initials}
+          <Avatar className="h-24 w-24 border-2 border-primary">
+            {preset && <AvatarImage src={preset.src} alt={user.pseudo} />}
+            {!preset && isImageUrl(avatar) && <AvatarImage src={avatar!} alt={user.pseudo} />}
+            <AvatarFallback className="bg-secondary text-2xl font-bold text-foreground">
+              {initials}
             </AvatarFallback>
           </Avatar>
           <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground border-2 border-background">
@@ -89,11 +90,11 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
                   <button
                     key={p.id}
                     onClick={() => chooseAvatar(p.id)}
-                    className={`flex aspect-square items-center justify-center rounded-full text-2xl transition-transform active:scale-90 ${p.bg} ${
+                    className={`overflow-hidden rounded-full transition-transform active:scale-90 ${
                       avatar === `preset:${p.id}` ? "ring-2 ring-primary" : ""
                     }`}
                   >
-                    {p.emoji}
+                    <img src={p.src} alt="" className="aspect-square w-full" />
                   </button>
                 ))}
               </div>
