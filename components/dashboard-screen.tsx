@@ -183,23 +183,6 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         </div>
       )}
 
-      {/* ── Stats de trading ─────────────────────────────────── */}
-      {tradingStats && tradingStats.tradesCount > 0 && (
-        <div className="mx-4 mb-3 grid grid-cols-4 gap-2">
-          {([
-            { label: "Best",     value: tradingStats.bestTrade  != null ? fmtPerf1(tradingStats.bestTrade)  : "—", color: "text-green-500" },
-            { label: "Worst",    value: tradingStats.worstTrade != null ? fmtPerf1(tradingStats.worstTrade) : "—", color: "text-red-500" },
-            { label: "Win rate", value: tradingStats.winRate    != null ? `${tradingStats.winRate}%` : "—",       color: "text-foreground" },
-            { label: "Trades",   value: `${tradingStats.tradesCount}`,                                            color: "text-foreground" },
-          ] as const).map((s) => (
-            <div key={s.label} className="flex flex-col items-center rounded-lg bg-secondary/30 px-1 py-1.5">
-              <span className="text-xs text-muted-foreground text-center leading-tight">{s.label}</span>
-              <span className={`text-sm font-bold tabular-nums ${s.color}`}>{s.value}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* ── Bandeau statut fenêtre d'arbitrage ───────────────── */}
       <Link href="/arbitrage" className="mx-4 mb-3">
         <div className={`flex items-center justify-between rounded-xl border px-4 py-2.5 ${
@@ -342,6 +325,23 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
           </div>
         )}
       </div>
+
+      {/* ── Stats de trading (sous les positions) ────────────── */}
+      {tradingStats && tradingStats.tradesCount > 0 && (
+        <div className="mx-4 mb-3 grid grid-cols-4 gap-2">
+          {([
+            { label: "Best",     value: tradingStats.bestTrade  != null ? fmtPerf1(tradingStats.bestTrade)  : "—", color: "text-green-500" },
+            { label: "Worst",    value: tradingStats.worstTrade != null ? fmtPerf1(tradingStats.worstTrade) : "—", color: "text-red-500" },
+            { label: "Win rate", value: tradingStats.winRate    != null ? `${tradingStats.winRate}%` : "—",       color: "text-foreground" },
+            { label: "Trades",   value: `${tradingStats.tradesCount}`,                                            color: "text-foreground" },
+          ] as const).map((s) => (
+            <div key={s.label} className="flex flex-col items-center rounded-lg bg-secondary/30 px-1 py-1.5">
+              <span className="text-xs text-muted-foreground text-center leading-tight">{s.label}</span>
+              <span className={`text-sm font-bold tabular-nums ${s.color}`}>{s.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Bouton arbitrage ─────────────────────────────────── */}
       <div className="px-4 pb-4">
