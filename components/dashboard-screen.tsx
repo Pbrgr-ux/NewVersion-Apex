@@ -15,9 +15,9 @@ import type { DashboardData, LeaderRow } from "@/lib/dashboard-data"
 function LeaderLine({ r }: { r: LeaderRow }) {
   const medal = r.rang === 1 ? "bg-amber-400 text-black" : r.rang === 2 ? "bg-slate-300 text-black" : r.rang === 3 ? "bg-orange-500 text-white" : "bg-secondary text-muted-foreground"
   return (
-    <div className={`flex items-center gap-2.5 rounded-lg px-2 py-1 ${r.isSelf ? "bg-primary/10 border border-primary/30" : ""}`}>
+    <div className={`flex items-center gap-2.5 rounded-lg px-2 py-1 ${r.isSelf ? "bg-green-600/10" : ""}`}>
       <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${medal}`}>{r.rang}</span>
-      <span className={`flex-1 truncate text-sm ${r.isSelf ? "font-bold text-primary" : "font-medium text-foreground"}`}>
+      <span className={`flex-1 truncate text-sm ${r.isSelf ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
         {r.pseudo}{r.isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
       </span>
       <span className={`text-sm font-bold tabular-nums ${r.perf >= 0 ? "text-green-600" : "text-red-600"}`}>
@@ -150,7 +150,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
         <div className="mx-4 mb-5 rounded-xl border border-border bg-card px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ranking</span>
-            <Link href="/classement" className="flex items-center gap-0.5 text-xs font-semibold text-primary">
+            <Link href="/classement" className="flex items-center gap-0.5 text-xs font-semibold text-green-600">
               See ranking <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
