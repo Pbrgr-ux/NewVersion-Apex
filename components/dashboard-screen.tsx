@@ -62,23 +62,20 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
 
         {/* Titre saison (en tête du container) */}
         <div className="mb-4 pb-3 border-b border-border/60">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-foreground uppercase">{season.label}</h1>
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-lg font-bold tracking-tight text-foreground uppercase">{season.label}</h1>
             {season.statut === "active" && <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />}
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="mt-0.5 flex items-center justify-between text-sm text-muted-foreground">
             <span>
               {season.statut === "active" ? `Week ${season.semaine} / ${season.semainesTotal}`
                : season.statut === "a_venir" ? "Upcoming" : "Ended"}
             </span>
             {season.statut === "active" && (
-              <>
-                <span className="text-border">·</span>
-                <span className="flex items-center gap-1 text-green-500">
-                  <Users className="h-3.5 w-3.5" />
-                  {season.semainesRestantes} weeks left
-                </span>
-              </>
+              <span className="flex items-center gap-1 text-green-500">
+                <Users className="h-3.5 w-3.5" />
+                {season.semainesRestantes} weeks left
+              </span>
             )}
           </div>
         </div>
@@ -98,7 +95,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rank</p>
-                <p className="text-xl font-bold leading-tight text-foreground">
+                <p className="text-lg font-bold leading-tight text-foreground">
                   {classement.rang != null ? `#${classement.rang}` : "—"}
                   {classement.total > 0 && (
                     <span className="text-sm font-normal text-muted-foreground"> /{classement.total}</span>
@@ -117,12 +114,12 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
           {/* Colonne droite : capital + season perf (alignés à gauche) + barre */}
           <div className="flex flex-col">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Capital</p>
-            <p className="text-xl font-bold leading-tight text-foreground tabular-nums">
+            <p className="text-lg font-bold leading-tight text-foreground tabular-nums">
               {capitalAjuste ? `${fmtPrix(capitalAjuste)} €` : "—"}
             </p>
 
             <p className="mt-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Season perf</p>
-            <p className={`text-xl font-bold leading-tight tabular-nums ${perfColor(perf.season)}`}>
+            <p className={`text-lg font-bold leading-tight tabular-nums ${perfColor(perf.season)}`}>
               {fmtPerf1(perf.season)}
             </p>
 
