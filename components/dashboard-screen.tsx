@@ -111,8 +111,8 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             )}
           </div>
 
-          {/* Colonne droite : capital + season perf (alignés à gauche) + barre */}
-          <div className="flex flex-col">
+          {/* Colonne droite : capital + season perf (alignés à droite) */}
+          <div className="flex flex-col items-end text-right">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Capital</p>
             <p className="text-lg font-bold leading-tight text-foreground tabular-nums">
               {capitalAjuste ? `${fmtPrix(capitalAjuste)} €` : "—"}
@@ -122,13 +122,6 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             <p className={`text-lg font-bold leading-tight tabular-nums ${perfColor(perf.season)}`}>
               {fmtPerf1(perf.season)}
             </p>
-
-            {season.statut === "active" && (
-              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                <div className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${(season.semaine / season.semainesTotal) * 100}%` }} />
-              </div>
-            )}
           </div>
         </div>
       </div>
