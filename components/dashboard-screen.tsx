@@ -57,20 +57,21 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
   return (
     <main className="flex min-h-svh flex-col bg-background pb-20">
 
-      {/* ── Titre saison ─────────────────────────────────────── */}
-      <div className="px-5 pt-2 pb-3">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold tracking-tight text-foreground uppercase">{season.label}</h1>
-          {season.statut === "active" && <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />}
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {season.statut === "active" ? `Week ${season.semaine} / ${season.semainesTotal}`
-           : season.statut === "a_venir" ? "Upcoming" : "Ended"}
-        </p>
-      </div>
+      {/* ── HERO : titre saison + rang + capital + perf ──────── */}
+      <div className="mx-4 mt-2 mb-3 rounded-2xl border border-border bg-card p-4">
 
-      {/* ── HERO : rang + capital + perf (façon maquette) ─────── */}
-      <div className="mx-4 mb-3 rounded-2xl border border-border bg-card p-4">
+        {/* Titre saison (en tête du container) */}
+        <div className="mb-4 pb-3 border-b border-border/60">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-foreground uppercase">{season.label}</h1>
+            {season.statut === "active" && <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {season.statut === "active" ? `Week ${season.semaine} / ${season.semainesTotal}`
+             : season.statut === "a_venir" ? "Upcoming" : "Ended"}
+          </p>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
 
           {/* Colonne gauche : médaille + rang + écart + semaines */}
