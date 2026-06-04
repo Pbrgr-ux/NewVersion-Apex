@@ -86,10 +86,10 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rank</p>
-                <p className="text-3xl font-bold leading-none text-foreground">
+                <p className="text-xl font-bold leading-tight text-foreground">
                   {classement.rang != null ? `#${classement.rang}` : "—"}
                   {classement.total > 0 && (
-                    <span className="text-base font-normal text-muted-foreground"> /{classement.total}</span>
+                    <span className="text-sm font-normal text-muted-foreground"> /{classement.total}</span>
                   )}
                 </p>
               </div>
@@ -109,29 +109,22 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             )}
           </div>
 
-          {/* Colonne droite : capital + perf saison encadrée + barre */}
+          {/* Colonne droite : capital + season perf (alignés à gauche) + barre */}
           <div className="flex flex-col">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Capital</p>
-            <p className="text-2xl font-bold leading-tight text-foreground tabular-nums">
+            <p className="text-xl font-bold leading-tight text-foreground tabular-nums">
               {capitalAjuste ? `${fmtPrix(capitalAjuste)} €` : "—"}
             </p>
 
-            <div className="mt-3 rounded-xl border border-border bg-secondary/30 px-3 py-2 text-center">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Season perf</p>
-              <p className={`text-2xl font-bold tabular-nums ${perfColor(perf.season)}`}>
-                {fmtPerf1(perf.season)}
-              </p>
-            </div>
+            <p className="mt-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Season perf</p>
+            <p className={`text-xl font-bold leading-tight tabular-nums ${perfColor(perf.season)}`}>
+              {fmtPerf1(perf.season)}
+            </p>
 
             {season.statut === "active" && (
-              <div className="mt-3">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                  <div className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${(season.semaine / season.semainesTotal) * 100}%` }} />
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {classement.rang && classement.rang > 1 ? `Goal: Top ${classement.rang - 1}` : "Season progress"}
-                </p>
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                <div className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${(season.semaine / season.semainesTotal) * 100}%` }} />
               </div>
             )}
           </div>
