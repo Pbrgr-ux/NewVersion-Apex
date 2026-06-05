@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Crown, Check, ShieldCheck, Zap, Users } from "lucide-react"
+import { Crown, Check, Eye, Users, BarChart3, Newspaper, Sparkles } from "lucide-react"
 
 type Plan = "monthly" | "annual"
 
@@ -34,19 +34,34 @@ const PLANS = {
 
 const FEATURES = [
   {
-    icon: Zap,
-    title: "Other players. positions",
-    description: "See where the best traders invest each week.",
+    icon: BarChart3,
+    title: "Advanced stats",
+    description: "Alpha vs CAC40 & S&P 500, sector exposure, full equity curve.",
+  },
+  {
+    icon: Crown,
+    title: "Full all-time history",
+    description: "Every past season, ranks and performance, kept forever.",
+  },
+  {
+    icon: Newspaper,
+    title: "Daily newsroom",
+    description: "A short daily briefing on the stocks that moved.",
   },
   {
     icon: Users,
-    title: "Private leagues with friends",
-    description: "Create exclusive competitions and share an invite code.",
+    title: "Private leagues",
+    description: "Create leagues and challenge your friends with an invite code.",
   },
   {
-    icon: ShieldCheck,
-    title: "Ad-free",
-    description: "A clean experience, focused on performance.",
+    icon: Eye,
+    title: "Rivals' positions (delayed)",
+    description: "See how the top players allocated — once the window has closed.",
+  },
+  {
+    icon: Sparkles,
+    title: "Pro badge & exclusive avatars",
+    description: "Stand out on the leaderboard with a Pro badge and gold frame.",
   },
 ]
 

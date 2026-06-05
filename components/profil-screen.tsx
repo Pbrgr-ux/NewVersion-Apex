@@ -122,6 +122,22 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
         </div>
       </div>
 
+      {/* ── CTA Go Pro (si pas déjà Pro) ─────────────────────── */}
+      {!isPro && (
+        <Link href="/pro" className="mx-4 mb-4">
+          <div className="flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20">
+              <Crown className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-foreground">Go Pro</p>
+              <p className="text-xs text-muted-foreground">Advanced stats, newsroom, private leagues…</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-primary" />
+          </div>
+        </Link>
+      )}
+
       {/* ── Classement saison courante ───────────────────────── */}
       <div className="grid grid-cols-2 gap-3 px-4 pb-4">
         <Card className="bg-card border-border">
