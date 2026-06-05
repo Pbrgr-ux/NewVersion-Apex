@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Crown, LogOut, Calendar, Trophy,
-  Zap, ChevronRight,
+  Zap, ChevronRight, Users,
   Loader2, KeyRound, TrendingUp, TrendingDown,
   Settings, Pencil,
 } from "lucide-react"
@@ -221,6 +221,17 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
           Account
         </h3>
         <div className="flex flex-col gap-2">
+          <Button
+            variant="outline"
+            className="h-12 justify-between border-border bg-card text-foreground hover:bg-secondary"
+            onClick={() => router.push("/ligue")}
+          >
+            <div className="flex items-center gap-3">
+              <Users className="h-5 w-5 text-primary" />
+              <span>Private leagues</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Button>
           {isAdmin && (
             <Button
               variant="outline"

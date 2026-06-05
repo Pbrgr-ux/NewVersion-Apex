@@ -183,6 +183,46 @@ export type Database = {
         ]
       }
 
+      // ── leagues ────────────────────────────────────────────
+      leagues: {
+        Row: {
+          id:         string
+          name:       string
+          code:       string
+          owner_id:   string
+          saison:     number
+          created_at: string
+        }
+        Insert: {
+          id?:         string
+          name:        string
+          code:        string
+          owner_id:    string
+          saison:      number
+          created_at?: string
+        }
+        Update: { name?: string }
+        Relationships: []
+      }
+
+      // ── league_members ─────────────────────────────────────
+      league_members: {
+        Row: {
+          id:         string
+          league_id:  string
+          user_id:    string
+          created_at: string
+        }
+        Insert: {
+          id?:         string
+          league_id:   string
+          user_id:     string
+          created_at?: string
+        }
+        Update: { league_id?: string }
+        Relationships: []
+      }
+
       // ── news_items ─────────────────────────────────────────
       news_items: {
         Row: {
