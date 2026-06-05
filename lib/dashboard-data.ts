@@ -50,7 +50,7 @@ export type IndicesData = {
   sp500_prix:       number | null
 }
 
-export type LeaderRow = { pseudo: string; perf: number; rang: number; isSelf: boolean }
+export type LeaderRow = { pseudo: string; perf: number; rang: number; isSelf: boolean; avatar: string | null }
 
 export type LeaderboardPreview = {
   top:       LeaderRow[]                              // top 3
@@ -115,7 +115,7 @@ function safeContribution(current: number | null, past: number | null, weight: n
 async function getLeaderboardPreview(saisonId: number, userId: string): Promise<LeaderboardPreview> {
   const db = admin()
   const [usersRes, classRes] = await Promise.all([
-    db.from("users").select("id, pseudo"),
+    db.from("users").select("id, pseudo, avatar"),
     db.from("classement")
       .select("user_id, rang, perf_totale")
       .eq("saison", saisonId)
@@ -123,12 +123,13 @@ async function getLeaderboardPreview(saisonId: number, userId: string): Promise<
       .order("perf_totale", { ascending: false }),
   ])
 
-  const pseudoOf = new Map<string, string>()
-  for (const u of usersRes.data ?? []) pseudoOf.set(u.id, u.pseudo)
+  const userOf = new Map<string, { pseudo: string; avatar: string | null }>()
+  for (const u of usersRes.data ?? []) userOf.set(u.id, { pseudo: u.pseudo, avatar: (u as { avatar?: string | null }).avatar ?? null })
 
   const rows = (classRes.data ?? []).map((c, i) => ({
     user_id: c.user_id,
-    pseudo:  pseudoOf.get(c.user_id) ?? c.user_id,
+    pseudo:  userOf.get(c.user_id)?.pseudo ?? c.user_id,
+    avatar:  userOf.get(c.user_id)?.avatar ?? null,
     perf:    c.perf_totale != null ? parseFloat(Number(c.perf_totale).toFixed(2)) : 0,
     rang:    i + 1,
     isSelf:  c.user_id === userId,
@@ -136,10 +137,10 @@ async function getLeaderboardPreview(saisonId: number, userId: string): Promise<
 
   if (rows.length === 0) return EMPTY_LEADERBOARD
 
-  const top  = rows.slice(0, 3).map(({ pseudo, perf, rang, isSelf }) => ({ pseudo, perf, rang, isSelf }))
+  const top  = rows.slice(0, 3).map(({ pseudo, perf, rang, isSelf, avatar }) => ({ pseudo, perf, rang, isSelf, avatar }))
   const meIdx = rows.findIndex((r) => r.isSelf)
   const me    = meIdx >= 0 ? rows[meIdx] : null
-  const self  = me && me.rang > 3 ? { pseudo: me.pseudo, perf: me.perf, rang: me.rang, isSelf: true } : null
+  const self  = me && me.rang > 3 ? { pseudo: me.pseudo, perf: me.perf, rang: me.rang, isSelf: true, avatar: me.avatar } : null
 
   // Écart pour dépasser le joueur juste au-dessus
   let toPass: { pseudo: string; delta: number } | null = null

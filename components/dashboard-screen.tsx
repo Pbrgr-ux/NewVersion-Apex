@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button }            from "@/components/ui/button"
 import { useArbitrageWindow } from "@/hooks/use-arbitrage-window"
 import type { DashboardData, LeaderRow } from "@/lib/dashboard-data"
+import { resolvePreset, isImageUrl } from "@/lib/avatars"
 
 // Ligne de classement compacte (top 3 + moi)
 function LeaderLine({ r }: { r: LeaderRow }) {
@@ -17,6 +18,16 @@ function LeaderLine({ r }: { r: LeaderRow }) {
   return (
     <div className={`flex items-center gap-2.5 px-2 py-1 ${r.isSelf ? "rounded-[4px] bg-green-600/10" : ""}`}>
       <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${medal}`}>{r.rang}</span>
+      {/* Miniature avatar (ou 1ère lettre du pseudo) */}
+      {resolvePreset(r.avatar) ? (
+        <img src={resolvePreset(r.avatar)!.src} alt="" className="h-6 w-6 shrink-0 rounded-full" />
+      ) : isImageUrl(r.avatar) ? (
+        <img src={r.avatar!} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+      ) : (
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
+          {r.pseudo.charAt(0).toUpperCase()}
+        </span>
+      )}
       <span className={`flex-1 truncate text-sm ${r.isSelf ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
         {r.pseudo}{r.isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
       </span>
@@ -147,8 +158,8 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
 
       {/* ── Classement (top 3 + moi + écart) ─────────────────── */}
       {leaderboard.top.length > 0 && (
-        <div className="mx-4 mb-5 rounded-xl border border-border bg-card px-4 py-3">
-          <div className="flex items-center justify-between mb-2">
+        <div className="mx-4 mb-5 rounded-xl border border-border bg-card px-2.5 py-3">
+          <div className="flex items-center justify-between mb-2 px-1.5">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ranking</span>
             <Link href="/classement" className="flex items-center gap-0.5 text-xs font-semibold text-green-600">
               See ranking <ChevronRight className="h-3 w-3" />
