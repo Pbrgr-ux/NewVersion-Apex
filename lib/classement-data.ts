@@ -18,6 +18,7 @@ export type LeaderboardEntry = {
   user_id:       string
   pseudo:        string
   is_pro:        boolean
+  avatar:        string | null
   rang:          number
   perf:          number | null
   statut_joueur: string           // "confirmed" | "rookie"
@@ -71,7 +72,7 @@ function safeContribution(current: number | null, past: number | null, weight: n
 
 function sortAndRank(
   entries: Array<{ user_id: string; perf: number | null; statut_joueur?: string; perf_vs_cac40?: number | null; perf_vs_sp500?: number | null }>,
-  userMap: Map<string, { pseudo: string; is_pro: boolean }>
+  userMap: Map<string, { pseudo: string; is_pro: boolean; avatar: string | null }>
 ): LeaderboardEntry[] {
   return entries
     .filter((e) => e.perf !== null)
@@ -81,6 +82,7 @@ function sortAndRank(
       user_id:       e.user_id,
       pseudo:        userMap.get(e.user_id)?.pseudo  ?? e.user_id,
       is_pro:        userMap.get(e.user_id)?.is_pro  ?? false,
+      avatar:        userMap.get(e.user_id)?.avatar  ?? null,
       rang:          i + 1,
       perf:          e.perf,
       statut_joueur: e.statut_joueur ?? "confirmed",
@@ -99,7 +101,7 @@ export async function getAllClassementData(): Promise<AllClassementData> {
   const currentUserId           = me?.id ?? null
 
   const [usersRes, classementRes, portfoliosRes, coursRes, lastIndice, nomMap, palmaresRes] = await Promise.all([
-    admin.from("users").select("id, pseudo, is_pro"),
+    admin.from("users").select("id, pseudo, is_pro, avatar"),
 
     admin
       .from("classement")
@@ -135,9 +137,9 @@ export async function getAllClassementData(): Promise<AllClassementData> {
       .select("user_id, perf_totale"),
   ])
 
-  const userMap = new Map<string, { pseudo: string; is_pro: boolean }>()
+  const userMap = new Map<string, { pseudo: string; is_pro: boolean; avatar: string | null }>()
   for (const u of usersRes.data ?? []) {
-    userMap.set(u.id, { pseudo: u.pseudo, is_pro: u.is_pro })
+    userMap.set(u.id, { pseudo: u.pseudo, is_pro: u.is_pro, avatar: (u as { avatar?: string | null }).avatar ?? null })
   }
 
   const indices = {
@@ -154,6 +156,7 @@ export async function getAllClassementData(): Promise<AllClassementData> {
       user_id:       c.user_id,
       pseudo:        userMap.get(c.user_id)?.pseudo ?? c.user_id,
       is_pro:        userMap.get(c.user_id)?.is_pro ?? false,
+      avatar:        userMap.get(c.user_id)?.avatar ?? null,
       rang:          i + 1,
       perf:          c.perf_totale != null ? parseFloat(Number(c.perf_totale).toFixed(2)) : null,
       statut_joueur: "confirmed",
@@ -167,6 +170,7 @@ export async function getAllClassementData(): Promise<AllClassementData> {
       user_id:       c.user_id,
       pseudo:        userMap.get(c.user_id)?.pseudo ?? c.user_id,
       is_pro:        userMap.get(c.user_id)?.is_pro ?? false,
+      avatar:        userMap.get(c.user_id)?.avatar ?? null,
       rang:          i + 1,
       perf:          c.perf_totale != null ? parseFloat(Number(c.perf_totale).toFixed(2)) : null,
       statut_joueur: "rookie",

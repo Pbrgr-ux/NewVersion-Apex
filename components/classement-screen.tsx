@@ -7,9 +7,18 @@ import {
   Home, BarChart3, User, Crown, Medal,
 } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback }      from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge }                        from "@/components/ui/badge"
 import type { AllClassementData, LeaderboardEntry } from "@/lib/classement-data"
+import { resolvePreset, isImageUrl }    from "@/lib/avatars"
+
+// avatar (champ DB) → URL affichable, ou null
+function avatarSrc(avatar: string | null): string | null {
+  const p = resolvePreset(avatar)
+  if (p) return p.src
+  if (isImageUrl(avatar)) return avatar
+  return null
+}
 
 // ── Types ─────────────────────────────────────────────────────
 type TabId = "confirmed" | "rookie" | "allTime" | "mois" | "semaine" | "jour"
@@ -68,6 +77,7 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
         {rank === 1 && <Crown className="h-6 w-6 text-amber-400 mb-0" />}
         <div className="relative">
           <Avatar className={`${size === "large" ? "h-16 w-16" : "h-14 w-14"} ${podiumRingClass(rank)}`}>
+            {avatarSrc(entry.avatar) && <AvatarImage src={avatarSrc(entry.avatar)!} alt="" />}
             <AvatarFallback className={`${podiumFallbackClass(rank)} ${size === "large" ? "text-lg" : ""}`}>
               {entry.pseudo.slice(0, 2).toUpperCase()}
             </AvatarFallback>
@@ -132,6 +142,7 @@ function LeaderboardRow({
 
       {/* Avatar */}
       <Avatar className="h-9 w-9 shrink-0">
+        {avatarSrc(entry.avatar) && <AvatarImage src={avatarSrc(entry.avatar)!} alt="" />}
         <AvatarFallback className="bg-secondary text-foreground text-xs font-medium">
           {entry.pseudo.slice(0, 2).toUpperCase()}
         </AvatarFallback>
