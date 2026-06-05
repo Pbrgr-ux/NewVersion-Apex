@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, BarChart3, User } from "lucide-react"
+import { Home, BarChart3, User, Newspaper } from "lucide-react"
 
 // Pages sans barre de navigation (auth / accueil)
 const HIDDEN = ["/", "/signup", "/connexion", "/mot-de-passe-oublie", "/auth/confirmed"]
@@ -10,6 +10,7 @@ const HIDDEN = ["/", "/signup", "/connexion", "/mot-de-passe-oublie", "/auth/con
 const ITEMS = [
   { href: "/dashboard",  label: "Dashboard", icon: Home },
   { href: "/classement", label: "Ranking",   icon: BarChart3 },
+  { href: "/newsroom",   label: "News",      icon: Newspaper },
   { href: "/profil",     label: "Profile",   icon: User },
 ]
 

@@ -4,6 +4,10 @@
     {
       "path": "/api/update-cours",
       "schedule": "30 16 * * 1-5"
+    },
+    {
+      "path": "/api/update-news",
+      "schedule": "0 21 * * *"
     }
   ]
 }

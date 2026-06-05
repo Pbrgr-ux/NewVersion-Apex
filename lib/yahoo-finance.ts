@@ -27,6 +27,7 @@ const yf = new (YahooFinanceClass as unknown as new (opts?: object) => {
   ): Promise<unknown>
   chart(symbol: string, queryOptions?: object, moduleOptions?: object): Promise<unknown>
   quoteSummary(symbol: string, queryOptions?: object, moduleOptions?: object): Promise<unknown>
+  search(query: string, queryOptions?: object, moduleOptions?: object): Promise<unknown>
 })({ suppressNotices: ["yahooSurvey"] })
 
 export type FetchedPrice = {
@@ -145,6 +146,38 @@ export async function fetchHistory(yahooSymbol: string, range = "6mo"): Promise<
       }))
   } catch (err) {
     console.error("[yahoo-finance] fetchHistory:", err)
+    return []
+  }
+}
+
+export type NewsItem = {
+  ticker:       string
+  title:        string
+  publisher:    string | null
+  url:          string | null
+  published_at: string | null
+}
+
+/** Récupère les dernières actus d'un symbole via Yahoo search. */
+export async function fetchNews(yahooSymbol: string, internalTicker: string, limit = 3): Promise<NewsItem[]> {
+  try {
+    const raw = await yf.search(yahooSymbol, { newsCount: limit, quotesCount: 0 }) as {
+      news?: Array<{ title?: string; publisher?: string; link?: string; providerPublishTime?: number | Date }>
+    }
+    return (raw?.news ?? [])
+      .filter((n) => n.title && n.link)
+      .slice(0, limit)
+      .map((n) => ({
+        ticker:       internalTicker,
+        title:        n.title!,
+        publisher:    n.publisher ?? null,
+        url:          n.link ?? null,
+        published_at: n.providerPublishTime
+          ? (n.providerPublishTime instanceof Date ? n.providerPublishTime : new Date(n.providerPublishTime)).toISOString()
+          : null,
+      }))
+  } catch (err) {
+    console.error("[yahoo-finance] fetchNews", internalTicker, err)
     return []
   }
 }

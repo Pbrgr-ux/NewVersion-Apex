@@ -183,6 +183,31 @@ export type Database = {
         ]
       }
 
+      // ── news_items ─────────────────────────────────────────
+      news_items: {
+        Row: {
+          id:           number
+          ticker:       string
+          title:        string
+          publisher:    string | null
+          url:          string | null
+          published_at: string | null
+          created_at:   string
+        }
+        Insert: {
+          ticker:        string
+          title:         string
+          publisher?:    string | null
+          url?:          string | null
+          published_at?: string | null
+          created_at?:   string
+        }
+        Update: {
+          title?: string
+        }
+        Relationships: []
+      }
+
       // ── quotes_live ────────────────────────────────────────
       quotes_live: {
         Row: {
