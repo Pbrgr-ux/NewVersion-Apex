@@ -11,24 +11,7 @@ export type AvatarPreset = {
   src: string   // chemin public de l'illustration SVG
 }
 
-const FILES = [
-  "avatar_01_young_hoodie",
-  "avatar_02_woman_wavy",
-  "avatar_03_glasses",
-  "avatar_04_dark_skin_hoodie",
-  "avatar_05_hijab",
-  "avatar_06_blond_hoodie",
-  "avatar_07_suit_beard",
-  "avatar_08_bob",
-  "avatar_09_senior_glasses",
-  "avatar_10_afro",
-  "avatar_11_turban",
-  "avatar_12_curly",
-  "avatar_13_east_asian",
-  "avatar_14_red_hair",
-  "avatar_15_senior_woman",
-  "avatar_16_keffiyeh",
-]
+const FILES = Array.from({ length: 16 }, (_, i) => `avatar_${String(i + 1).padStart(2, "0")}`)
 
 export const AVATAR_PRESETS: AvatarPreset[] = FILES.map((id) => ({
   id,
