@@ -133,7 +133,8 @@ export async function GET(request: NextRequest) {
     supabase
       .from("portfolios")
       .select("id, user_id, statut_joueur, capital_initial, capital_ajuste, positions ( ticker, allocation_pct, prix_achat, open_price, status )")
-      .eq("saison", CURRENT_SAISON),
+      .eq("saison", CURRENT_SAISON)
+      .is("league_id", null),              // classement global = jeu principal uniquement
 
     supabase
       .from("cours")

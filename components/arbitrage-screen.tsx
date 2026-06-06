@@ -8,15 +8,13 @@ import {
   Lock,
   Minus,
   Plus,
-  Home,
-  BarChart3,
-  User,
   AlertTriangle,
+  Trophy,
+  ChevronDown,
 } from "lucide-react"
 import { Card, CardContent }       from "@/components/ui/card"
 import { Button }                  from "@/components/ui/button"
 import { Slider }                  from "@/components/ui/slider"
-import { Progress }                from "@/components/ui/progress"
 import {
   Dialog,
   DialogContent,
@@ -26,20 +24,28 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useArbitrageWindow }      from "@/hooks/use-arbitrage-window"
+import { MAIN_WINDOW, type ArbitrageWindowConfig } from "@/lib/arbitrage-window"
 import { TICKERS }                 from "@/lib/tickers"
 import { createClient }            from "@/lib/supabase/client"
 import { getCurrentSeasonId }      from "@/lib/seasons"
+import type { LeagueContext }      from "@/lib/leagues"
 
 // Saison courante — doit correspondre à celle lue par le dashboard
 const CURRENT_SAISON = getCurrentSeasonId()
-// Clé localStorage spécifique à l'utilisateur — évite de bloquer les autres
-function lsKey(userId: string) { return `tl_lock_close_${userId}` }
+// Clé localStorage par utilisateur ET par contexte (jeu principal / ligue)
+function lsKey(userId: string, ctx: string) { return `tl_lock_close_${userId}_${ctx}` }
 
 type Region = "US" | "Europe" | "ETF"
 
-// ── Mock prix + variation semaine (remplacé par cours Supabase en V2) ──
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+function windowLabel(cfg: ArbitrageWindowConfig): string {
+  const days = (cfg.jours ?? []).slice().sort((a, b) => a - b).map((d) => DAY_LABELS[d]).join(", ")
+  return `${days || "—"} · ${cfg.heureDebut}:00–${cfg.heureFin}:00`
+}
+
+// ── Mock prix (fallback si live indispo) ──────────────────────
 const MOCK_MARKET: Record<string, { price: number; weekChange: number }> = {
-  // US
   AAPL:  { price: 189.30, weekChange:  1.84 }, MSFT:  { price: 415.20, weekChange:  0.92 },
   NVDA:  { price: 875.40, weekChange:  4.67 }, GOOGL: { price: 175.60, weekChange: -1.05 },
   AMZN:  { price: 192.10, weekChange:  2.31 }, META:  { price: 527.80, weekChange:  3.22 },
@@ -53,7 +59,6 @@ const MOCK_MARKET: Record<string, { price: number; weekChange: number }> = {
   COST:  { price: 824.60, weekChange:  1.56 }, BAC:   { price: 40.20,  weekChange:  0.81 },
   NFLX:  { price: 628.40, weekChange:  2.45 }, CVX:   { price: 162.30, weekChange: -0.55 },
   CRM:   { price: 285.10, weekChange:  1.94 },
-  // Europe
   MC:    { price: 642.00, weekChange: -1.20 }, NESN:  { price: 94.50,  weekChange:  0.32 },
   ASML:  { price: 788.00, weekChange:  2.11 }, "NOVO-B":{ price: 826.00, weekChange: -3.40 },
   ROG:   { price: 245.30, weekChange: -0.68 }, SAP:   { price: 196.40, weekChange:  1.45 },
@@ -67,7 +72,6 @@ const MOCK_MARKET: Record<string, { price: number; weekChange: number }> = {
   IBE:   { price: 12.84,  weekChange:  0.41 }, ABBN:  { price: 50.60,  weekChange:  0.73 },
   BNP:   { price: 69.40,  weekChange: -0.28 }, CFR:   { price: 124.50, weekChange: -1.14 },
   MUV2:  { price: 418.70, weekChange:  0.85 },
-  // ETF
   SPY:   { price: 524.10, weekChange:  1.42 }, IVV:   { price: 527.80, weekChange:  1.38 },
   VOO:   { price: 483.40, weekChange:  1.39 }, QQQ:   { price: 448.20, weekChange:  2.17 },
   VTI:   { price: 254.60, weekChange:  1.31 }, SOXX:  { price: 214.30, weekChange:  3.85 },
@@ -84,15 +88,37 @@ const TABS: { label: string; region: Region }[] = [
   { label: "📦 ETF",    region: "ETF"    },
 ]
 
-export function ArbitrageScreen() {
-  const arbitrage = useArbitrageWindow()
+export function ArbitrageScreen({ leagueContexts = [], initialLeagueId = null }: { leagueContexts?: LeagueContext[]; initialLeagueId?: string | null }) {
   const supabase  = createClient()
   const router    = useRouter()
+
+  // ── Contexte de compétition (null = jeu principal) ─────────
+  const [activeLeagueId, setActiveLeagueId] = useState<string | null>(initialLeagueId)
+  const activeLeague = useMemo(
+    () => leagueContexts.find((l) => l.id === activeLeagueId) ?? null,
+    [leagueContexts, activeLeagueId]
+  )
+  const ctxKey = activeLeagueId ?? "main"
+
+  // Config dérivée du contexte
+  const windowConfig: ArbitrageWindowConfig = useMemo(() => activeLeague
+    ? { jours: activeLeague.fenetre_jours, heureDebut: activeLeague.fenetre_heure_debut, heureFin: activeLeague.fenetre_heure_fin }
+    : MAIN_WINDOW,
+    [activeLeague])
+  const maxAlloc = activeLeague?.max_allocation_pct ?? 50
+  const universe = useMemo(() => {
+    const allowed = activeLeague?.tickers_autorises
+    if (!allowed || allowed.length === 0) return TICKERS
+    const set = new Set(allowed)
+    return TICKERS.filter((t) => set.has(t.ticker))
+  }, [activeLeague])
+
+  const arbitrage = useArbitrageWindow(windowConfig)
 
   const [activeTab, setActiveTab]     = useState<Region>("US")
   const [isLocked, setIsLocked]       = useState(false)
   const [userId, setUserId]           = useState<string | null>(null)
-  const [sortVersion, setSortVersion] = useState(0)   // force re-tri après chargement initial
+  const [sortVersion, setSortVersion] = useState(0)
 
   const [allocations, setAllocations] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {}
@@ -106,7 +132,19 @@ export function ArbitrageScreen() {
   const [capitalAjuste, setCapitalAjuste]         = useState(100_000)
   const [openPosWealth, setOpenPosWealth]         = useState<Array<{ ticker: string; base_capital: number | null; open_price: number | null; allocation_pct: number }>>([])
 
-  // ── Prix temps réel (cohérents avec la fiche action) ───────
+  // Onglets visibles = régions présentes dans l'univers du contexte
+  const visibleTabs = useMemo(
+    () => TABS.filter((tab) => universe.some((t) => t.region === tab.region)),
+    [universe]
+  )
+  // S'assurer que l'onglet actif est valide pour l'univers courant
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.some((t) => t.region === activeTab)) {
+      setActiveTab(visibleTabs[0].region)
+    }
+  }, [visibleTabs, activeTab])
+
+  // ── Prix temps réel ────────────────────────────────────────
   useEffect(() => {
     fetch("/api/quotes")
       .then((r) => r.json())
@@ -130,27 +168,38 @@ export function ArbitrageScreen() {
     return Math.round(base * (1 + r))
   }, [openPosWealth, livePrices, capitalAjuste])
 
-  // ── Charger l'allocation existante + vérifier le lock ──────
+  // ── Charger l'allocation du contexte + vérifier le lock ────
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
 
-      // 1. Charger le portfolio + positions existantes
-      const { data: portfolios } = await supabase
+      // Reset au changement de contexte
+      setAllocations(() => {
+        const z: Record<string, number> = {}
+        TICKERS.forEach((t) => { z[t.ticker] = 0 })
+        return z
+      })
+      setOpenPosWealth([])
+      setIsLocked(false)
+
+      // 1. Portfolio du contexte courant
+      let pq = supabase
         .from("portfolios")
         .select("id, capital_ajuste")
         .eq("user_id", user.id)
-        .eq("saison", CURRENT_SAISON)
-        .order("id", { ascending: false })
-        .limit(1)
+      pq = activeLeagueId
+        ? pq.eq("league_id", activeLeagueId)
+        : pq.eq("saison", CURRENT_SAISON).is("league_id", null)
+      const { data: portfolios } = await pq.order("id", { ascending: false }).limit(1)
 
       const portfolioId = portfolios?.[0]?.id
-      if (portfolios?.[0]?.capital_ajuste != null) {
-        setCapitalAjuste(Number(portfolios[0].capital_ajuste))
-      }
-      let hasPositions  = false
+      const capBase = portfolios?.[0]?.capital_ajuste != null
+        ? Number(portfolios[0].capital_ajuste)
+        : (activeLeague?.capital_initial ?? 100_000)
+      setCapitalAjuste(capBase)
+      let hasPositions = false
 
       if (portfolioId) {
         const { data: positions } = await supabase
@@ -161,55 +210,43 @@ export function ArbitrageScreen() {
 
         if (positions && positions.length > 0) {
           hasPositions = true
-          // Pré-remplir les sliders avec la répartition actuelle
           setAllocations((prev) => {
             const next = { ...prev }
-            for (const p of positions) {
-              next[p.ticker] = Number(p.allocation_pct)
-            }
+            for (const p of positions) next[p.ticker] = Number(p.allocation_pct)
             return next
           })
-          // Données pour le calcul de la richesse courante
           setOpenPosWealth(positions.map((p) => ({
             ticker:         p.ticker,
             base_capital:   p.base_capital != null ? Number(p.base_capital) : null,
             open_price:     p.open_price != null ? Number(p.open_price) : null,
             allocation_pct: Number(p.allocation_pct),
           })))
-          // Re-trier pour positionner les tickers alloués en tête
           setSortVersion((v) => v + 1)
         }
       }
 
-      // 2. Vérifier le lock localStorage
-      const lockedUntil = localStorage.getItem(lsKey(user.id))
+      // 2. Lock localStorage (par contexte)
+      const lockedUntil = localStorage.getItem(lsKey(user.id, ctxKey))
       const lockActif   = lockedUntil != null && Date.now() < new Date(lockedUntil).getTime()
-
-      if (lockActif && hasPositions) {
-        // Lock valide + positions existantes → écran verrouillé
-        setIsLocked(true)
-      } else {
-        // Lock expiré, orphelin, ou sans positions → débloquer
-        localStorage.removeItem(lsKey(user.id))
-      }
+      if (lockActif && hasPositions) setIsLocked(true)
+      else localStorage.removeItem(lsKey(user.id, ctxKey))
     }
     init()
-  }, [supabase])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, activeLeagueId])
 
-  // Tri : tickers alloués en tête. Recalculé uniquement au changement
-  // d'onglet ou au chargement initial (pas à chaque mouvement de slider,
-  // pour éviter que les cartes ne sautent pendant l'ajustement).
+  // Tri : tickers alloués en tête (univers du contexte)
   const visibleStocks = useMemo(
     () => {
-      const inTab = TICKERS.filter((t) => t.region === activeTab)
+      const inTab = universe.filter((t) => t.region === activeTab)
       return [...inTab].sort((a, b) => {
         const aOn = (allocations[a.ticker] ?? 0) > 0 ? 1 : 0
         const bOn = (allocations[b.ticker] ?? 0) > 0 ? 1 : 0
-        return bOn - aOn   // alloués (1) avant non-alloués (0)
+        return bOn - aOn
       })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeTab, sortVersion]
+    [activeTab, sortVersion, universe]
   )
 
   const totalAllocation = useMemo(
@@ -225,8 +262,7 @@ export function ArbitrageScreen() {
     setAllocations((prev) => {
       const current   = prev[ticker] ?? 0
       const otherSum  = totalAllocation - current
-      // Ne pas dépasser 100% au total, ni 50% par action
-      const maxForThis = Math.min(50, 100 - otherSum)
+      const maxForThis = Math.min(maxAlloc, 100 - otherSum)
       return { ...prev, [ticker]: Math.max(0, Math.min(maxForThis, value)) }
     })
   }
@@ -234,28 +270,22 @@ export function ArbitrageScreen() {
   const handleConfirm = async () => {
     setIsSubmitting(true)
     setSubmitError(null)
-
     try {
-      // Tout est fait côté serveur : prix temps réel + fermeture/ouverture
-      // historisée des positions (voir /api/arbitrate).
       const res = await fetch("/api/arbitrate", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ allocations }),
+        body:    JSON.stringify({ allocations, leagueId: activeLeagueId ?? undefined }),
       })
-
       const json = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(json?.error ?? "Could not save")
 
-      // Verrouiller jusqu'à la fermeture de la fenêtre (clé par user)
       const { data: { user } } = await supabase.auth.getUser()
       if (user && arbitrage.windowCloseISO) {
-        localStorage.setItem(lsKey(user.id), arbitrage.windowCloseISO)
+        localStorage.setItem(lsKey(user.id, ctxKey), arbitrage.windowCloseISO)
         setUserId(user.id)
       }
       setShowConfirmDialog(false)
-      router.push("/dashboard")
-
+      router.push(activeLeagueId ? `/ligue/${activeLeagueId}` : "/dashboard")
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Unknown error")
     } finally {
@@ -271,11 +301,31 @@ export function ArbitrageScreen() {
     [allocations]
   )
 
+  // ── Sélecteur de contexte (réutilisé dans les deux écrans) ──
+  const ContextSelector = leagueContexts.length > 0 ? (
+    <div className="flex items-center gap-2 border-b border-border bg-secondary/40 px-4 py-2">
+      <Trophy className="h-4 w-4 shrink-0 text-primary" />
+      <span className="text-xs text-muted-foreground">Trading for</span>
+      <div className="relative flex-1">
+        <select
+          value={activeLeagueId ?? "main"}
+          onChange={(e) => setActiveLeagueId(e.target.value === "main" ? null : e.target.value)}
+          className="w-full appearance-none rounded-lg border border-border bg-card px-3 py-1.5 pr-8 text-sm font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          <option value="main">Main game</option>
+          {leagueContexts.map((l) => (
+            <option key={l.id} value={l.id}>{l.name}</option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      </div>
+    </div>
+  ) : null
+
   // ── Écran verrouillé ─────────────────────────────────────────
   if (isLocked) {
     return (
       <main className="flex min-h-svh flex-col bg-background pb-20">
-        {/* Header */}
         <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-sm">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2">
@@ -293,7 +343,8 @@ export function ArbitrageScreen() {
           </div>
         </header>
 
-        {/* Bandeau validé */}
+        {ContextSelector}
+
         <div className="mx-4 mt-4 flex items-start gap-3 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/20 mt-0.5">
             <Lock className="h-4 w-4 text-green-500" />
@@ -306,29 +357,23 @@ export function ArbitrageScreen() {
                 : "Editable during the next trading window."}
             </p>
           </div>
-          {/* Bouton déblocage manuel (si problème technique) */}
           {arbitrage.isOpen && userId && (
             <button
-              onClick={() => {
-                localStorage.removeItem(lsKey(userId))
-                setIsLocked(false)
-              }}
+              onClick={() => { localStorage.removeItem(lsKey(userId, ctxKey)); setIsLocked(false) }}
               className="shrink-0 rounded-lg border border-border bg-card px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
             >
-              Modifier
+              Modify
             </button>
           )}
         </div>
 
-        {/* Récap allocation soumise */}
         <div className="px-4 py-4 space-y-2">
           <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
             Submitted allocation
           </h3>
 
           {submittedPositions.map((t) => {
-            const pct    = allocations[t.ticker] ?? 0
-            const market = MOCK_MARKET[t.ticker]
+            const pct = allocations[t.ticker] ?? 0
             return (
               <div key={t.ticker} className="flex items-center gap-3 rounded-xl bg-card border border-border px-4 py-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-foreground">
@@ -343,19 +388,16 @@ export function ArbitrageScreen() {
                     <span className="text-sm font-bold text-foreground tabular-nums">{pct}%</span>
                   </div>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${(pct / 50) * 100}%` }} />
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${(pct / maxAlloc) * 100}%` }} />
                   </div>
                 </div>
               </div>
             )
           })}
 
-          {/* Cash */}
           {cashPct > 0 && (
             <div className="flex items-center gap-3 rounded-xl bg-card border border-green-500/20 px-4 py-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/15 text-sm">
-                💵
-              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/15 text-sm">💵</div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-semibold text-green-500 text-sm">Cash</span>
@@ -379,99 +421,85 @@ export function ArbitrageScreen() {
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <Clock
-              className={`h-5 w-5 ${arbitrage.isOpen ? "text-success" : "text-danger"}`}
-            />
+            <Clock className={`h-5 w-5 ${arbitrage.isOpen ? "text-success" : "text-danger"}`} />
             <span className="font-semibold text-foreground">
               {arbitrage.isOpen ? "Window open" : "Window closed"}
             </span>
           </div>
-
           <span className="font-mono text-sm text-muted-foreground">
             {arbitrage.isOpen ? (
-              <>
-                Closes in{" "}
-                <span className="font-semibold text-success">
-                  {arbitrage.timeUntilClose}
-                </span>
-              </>
+              <>Closes in <span className="font-semibold text-success">{arbitrage.timeUntilClose}</span></>
             ) : (
-              <>
-                Opens in{" "}
-                <span className="font-semibold text-foreground">
-                  {arbitrage.timeUntilOpen}
-                </span>
-              </>
+              <>Opens in <span className="font-semibold text-foreground">{arbitrage.timeUntilOpen}</span></>
             )}
           </span>
         </div>
 
-        {/* Bandeau fermée */}
         {!arbitrage.isOpen && (
           <div className="flex items-center gap-2 border-t border-border/60 bg-secondary/60 px-4 py-2">
             <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <p className="text-xs text-muted-foreground">
-              Changes are only allowed{" "}
-              <span className="font-medium text-foreground">
-                Saturday 8:00am to Sunday 9:00pm
-              </span>{" "}
-              (Paris time).
+              Open <span className="font-medium text-foreground">{windowLabel(windowConfig)}</span> (Paris time).
             </p>
           </div>
         )}
       </header>
 
+      {ContextSelector}
+
       {/* ── Solde ──────────────────────────────────────────────── */}
       <div className="flex flex-col items-center gap-1 px-4 py-6 border-b border-border">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Available capital
+          {activeLeague ? `${activeLeague.name} · capital` : "Available capital"}
         </span>
         <span className="text-3xl font-bold tabular-nums text-foreground">
           {currentCapital.toLocaleString("en-US")} €
         </span>
       </div>
 
-      {/* ── Onglets US / Europe / ETF ──────────────────────────── */}
-      <div className="sticky top-[57px] z-30 border-b border-border bg-background px-4 py-2">
-        <div className="flex gap-2">
-          {TABS.map((tab) => {
-            const tabTotal = TICKERS
-              .filter((t) => t.region === tab.region)
-              .reduce((s, t) => s + (allocations[t.ticker] ?? 0), 0)
-            return (
-              <button
-                key={tab.region}
-                onClick={() => setActiveTab(tab.region)}
-                className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
-                  activeTab === tab.region
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab.label}
-                {tabTotal > 0 && (
-                  <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-bold ${
-                    activeTab === tab.region ? "bg-white/20" : "bg-primary/15 text-primary"
-                  }`}>
-                    {tabTotal}%
-                  </span>
-                )}
-              </button>
-            )
-          })}
+      {/* ── Onglets ───────────────────────────────────────────── */}
+      {visibleTabs.length > 1 && (
+        <div className="sticky top-[57px] z-30 border-b border-border bg-background px-4 py-2">
+          <div className="flex gap-2">
+            {visibleTabs.map((tab) => {
+              const tabTotal = universe
+                .filter((t) => t.region === tab.region)
+                .reduce((s, t) => s + (allocations[t.ticker] ?? 0), 0)
+              return (
+                <button
+                  key={tab.region}
+                  onClick={() => setActiveTab(tab.region)}
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                    activeTab === tab.region
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}
+                  {tabTotal > 0 && (
+                    <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-bold ${
+                      activeTab === tab.region ? "bg-white/20" : "bg-primary/15 text-primary"
+                    }`}>
+                      {tabTotal}%
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Liste des actions ──────────────────────────────────── */}
       <div className="flex-1 px-4 py-4">
         <div className="mb-3 flex items-center justify-end">
-          <span className="text-xs text-muted-foreground">Max 50% per stock</span>
+          <span className="text-xs text-muted-foreground">Max {maxAlloc}% per stock</span>
         </div>
 
         <div className="flex flex-col gap-2">
           {visibleStocks.map((stock) => {
             const mock   = MOCK_MARKET[stock.ticker] ?? { price: 100, weekChange: 0 }
-            const price  = livePrices[stock.ticker] ?? mock.price   // prix réel si dispo
+            const price  = livePrices[stock.ticker] ?? mock.price
             const alloc  = allocations[stock.ticker] ?? 0
             return (
               <Card
@@ -481,7 +509,6 @@ export function ArbitrageScreen() {
                 }`}
               >
                 <CardContent className="p-0">
-                  {/* Ligne infos + prix */}
                   <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/50">
                     <div className="flex items-center gap-2">
                       <div className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary text-xs font-bold text-foreground">
@@ -501,7 +528,6 @@ export function ArbitrageScreen() {
                     </div>
                   </div>
 
-                  {/* Slider allocation */}
                   <div className="flex items-center gap-2 px-3 py-1 bg-secondary/30">
                     <Button
                       variant="outline"
@@ -517,7 +543,7 @@ export function ArbitrageScreen() {
                       <Slider
                         value={[alloc]}
                         onValueChange={([v]) => updateAllocation(stock.ticker, v)}
-                        max={50}
+                        max={maxAlloc}
                         step={1}
                         disabled={!arbitrage.isOpen}
                         className="flex-1"
@@ -532,7 +558,7 @@ export function ArbitrageScreen() {
                       size="icon"
                       className="h-6 w-6 shrink-0"
                       onClick={() => updateAllocation(stock.ticker, alloc + 5)}
-                      disabled={!arbitrage.isOpen || alloc >= 50}
+                      disabled={!arbitrage.isOpen || alloc >= maxAlloc}
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
@@ -547,8 +573,6 @@ export function ArbitrageScreen() {
       {/* ── Barre basse fixe ───────────────────────────────────── */}
       <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-sm">
         <div className="px-4 pt-3 pb-4">
-
-          {/* Récap investi / cash */}
           <div className="mb-2 flex items-center justify-between text-sm">
             <div className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary" />
@@ -564,15 +588,10 @@ export function ArbitrageScreen() {
             </div>
           </div>
 
-          {/* Barre bicolore */}
           <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-secondary">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-200"
-              style={{ width: `${totalAllocation}%` }}
-            />
+            <div className="h-full rounded-full bg-primary transition-all duration-200" style={{ width: `${totalAllocation}%` }} />
           </div>
 
-          {/* CTA */}
           <Button
             size="lg"
             className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -602,11 +621,12 @@ export function ArbitrageScreen() {
               Confirm your allocation
             </DialogTitle>
             <DialogDescription>
-              Check your allocation before submitting — it cannot be changed until the next window.
+              {activeLeague
+                ? `League: ${activeLeague.name}. It cannot be changed until the next window.`
+                : "Check your allocation before submitting — it cannot be changed until the next window."}
             </DialogDescription>
           </DialogHeader>
 
-          {/* ── Répartition détaillée ── */}
           <div className="flex-1 overflow-y-auto my-2 space-y-1.5 pr-1">
             {TICKERS
               .filter((t) => (allocations[t.ticker] ?? 0) > 0)
@@ -615,22 +635,16 @@ export function ArbitrageScreen() {
                 const pct = allocations[t.ticker] ?? 0
                 return (
                   <div key={t.ticker} className="flex items-center gap-3">
-                    {/* Pastille ticker */}
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-bold text-foreground">
                       {t.ticker.replace(".", "").slice(0, 2)}
                     </div>
-                    {/* Nom */}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="text-xs font-semibold text-foreground truncate">{t.ticker}</span>
                         <span className="text-xs font-bold text-foreground tabular-nums ml-2">{pct}%</span>
                       </div>
-                      {/* Mini barre */}
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                        <div
-                          className="h-full rounded-full bg-primary"
-                          style={{ width: `${(pct / 50) * 100}%` }}
-                        />
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${(pct / maxAlloc) * 100}%` }} />
                       </div>
                     </div>
                   </div>
@@ -638,29 +652,22 @@ export function ArbitrageScreen() {
               })
             }
 
-            {/* Ligne Cash si > 0 */}
             {cashPct > 0 && (
               <div className="flex items-center gap-3 pt-1 border-t border-border mt-2">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-green-500/15 text-xs font-bold text-green-500">
-                  💵
-                </div>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-green-500/15 text-xs font-bold text-green-500">💵</div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-xs font-semibold text-green-500">Cash</span>
                     <span className="text-xs font-bold text-green-500 tabular-nums ml-2">{cashPct}%</span>
                   </div>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className="h-full rounded-full bg-green-500/60"
-                      style={{ width: `${cashPct}%` }}
-                    />
+                    <div className="h-full rounded-full bg-green-500/60" style={{ width: `${cashPct}%` }} />
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* ── Pied : timer + boutons ── */}
           <div className="border-t border-border pt-3 space-y-3">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Window closes in</span>
@@ -672,18 +679,10 @@ export function ArbitrageScreen() {
               </p>
             )}
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setShowConfirmDialog(false)}
-                disabled={isSubmitting}
-              >
+              <Button variant="outline" onClick={() => setShowConfirmDialog(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button
-                onClick={handleConfirm}
-                disabled={isSubmitting}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
+              <Button onClick={handleConfirm} disabled={isSubmitting} className="bg-primary text-primary-foreground hover:bg-primary/90">
                 {isSubmitting ? "Saving…" : "Confirm"}
               </Button>
             </DialogFooter>

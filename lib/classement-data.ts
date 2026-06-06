@@ -113,7 +113,8 @@ export async function getAllClassementData(): Promise<AllClassementData> {
     admin
       .from("portfolios")
       .select("user_id, statut_joueur, positions ( ticker, allocation_pct, status, open_price )")
-      .eq("saison", CURRENT_SAISON),
+      .eq("saison", CURRENT_SAISON)
+      .is("league_id", null),              // jeu principal uniquement
 
     admin
       .from("cours")

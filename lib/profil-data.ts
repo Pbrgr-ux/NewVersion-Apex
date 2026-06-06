@@ -102,6 +102,7 @@ export async function getProfilData(): Promise<ProfilData | null> {
       .select("id, positions ( ticker, allocation_pct, status )")
       .eq("user_id", user.id)
       .eq("saison", CURRENT_SAISON)
+      .is("league_id", null)               // jeu principal uniquement
       .maybeSingle(),
 
     // Nb total de joueurs classés par saison

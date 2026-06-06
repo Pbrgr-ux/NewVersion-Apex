@@ -1,7 +1,10 @@
 /**
  * lib/leagues.ts  (SERVER-ONLY)
  *
- * Ligues privées : création (Pro, max 3), adhésion par code, détail.
+ * Ligues privées = compétitions autonomes (Modèle B) :
+ *   • chaque ligue porte sa config (capital, univers, fenêtre, durée)
+ *   • portefeuille distinct par (joueur × ligue), scopé par league_id
+ *   • perf calculée à la lecture depuis les positions scopées de la ligue
  */
 
 import { createClient as createServerClient } from "@/lib/supabase/server"
@@ -9,6 +12,8 @@ import { createClient }   from "@supabase/supabase-js"
 import type { Database }  from "@/types/database"
 import { getCurrentSeasonId } from "@/lib/seasons"
 import { TICKER_MAP }     from "@/lib/tickers"
+import { getLiveQuotes }  from "@/lib/live-quotes"
+import { computeChainedPerf, type PerfPosition } from "@/lib/perf"
 
 export const MAX_LEAGUES = 3
 
@@ -19,38 +24,122 @@ function admin() {
   )
 }
 
+// ── Types ──────────────────────────────────────────────────────
+export type LeagueConfig = {
+  name:                string
+  duration_mode:       "fixed" | "permanent"
+  debut_date:          string | null
+  fin_date:            string | null
+  capital_initial:     number
+  max_allocation_pct:  number
+  tickers_autorises:   string[] | null   // null = toutes
+  fenetre_jours:       number[]
+  fenetre_heure_debut: number
+  fenetre_heure_fin:   number
+}
+
 export type LeagueSummary = {
-  id:      string
-  name:    string
-  code:    string
-  members: number
-  myRank:  number | null
-  isOwner: boolean
+  id:            string
+  name:          string
+  code:          string
+  members:       number
+  myRank:        number | null
+  isOwner:       boolean
+  duration_mode: string
+  fin_date:      string | null
+  statut:        string
 }
 
 export type LeagueMemberRow = {
-  user_id: string
-  pseudo:  string
-  avatar:  string | null
-  is_pro:  boolean
-  rang:    number
-  perf:    number | null
-  isSelf:  boolean
+  user_id:   string
+  pseudo:    string
+  avatar:    string | null
+  is_pro:    boolean
+  rang:      number
+  perf:      number | null
+  isSelf:    boolean
   positions: { ticker: string; name: string; allocation_pct: number }[]  // vide si non-Pro
 }
 
 export type LeagueDetail = {
-  id:      string
-  name:    string
-  code:    string
-  isOwner: boolean
-  isPro:   boolean
-  members: LeagueMemberRow[]
+  id:                  string
+  name:                string
+  code:                string
+  isOwner:             boolean
+  isPro:               boolean
+  capital_initial:     number
+  max_allocation_pct:  number
+  tickers_autorises:   string[] | null
+  fenetre_jours:       number[]
+  fenetre_heure_debut: number
+  fenetre_heure_fin:   number
+  duration_mode:       string
+  debut_date:          string | null
+  fin_date:            string | null
+  statut:              string
+  members:             LeagueMemberRow[]
+}
+
+/** Config d'une ligue nécessaire au sélecteur de contexte d'arbitrage. */
+export type LeagueContext = {
+  id:                  string
+  name:                string
+  capital_initial:     number
+  max_allocation_pct:  number
+  tickers_autorises:   string[] | null
+  fenetre_jours:       number[]
+  fenetre_heure_debut: number
+  fenetre_heure_fin:   number
+  statut:              string
 }
 
 function genCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("")
+}
+
+type DbClient = ReturnType<typeof admin>
+
+/**
+ * Perf par membre pour une ligue, calculée à la lecture depuis les positions
+ * scopées league_id. Renvoie une Map<user_id, perf%> (null si pas de données).
+ */
+async function leaguePerfMap(
+  db: DbClient,
+  leagueId: string,
+): Promise<{ perf: Map<string, number | null>; openByUser: Map<string, PerfPosition[]> }> {
+  const { data: positions } = await db
+    .from("positions")
+    .select("user_id, ticker, allocation_pct, open_price, close_price, status, opened_at")
+    .eq("league_id", leagueId)
+
+  const byUser = new Map<string, PerfPosition[]>()
+  const openTickers = new Set<string>()
+  for (const p of positions ?? []) {
+    const uid = p.user_id ?? ""
+    if (!uid) continue
+    if (!byUser.has(uid)) byUser.set(uid, [])
+    byUser.get(uid)!.push({
+      ticker:         p.ticker,
+      allocation_pct: Number(p.allocation_pct),
+      open_price:     p.open_price != null ? Number(p.open_price) : null,
+      close_price:    p.close_price != null ? Number(p.close_price) : null,
+      status:         p.status,
+      opened_at:      p.opened_at,
+    })
+    if ((p.status ?? "open") === "open") openTickers.add(p.ticker)
+  }
+
+  // TODO(ligues terminées) : figer sur le dernier cours ≤ fin_date.
+  const liveQuotes = await getLiveQuotes([...openTickers])
+
+  const perf = new Map<string, number | null>()
+  const openByUser = new Map<string, PerfPosition[]>()
+  for (const [uid, pos] of byUser) {
+    perf.set(uid, computeChainedPerf(pos, liveQuotes))
+    openByUser.set(uid, pos.filter((p) => (p.status ?? "open") === "open"))
+  }
+  return { perf, openByUser }
 }
 
 /** Ligues dont l'utilisateur courant est membre + son rang dans chacune. */
@@ -68,14 +157,10 @@ export async function getMyLeagues(): Promise<{ leagues: LeagueSummary[]; userId
   const leagueIds = (memberships ?? []).map((m) => m.league_id)
   if (leagueIds.length === 0) return { leagues: [], userId: user.id }
 
-  const [leaguesRes, allMembersRes, classementRes] = await Promise.all([
-    db.from("leagues").select("id, name, code, owner_id").in("id", leagueIds),
+  const [leaguesRes, allMembersRes] = await Promise.all([
+    db.from("leagues").select("id, name, code, owner_id, duration_mode, fin_date, statut").in("id", leagueIds),
     db.from("league_members").select("league_id, user_id").in("league_id", leagueIds),
-    db.from("classement").select("user_id, perf_totale").eq("saison", getCurrentSeasonId()),
   ])
-
-  const perfOf = new Map<string, number>()
-  for (const c of classementRes.data ?? []) perfOf.set(c.user_id, Number(c.perf_totale))
 
   const membersByLeague = new Map<string, string[]>()
   for (const m of allMembersRes.data ?? []) {
@@ -83,28 +168,66 @@ export async function getMyLeagues(): Promise<{ leagues: LeagueSummary[]; userId
     membersByLeague.get(m.league_id)!.push(m.user_id)
   }
 
-  const leagues: LeagueSummary[] = (leaguesRes.data ?? []).map((l) => {
+  // Rang interne par perf calculée à la lecture (une passe par ligue)
+  const leagues: LeagueSummary[] = []
+  for (const l of leaguesRes.data ?? []) {
     const memberIds = membersByLeague.get(l.id) ?? []
-    // Rang interne = position dans le classement trié des membres par perf
+    const { perf } = await leaguePerfMap(db, l.id)
     const ranked = memberIds
-      .map((uid) => ({ uid, perf: perfOf.get(uid) ?? null }))
+      .map((uid) => ({ uid, perf: perf.get(uid) ?? null }))
       .filter((m) => m.perf !== null)
       .sort((a, b) => (b.perf ?? 0) - (a.perf ?? 0))
     const myRank = ranked.findIndex((m) => m.uid === user.id)
-    return {
-      id:      l.id,
-      name:    l.name,
-      code:    l.code,
-      members: memberIds.length,
-      myRank:  myRank >= 0 ? myRank + 1 : null,
-      isOwner: l.owner_id === user.id,
-    }
-  })
+    leagues.push({
+      id:            l.id,
+      name:          l.name,
+      code:          l.code,
+      members:       memberIds.length,
+      myRank:        myRank >= 0 ? myRank + 1 : null,
+      isOwner:       l.owner_id === user.id,
+      duration_mode: l.duration_mode,
+      fin_date:      l.fin_date,
+      statut:        l.statut,
+    })
+  }
 
   return { leagues, userId: user.id }
 }
 
-/** Détail d'une ligue : membres classés + positions (Pro uniquement). */
+/** Config des ligues actives du joueur pour le sélecteur d'arbitrage. */
+export async function getMyLeagueContexts(): Promise<LeagueContext[]> {
+  const server = await createServerClient()
+  const { data: { user } } = await server.auth.getUser()
+  if (!user) return []
+
+  const db = admin()
+  const { data: memberships } = await db
+    .from("league_members")
+    .select("league_id")
+    .eq("user_id", user.id)
+  const leagueIds = (memberships ?? []).map((m) => m.league_id)
+  if (leagueIds.length === 0) return []
+
+  const { data: leagues } = await db
+    .from("leagues")
+    .select("id, name, capital_initial, max_allocation_pct, tickers_autorises, fenetre_jours, fenetre_heure_debut, fenetre_heure_fin, statut")
+    .in("id", leagueIds)
+    .eq("statut", "active")
+
+  return (leagues ?? []).map((l) => ({
+    id:                  l.id,
+    name:                l.name,
+    capital_initial:     l.capital_initial,
+    max_allocation_pct:  l.max_allocation_pct,
+    tickers_autorises:   l.tickers_autorises,
+    fenetre_jours:       l.fenetre_jours,
+    fenetre_heure_debut: l.fenetre_heure_debut,
+    fenetre_heure_fin:   l.fenetre_heure_fin,
+    statut:              l.statut,
+  }))
+}
+
+/** Détail d'une ligue : membres classés par perf calculée + positions (Pro). */
 export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | null> {
   const server = await createServerClient()
   const { data: { user } } = await server.auth.getUser()
@@ -113,7 +236,7 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
   const db = admin()
   const { data: league } = await db
     .from("leagues")
-    .select("id, name, code, owner_id")
+    .select("id, name, code, owner_id, capital_initial, max_allocation_pct, tickers_autorises, fenetre_jours, fenetre_heure_debut, fenetre_heure_fin, duration_mode, debut_date, fin_date, statut")
     .eq("id", leagueId)
     .maybeSingle()
   if (!league) return null
@@ -127,34 +250,16 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
   const { data: dbUser } = await db.from("users").select("is_pro").eq("id", user.id).maybeSingle()
   const isPro = dbUser?.is_pro ?? false
 
-  // Membres + users + classement + (Pro) positions
   const { data: members } = await db.from("league_members").select("user_id").eq("league_id", leagueId)
   const memberIds = (members ?? []).map((m) => m.user_id)
 
-  const [usersRes, classRes] = await Promise.all([
+  const [usersRes, perfRes] = await Promise.all([
     db.from("users").select("id, pseudo, avatar, is_pro").in("id", memberIds),
-    db.from("classement").select("user_id, perf_totale").eq("saison", getCurrentSeasonId()).in("user_id", memberIds),
+    leaguePerfMap(db, leagueId),
   ])
 
   const userOf = new Map(usersRes.data?.map((u) => [u.id, u]) ?? [])
-  const perfOf = new Map(classRes.data?.map((c) => [c.user_id, Number(c.perf_totale)]) ?? [])
-
-  // Positions des membres (seulement si demandeur Pro)
-  const positionsByUser = new Map<string, { ticker: string; name: string; allocation_pct: number }[]>()
-  if (isPro) {
-    const { data: portfolios } = await db
-      .from("portfolios")
-      .select("user_id, positions ( ticker, allocation_pct, status )")
-      .eq("saison", getCurrentSeasonId())
-      .in("user_id", memberIds)
-    for (const p of portfolios ?? []) {
-      const pos = ((p.positions ?? []) as Array<{ ticker: string; allocation_pct: number; status?: string }>)
-        .filter((x) => (x.status ?? "open") === "open")
-        .sort((a, b) => b.allocation_pct - a.allocation_pct)
-        .map((x) => ({ ticker: x.ticker, name: TICKER_MAP[x.ticker]?.name ?? x.ticker, allocation_pct: Number(x.allocation_pct) }))
-      positionsByUser.set(p.user_id, pos)
-    }
-  }
+  const { perf, openByUser } = perfRes
 
   const rows: LeagueMemberRow[] = memberIds
     .map((uid) => ({
@@ -162,28 +267,64 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
       pseudo:  userOf.get(uid)?.pseudo ?? uid,
       avatar:  (userOf.get(uid) as { avatar?: string | null } | undefined)?.avatar ?? null,
       is_pro:  userOf.get(uid)?.is_pro ?? false,
-      perf:    perfOf.has(uid) ? perfOf.get(uid)! : null,
+      perf:    perf.get(uid) ?? null,
       isSelf:  uid === user.id,
-      positions: positionsByUser.get(uid) ?? [],
+      // Positions visibles seulement si le demandeur est Pro
+      positions: isPro
+        ? (openByUser.get(uid) ?? [])
+            .sort((a, b) => b.allocation_pct - a.allocation_pct)
+            .map((p) => ({ ticker: p.ticker, name: TICKER_MAP[p.ticker]?.name ?? p.ticker, allocation_pct: p.allocation_pct }))
+        : [],
     }))
     .sort((a, b) => (b.perf ?? -Infinity) - (a.perf ?? -Infinity))
     .map((m, i) => ({ ...m, rang: i + 1 }))
 
   return {
-    id:      league.id,
-    name:    league.name,
-    code:    league.code,
-    isOwner: league.owner_id === user.id,
+    id:                  league.id,
+    name:                league.name,
+    code:                league.code,
+    isOwner:             league.owner_id === user.id,
     isPro,
-    members: rows,
+    capital_initial:     league.capital_initial,
+    max_allocation_pct:  league.max_allocation_pct,
+    tickers_autorises:   league.tickers_autorises,
+    fenetre_jours:       league.fenetre_jours,
+    fenetre_heure_debut: league.fenetre_heure_debut,
+    fenetre_heure_fin:   league.fenetre_heure_fin,
+    duration_mode:       league.duration_mode,
+    debut_date:          league.debut_date,
+    fin_date:            league.fin_date,
+    statut:              league.statut,
+    members:             rows,
   }
 }
 
-/** Crée une ligue (Pro requis, max 3 adhésions). */
-export async function createLeague(name: string): Promise<{ ok: boolean; id?: string; error?: string }> {
+/** Crée le portefeuille scopé d'un membre pour une ligue (capital = capital_initial). */
+async function createLeaguePortfolio(db: DbClient, userId: string, leagueId: string, saison: number, capital: number) {
+  const { data: existing } = await db
+    .from("portfolios")
+    .select("id").eq("user_id", userId).eq("league_id", leagueId).maybeSingle()
+  if (existing) return
+  await db.from("portfolios").insert({
+    user_id:        userId,
+    league_id:      leagueId,
+    saison,
+    cash:           0,
+    capital_initial: capital,
+    capital_ajuste:  capital,
+    statut_joueur:   "confirmed",
+    date_inscription_saison: new Date().toISOString().split("T")[0],
+  })
+}
+
+/** Crée une ligue (Pro requis, max 3) avec config complète. */
+export async function createLeague(config: LeagueConfig): Promise<{ ok: boolean; id?: string; error?: string }> {
   const server = await createServerClient()
   const { data: { user } } = await server.auth.getUser()
   if (!user) return { ok: false, error: "Not signed in" }
+
+  const name = config.name?.trim()
+  if (!name) return { ok: false, error: "Name required" }
 
   const db = admin()
   const { data: dbUser } = await db.from("users").select("is_pro").eq("id", user.id).maybeSingle()
@@ -200,9 +341,28 @@ export async function createLeague(name: string): Promise<{ ok: boolean; id?: st
     code = genCode()
   }
 
+  const today  = new Date().toISOString().split("T")[0]
+  const saison = getCurrentSeasonId()
+  const isFixed = config.duration_mode === "fixed"
+
   const { data: created, error } = await db
     .from("leagues")
-    .insert({ name: name.trim(), code, owner_id: user.id, saison: getCurrentSeasonId() })
+    .insert({
+      name,
+      code,
+      owner_id:            user.id,
+      saison,
+      capital_initial:     config.capital_initial,
+      max_allocation_pct:  config.max_allocation_pct,
+      tickers_autorises:   config.tickers_autorises,
+      fenetre_jours:       config.fenetre_jours,
+      fenetre_heure_debut: config.fenetre_heure_debut,
+      fenetre_heure_fin:   config.fenetre_heure_fin,
+      duration_mode:       config.duration_mode,
+      debut_date:          isFixed ? (config.debut_date ?? today) : today,
+      fin_date:            isFixed ? config.fin_date : null,
+      statut:              "active",
+    })
     .select("id")
     .single()
   if (error || !created) {
@@ -213,22 +373,28 @@ export async function createLeague(name: string): Promise<{ ok: boolean; id?: st
   const { error: memErr } = await db.from("league_members").insert({ league_id: created.id, user_id: user.id })
   if (memErr) {
     console.error("[createLeague] insert league_members failed:", memErr)
-    // rollback de la ligue créée pour ne pas laisser d'orphelin
     await db.from("leagues").delete().eq("id", created.id)
     return { ok: false, error: memErr.message }
   }
+
+  await createLeaguePortfolio(db, user.id, created.id, saison, config.capital_initial)
   return { ok: true, id: created.id }
 }
 
-/** Rejoint une ligue via code (max 3 adhésions). */
+/** Rejoint une ligue via code (max 3) + crée le portefeuille scopé. */
 export async function joinLeague(code: string): Promise<{ ok: boolean; id?: string; error?: string }> {
   const server = await createServerClient()
   const { data: { user } } = await server.auth.getUser()
   if (!user) return { ok: false, error: "Not signed in" }
 
   const db = admin()
-  const { data: league } = await db.from("leagues").select("id").eq("code", code.trim().toUpperCase()).maybeSingle()
+  const { data: league } = await db
+    .from("leagues")
+    .select("id, saison, capital_initial, statut")
+    .eq("code", code.trim().toUpperCase())
+    .maybeSingle()
   if (!league) return { ok: false, error: "Invalid code" }
+  if (league.statut !== "active") return { ok: false, error: "This league is closed" }
 
   const { data: already } = await db.from("league_members").select("id").eq("league_id", league.id).eq("user_id", user.id).maybeSingle()
   if (already) return { ok: true, id: league.id }
@@ -237,6 +403,7 @@ export async function joinLeague(code: string): Promise<{ ok: boolean; id?: stri
   if ((count ?? 0) >= MAX_LEAGUES) return { ok: false, error: `Max ${MAX_LEAGUES} leagues at a time` }
 
   await db.from("league_members").insert({ league_id: league.id, user_id: user.id })
+  await createLeaguePortfolio(db, user.id, league.id, league.saison, league.capital_initial)
   return { ok: true, id: league.id }
 }
 

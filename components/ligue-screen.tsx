@@ -3,10 +3,12 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Copy, Check, LogOut, Crown, Lock } from "lucide-react"
+import { ArrowLeft, Copy, Check, LogOut, Crown, Lock, TrendingUp } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { resolvePreset, isImageUrl } from "@/lib/avatars"
 import type { LeagueDetail } from "@/lib/leagues"
+
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 function avatarSrc(a: string | null): string | null {
   const p = resolvePreset(a); if (p) return p.src
@@ -44,8 +46,49 @@ export function LigueScreen({ detail }: { detail: LeagueDetail }) {
         </button>
       </div>
 
-      <h1 className="text-lg font-bold text-foreground mb-1">{detail.name}</h1>
-      <p className="text-xs text-muted-foreground mb-4">{detail.members.length} member{detail.members.length > 1 ? "s" : ""} · share the code to invite</p>
+      <div className="mb-1 flex items-center gap-2">
+        <h1 className="text-lg font-bold text-foreground">{detail.name}</h1>
+        {detail.statut !== "active" && (
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">Ended</span>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">{detail.members.length} member{detail.members.length > 1 ? "s" : ""} · share the code to invite</p>
+
+      {/* Config de la compétition */}
+      <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-lg border border-border bg-card px-3 py-2">
+          <p className="text-muted-foreground">Capital</p>
+          <p className="font-semibold text-foreground tabular-nums">{detail.capital_initial.toLocaleString("en-US")} €</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card px-3 py-2">
+          <p className="text-muted-foreground">Duration</p>
+          <p className="font-semibold text-foreground">
+            {detail.duration_mode === "permanent"
+              ? "Permanent"
+              : detail.fin_date ? `Until ${new Date(detail.fin_date).toLocaleDateString("en-US", { day: "numeric", month: "short" })}` : "Fixed"}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card px-3 py-2">
+          <p className="text-muted-foreground">Window</p>
+          <p className="font-semibold text-foreground">
+            {detail.fenetre_jours.slice().sort((a, b) => a - b).map((d) => DAY_LABELS[d]).join(", ")} · {detail.fenetre_heure_debut}–{detail.fenetre_heure_fin}h
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card px-3 py-2">
+          <p className="text-muted-foreground">Universe</p>
+          <p className="font-semibold text-foreground">
+            {detail.tickers_autorises && detail.tickers_autorises.length > 0 ? `${detail.tickers_autorises.length} stocks` : "All stocks"} · max {detail.max_allocation_pct}%
+          </p>
+        </div>
+      </div>
+
+      {/* Trader pour cette ligue */}
+      {detail.statut === "active" && (
+        <Link href={`/arbitrage?league=${detail.id}`}
+          className="mb-4 flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
+          <TrendingUp className="h-4 w-4" /> Trade for this league
+        </Link>
+      )}
 
       {/* Classement membres */}
       <div className="flex flex-col gap-2">

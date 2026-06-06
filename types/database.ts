@@ -99,6 +99,7 @@ export type Database = {
           capital_ajuste:        number
           statut_joueur:         string    // "confirmed" | "rookie"
           date_inscription_saison: string
+          league_id:             string | null   // NULL = jeu principal
           created_at:            string
         }
         Insert: {
@@ -110,12 +111,14 @@ export type Database = {
           capital_ajuste?:        number
           statut_joueur?:         string
           date_inscription_saison?: string
+          league_id?:             string | null
           created_at?:            string
         }
         Update: {
           cash?:           number
           capital_ajuste?: number
           saison?:         number
+          league_id?:      string | null
         }
         Relationships: [
           {
@@ -144,6 +147,7 @@ export type Database = {
           close_price:    number | null
           closed_at:      string | null
           base_capital:   number | null  // valeur portefeuille à l'arbitrage
+          league_id:      string | null  // NULL = jeu principal
           created_at:     string
         }
         Insert: {
@@ -160,6 +164,7 @@ export type Database = {
           close_price?:    number | null
           closed_at?:      string | null
           base_capital?:   number | null
+          league_id?:      string | null
           created_at?:     string
         }
         Update: {
@@ -186,22 +191,46 @@ export type Database = {
       // ── leagues ────────────────────────────────────────────
       leagues: {
         Row: {
-          id:         string
-          name:       string
-          code:       string
-          owner_id:   string
-          saison:     number
-          created_at: string
+          id:                  string
+          name:                string
+          code:                string
+          owner_id:            string
+          saison:              number
+          capital_initial:     number
+          max_allocation_pct:  number
+          tickers_autorises:   string[] | null   // null = toutes
+          fenetre_jours:       number[]          // [6,0] = sam+dim
+          fenetre_heure_debut: number
+          fenetre_heure_fin:   number
+          duration_mode:       string            // 'fixed' | 'permanent'
+          debut_date:          string | null
+          fin_date:            string | null
+          statut:              string            // 'active' | 'terminee'
+          created_at:          string
         }
         Insert: {
-          id?:         string
-          name:        string
-          code:        string
-          owner_id:    string
-          saison:      number
-          created_at?: string
+          id?:                  string
+          name:                 string
+          code:                 string
+          owner_id:             string
+          saison:               number
+          capital_initial?:     number
+          max_allocation_pct?:  number
+          tickers_autorises?:   string[] | null
+          fenetre_jours?:       number[]
+          fenetre_heure_debut?: number
+          fenetre_heure_fin?:   number
+          duration_mode?:       string
+          debut_date?:          string | null
+          fin_date?:            string | null
+          statut?:              string
+          created_at?:          string
         }
-        Update: { name?: string }
+        Update: {
+          name?:                string
+          statut?:              string
+          fin_date?:            string | null
+        }
         Relationships: []
       }
 

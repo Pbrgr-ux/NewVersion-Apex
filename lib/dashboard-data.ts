@@ -184,6 +184,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       .select("id, capital_ajuste, statut_joueur")
       .eq("user_id", user.id)
       .eq("saison", CURRENT_SAISON)
+      .is("league_id", null)               // jeu principal uniquement
       .order("id", { ascending: false }),
 
     supabase

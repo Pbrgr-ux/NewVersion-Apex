@@ -5,18 +5,18 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Lock, Users, Plus, ArrowRight, ChevronRight, Loader2 } from "lucide-react"
 import type { LeagueSummary } from "@/lib/leagues"
+import { LeagueCreateForm, type LeaguePayload } from "@/components/league-create-form"
 
 type View = "list" | "create" | "join"
 
 export function LigueHubScreen({ leagues }: { leagues: LeagueSummary[] }) {
   const router = useRouter()
   const [view, setView]   = useState<View>("list")
-  const [name, setName]   = useState("")
   const [code, setCode]   = useState("")
   const [error, setError] = useState("")
   const [busy, setBusy]   = useState(false)
 
-  async function call(action: string, payload: Record<string, string>) {
+  async function call(action: string, payload: Record<string, unknown>) {
     setBusy(true); setError("")
     try {
       const res = await fetch("/api/leagues", {
@@ -51,6 +51,7 @@ export function LigueHubScreen({ leagues }: { leagues: LeagueSummary[] }) {
                   {l.members} member{l.members > 1 ? "s" : ""}
                   {l.myRank && <> · You #{l.myRank}</>}
                   {l.isOwner && <> · Owner</>}
+                  {l.statut !== "active" ? <> · Ended</> : l.duration_mode === "permanent" ? <> · Permanent</> : null}
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -81,21 +82,12 @@ export function LigueHubScreen({ leagues }: { leagues: LeagueSummary[] }) {
       )}
 
       {view === "create" && (
-        <form onSubmit={(e) => { e.preventDefault(); call("create", { name }) }} className="flex flex-col gap-4">
-          <button type="button" onClick={() => setView("list")} className="self-start text-xs text-muted-foreground hover:text-foreground">← Back</button>
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">New league</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">An invite code is generated automatically.</p>
-          </div>
-          <input value={name} onChange={(e) => { setName(e.target.value); setError("") }}
-            placeholder="League name" maxLength={32}
-            className="w-full rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-          {error && <p className="text-xs text-red-500">{error}</p>}
-          <button type="submit" disabled={busy || !name.trim()}
-            className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60">
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Create league →
-          </button>
-        </form>
+        <LeagueCreateForm
+          busy={busy}
+          error={error}
+          onBack={() => { setView("list"); setError("") }}
+          onSubmit={(name: string, config: LeaguePayload) => call("create", { name, config })}
+        />
       )}
 
       {view === "join" && (

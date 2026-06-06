@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
     .select("id")
     .eq("user_id", user_id)
     .eq("saison", saisonId)
+    .is("league_id", null)
     .maybeSingle()
 
   if (existing) {
