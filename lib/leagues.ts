@@ -100,13 +100,46 @@ function genCode(): string {
 
 type DbClient = ReturnType<typeof admin>
 
+function todayISO(): string {
+  return new Date().toISOString().split("T")[0]
+}
+
+/** Une ligue est-elle terminée ? (statut figé OU durée fixe dont la fin est passée) */
+export function isLeagueClosed(l: { statut: string; duration_mode: string; fin_date: string | null }): boolean {
+  if (l.statut !== "active") return true
+  if (l.duration_mode === "fixed" && l.fin_date) return l.fin_date < todayISO()
+  return false
+}
+
+/**
+ * Quotes "gelées" : dernier cours connu ≤ finDate pour chaque ticker.
+ * Sert à figer la valorisation des positions ouvertes d'une ligue terminée.
+ */
+async function frozenQuotes(db: DbClient, tickers: string[], finDate: string): Promise<Map<string, number>> {
+  const map = new Map<string, number>()
+  if (tickers.length === 0) return map
+  const { data: rows } = await db
+    .from("cours")
+    .select("ticker, prix, date")
+    .in("ticker", tickers)
+    .lte("date", finDate)
+    .order("date", { ascending: false })
+  for (const r of rows ?? []) {
+    if (!map.has(r.ticker)) map.set(r.ticker, Number(r.prix))   // 1er = le plus récent ≤ finDate
+  }
+  return map
+}
+
 /**
  * Perf par membre pour une ligue, calculée à la lecture depuis les positions
- * scopées league_id. Renvoie une Map<user_id, perf%> (null si pas de données).
+ * scopées league_id. Si `freezeDate` est fourni (ligue terminée), les positions
+ * ouvertes sont valorisées au dernier cours ≤ freezeDate (gel), sinon au prix
+ * temps réel. Renvoie une Map<user_id, perf%> (null si pas de données).
  */
 async function leaguePerfMap(
   db: DbClient,
   leagueId: string,
+  freezeDate?: string | null,
 ): Promise<{ perf: Map<string, number | null>; openByUser: Map<string, PerfPosition[]> }> {
   const { data: positions } = await db
     .from("positions")
@@ -130,13 +163,15 @@ async function leaguePerfMap(
     if ((p.status ?? "open") === "open") openTickers.add(p.ticker)
   }
 
-  // TODO(ligues terminées) : figer sur le dernier cours ≤ fin_date.
-  const liveQuotes = await getLiveQuotes([...openTickers])
+  // Ligue terminée → gel sur le dernier cours ≤ fin_date ; sinon prix temps réel.
+  const quotes = freezeDate
+    ? await frozenQuotes(db, [...openTickers], freezeDate)
+    : await getLiveQuotes([...openTickers])
 
   const perf = new Map<string, number | null>()
   const openByUser = new Map<string, PerfPosition[]>()
   for (const [uid, pos] of byUser) {
-    perf.set(uid, computeChainedPerf(pos, liveQuotes))
+    perf.set(uid, computeChainedPerf(pos, quotes))
     openByUser.set(uid, pos.filter((p) => (p.status ?? "open") === "open"))
   }
   return { perf, openByUser }
@@ -172,7 +207,12 @@ export async function getMyLeagues(): Promise<{ leagues: LeagueSummary[]; userId
   const leagues: LeagueSummary[] = []
   for (const l of leaguesRes.data ?? []) {
     const memberIds = membersByLeague.get(l.id) ?? []
-    const { perf } = await leaguePerfMap(db, l.id)
+    const closed    = isLeagueClosed(l)
+    const statut    = closed ? "terminee" : l.statut
+    // Persistance paresseuse du statut si la fin est dépassée
+    if (closed && l.statut === "active") await db.from("leagues").update({ statut: "terminee" }).eq("id", l.id)
+
+    const { perf } = await leaguePerfMap(db, l.id, closed ? l.fin_date : null)
     const ranked = memberIds
       .map((uid) => ({ uid, perf: perf.get(uid) ?? null }))
       .filter((m) => m.perf !== null)
@@ -187,7 +227,7 @@ export async function getMyLeagues(): Promise<{ leagues: LeagueSummary[]; userId
       isOwner:       l.owner_id === user.id,
       duration_mode: l.duration_mode,
       fin_date:      l.fin_date,
-      statut:        l.statut,
+      statut,
     })
   }
 
@@ -210,21 +250,24 @@ export async function getMyLeagueContexts(): Promise<LeagueContext[]> {
 
   const { data: leagues } = await db
     .from("leagues")
-    .select("id, name, capital_initial, max_allocation_pct, tickers_autorises, fenetre_jours, fenetre_heure_debut, fenetre_heure_fin, statut")
+    .select("id, name, capital_initial, max_allocation_pct, tickers_autorises, fenetre_jours, fenetre_heure_debut, fenetre_heure_fin, duration_mode, fin_date, statut")
     .in("id", leagueIds)
     .eq("statut", "active")
 
-  return (leagues ?? []).map((l) => ({
-    id:                  l.id,
-    name:                l.name,
-    capital_initial:     l.capital_initial,
-    max_allocation_pct:  l.max_allocation_pct,
-    tickers_autorises:   l.tickers_autorises,
-    fenetre_jours:       l.fenetre_jours,
-    fenetre_heure_debut: l.fenetre_heure_debut,
-    fenetre_heure_fin:   l.fenetre_heure_fin,
-    statut:              l.statut,
-  }))
+  // Exclure les ligues à durée fixe dont la fin est dépassée (plus de trading)
+  return (leagues ?? [])
+    .filter((l) => !isLeagueClosed(l))
+    .map((l) => ({
+      id:                  l.id,
+      name:                l.name,
+      capital_initial:     l.capital_initial,
+      max_allocation_pct:  l.max_allocation_pct,
+      tickers_autorises:   l.tickers_autorises,
+      fenetre_jours:       l.fenetre_jours,
+      fenetre_heure_debut: l.fenetre_heure_debut,
+      fenetre_heure_fin:   l.fenetre_heure_fin,
+      statut:              l.statut,
+    }))
 }
 
 /** Détail d'une ligue : membres classés par perf calculée + positions (Pro). */
@@ -250,12 +293,16 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
   const { data: dbUser } = await db.from("users").select("is_pro").eq("id", user.id).maybeSingle()
   const isPro = dbUser?.is_pro ?? false
 
+  // Ligue terminée → gel de la valorisation + persistance du statut
+  const closed = isLeagueClosed(league)
+  if (closed && league.statut === "active") await db.from("leagues").update({ statut: "terminee" }).eq("id", leagueId)
+
   const { data: members } = await db.from("league_members").select("user_id").eq("league_id", leagueId)
   const memberIds = (members ?? []).map((m) => m.user_id)
 
   const [usersRes, perfRes] = await Promise.all([
     db.from("users").select("id, pseudo, avatar, is_pro").in("id", memberIds),
-    leaguePerfMap(db, leagueId),
+    leaguePerfMap(db, leagueId, closed ? league.fin_date : null),
   ])
 
   const userOf = new Map(usersRes.data?.map((u) => [u.id, u]) ?? [])
@@ -294,7 +341,7 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
     duration_mode:       league.duration_mode,
     debut_date:          league.debut_date,
     fin_date:            league.fin_date,
-    statut:              league.statut,
+    statut:              closed ? "terminee" : league.statut,
     members:             rows,
   }
 }

@@ -17,6 +17,7 @@ import type { Database }             from "@/types/database"
 import { getCurrentSeasonId }        from "@/lib/seasons"
 import { getLiveQuotes }             from "@/lib/live-quotes"
 import { isWindowOpen }              from "@/lib/arbitrage-window"
+import { isLeagueClosed }            from "@/lib/leagues"
 
 function admin() {
   return createClient<Database>(
@@ -65,10 +66,10 @@ export async function POST(req: NextRequest) {
 
     const { data: league } = await db
       .from("leagues")
-      .select("capital_initial, max_allocation_pct, tickers_autorises, fenetre_jours, fenetre_heure_debut, fenetre_heure_fin, statut")
+      .select("capital_initial, max_allocation_pct, tickers_autorises, fenetre_jours, fenetre_heure_debut, fenetre_heure_fin, duration_mode, fin_date, statut")
       .eq("id", leagueId).maybeSingle()
     if (!league) return NextResponse.json({ error: "League not found" }, { status: 404 })
-    if (league.statut !== "active") return NextResponse.json({ error: "This league is closed" }, { status: 400 })
+    if (isLeagueClosed(league)) return NextResponse.json({ error: "This league has ended" }, { status: 400 })
 
     // Fenêtre validée côté serveur
     const open = isWindowOpen(new Date(), {
