@@ -9,7 +9,7 @@ import { LeagueCreateForm, type LeaguePayload } from "@/components/league-create
 
 type View = "list" | "create" | "join"
 
-export function LigueHubScreen({ leagues }: { leagues: LeagueSummary[] }) {
+export function LigueHubScreen({ leagues, isPro = false }: { leagues: LeagueSummary[]; isPro?: boolean }) {
   const router = useRouter()
   const [view, setView]   = useState<View>("list")
   const [code, setCode]   = useState("")
@@ -59,15 +59,27 @@ export function LigueHubScreen({ leagues }: { leagues: LeagueSummary[] }) {
           ))}
 
           {/* Actions */}
-          <button onClick={() => { setView("create"); setError("") }}
-            className="flex items-center gap-4 rounded-xl border border-primary/30 bg-primary/10 p-4 text-left active:scale-[0.98]">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20"><Plus className="h-5 w-5 text-primary" /></div>
-            <div className="flex-1">
-              <p className="font-semibold text-foreground">Create a league</p>
-              <p className="text-xs text-muted-foreground">PRO · up to 3 leagues</p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          </button>
+          {isPro ? (
+            <button onClick={() => { setView("create"); setError("") }}
+              className="flex items-center gap-4 rounded-xl border border-primary/30 bg-primary/10 p-4 text-left active:scale-[0.98]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20"><Plus className="h-5 w-5 text-primary" /></div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground">Create a league</p>
+                <p className="text-xs text-muted-foreground">PRO · up to 3 leagues</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          ) : (
+            <Link href="/pro"
+              className="flex items-center gap-4 rounded-xl border border-border bg-card/60 p-4 text-left opacity-70">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary"><Lock className="h-5 w-5 text-muted-foreground" /></div>
+              <div className="flex-1">
+                <p className="font-semibold text-muted-foreground">Create a league</p>
+                <p className="text-xs text-muted-foreground">Pro required · tap to upgrade</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          )}
 
           <button onClick={() => { setView("join"); setError("") }}
             className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 text-left active:scale-[0.98]">

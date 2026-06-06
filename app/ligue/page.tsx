@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 export default async function LiguePage() {
-  const { leagues, userId } = await getMyLeagues()
+  const { leagues, userId, isPro } = await getMyLeagues()
   if (!userId) redirect("/connexion")
-  return <LigueHubScreen leagues={leagues} />
+  return <LigueHubScreen leagues={leagues} isPro={isPro} />
 }

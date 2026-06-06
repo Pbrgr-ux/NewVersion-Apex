@@ -178,19 +178,22 @@ async function leaguePerfMap(
 }
 
 /** Ligues dont l'utilisateur courant est membre + son rang dans chacune. */
-export async function getMyLeagues(): Promise<{ leagues: LeagueSummary[]; userId: string | null }> {
+export async function getMyLeagues(): Promise<{ leagues: LeagueSummary[]; userId: string | null; isPro: boolean }> {
   const server = await createServerClient()
   const { data: { user } } = await server.auth.getUser()
-  if (!user) return { leagues: [], userId: null }
+  if (!user) return { leagues: [], userId: null, isPro: false }
 
   const db = admin()
+  const { data: dbUser } = await db.from("users").select("is_pro").eq("id", user.id).maybeSingle()
+  const isPro = dbUser?.is_pro ?? false
+
   const { data: memberships } = await db
     .from("league_members")
     .select("league_id")
     .eq("user_id", user.id)
 
   const leagueIds = (memberships ?? []).map((m) => m.league_id)
-  if (leagueIds.length === 0) return { leagues: [], userId: user.id }
+  if (leagueIds.length === 0) return { leagues: [], userId: user.id, isPro }
 
   const [leaguesRes, allMembersRes] = await Promise.all([
     db.from("leagues").select("id, name, code, owner_id, duration_mode, fin_date, statut").in("id", leagueIds),
@@ -231,7 +234,7 @@ export async function getMyLeagues(): Promise<{ leagues: LeagueSummary[]; userId
     })
   }
 
-  return { leagues, userId: user.id }
+  return { leagues, userId: user.id, isPro }
 }
 
 /** Config des ligues actives du joueur pour le sélecteur d'arbitrage. */
