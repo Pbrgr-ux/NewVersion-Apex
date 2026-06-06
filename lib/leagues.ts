@@ -205,9 +205,18 @@ export async function createLeague(name: string): Promise<{ ok: boolean; id?: st
     .insert({ name: name.trim(), code, owner_id: user.id, saison: getCurrentSeasonId() })
     .select("id")
     .single()
-  if (error || !created) return { ok: false, error: "Could not create league" }
+  if (error || !created) {
+    console.error("[createLeague] insert leagues failed:", error)
+    return { ok: false, error: error?.message ?? "Could not create league" }
+  }
 
-  await db.from("league_members").insert({ league_id: created.id, user_id: user.id })
+  const { error: memErr } = await db.from("league_members").insert({ league_id: created.id, user_id: user.id })
+  if (memErr) {
+    console.error("[createLeague] insert league_members failed:", memErr)
+    // rollback de la ligue créée pour ne pas laisser d'orphelin
+    await db.from("leagues").delete().eq("id", created.id)
+    return { ok: false, error: memErr.message }
+  }
   return { ok: true, id: created.id }
 }
 
