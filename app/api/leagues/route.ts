@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createLeague, joinLeague, leaveLeague } from "@/lib/leagues"
+import { createLeague, joinLeague, leaveLeague, endLeague } from "@/lib/leagues"
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null)
@@ -35,7 +35,12 @@ export async function POST(req: NextRequest) {
   if (action === "leave") {
     if (!body?.leagueId) return NextResponse.json({ error: "leagueId required" }, { status: 400 })
     const r = await leaveLeague(body.leagueId)
-    return NextResponse.json(r)
+    return NextResponse.json(r, { status: r.ok ? 200 : 400 })
+  }
+  if (action === "end") {
+    if (!body?.leagueId) return NextResponse.json({ error: "leagueId required" }, { status: 400 })
+    const r = await endLeague(body.leagueId)
+    return NextResponse.json(r, { status: r.ok ? 200 : 400 })
   }
   return NextResponse.json({ error: "Unknown action" }, { status: 400 })
 }

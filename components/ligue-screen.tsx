@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Copy, Check, LogOut, Crown, Lock, TrendingUp } from "lucide-react"
+import { ArrowLeft, Copy, Check, LogOut, Crown, Lock, TrendingUp, Ban } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { resolvePreset, isImageUrl } from "@/lib/avatars"
 import type { LeagueDetail } from "@/lib/leagues"
@@ -21,16 +21,25 @@ function fmtPerf(v: number | null) {
 
 export function LigueScreen({ detail }: { detail: LeagueDetail }) {
   const router = useRouter()
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied]   = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [busy, setBusy]       = useState(false)
+  const [confirmEnd, setConfirmEnd] = useState(false)
+  const [err, setErr]         = useState("")
 
   async function copyCode() {
     await navigator.clipboard.writeText(detail.code)
     setCopied(true); setTimeout(() => setCopied(false), 1500)
   }
-  async function leave() {
-    await fetch("/api/leagues", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "leave", leagueId: detail.id }) })
-    router.push("/ligue"); router.refresh()
+  async function action(act: "leave" | "end") {
+    setBusy(true); setErr("")
+    try {
+      const res = await fetch("/api/leagues", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: act, leagueId: detail.id }) })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) { setErr(json?.error ?? "Error"); return }
+      if (act === "leave") { router.push("/ligue") }
+      router.refresh()
+    } finally { setBusy(false) }
   }
 
   return (
@@ -138,10 +147,40 @@ export function LigueScreen({ detail }: { detail: LeagueDetail }) {
         </Link>
       )}
 
-      {/* Quitter */}
-      <button onClick={leave} className="mt-6 flex items-center justify-center gap-2 rounded-lg border border-border bg-card py-2.5 text-sm text-red-600">
-        <LogOut className="h-4 w-4" /> Leave league
-      </button>
+      {err && <p className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-500">{err}</p>}
+
+      {/* Admin (owner) : arrêter la ligue ; membre : quitter */}
+      {detail.isOwner ? (
+        detail.statut === "active" && (
+          !confirmEnd ? (
+            <button onClick={() => setConfirmEnd(true)} disabled={busy}
+              className="mt-6 flex items-center justify-center gap-2 rounded-lg border border-border bg-card py-2.5 text-sm text-red-600 disabled:opacity-60">
+              <Ban className="h-4 w-4" /> Stop league
+            </button>
+          ) : (
+            <div className="mt-6 rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+              <p className="text-xs text-foreground mb-2">
+                Stop <span className="font-semibold">{detail.name}</span>? The ranking will be frozen and trading closed. This can&apos;t be undone.
+              </p>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmEnd(false)} disabled={busy}
+                  className="flex-1 rounded-lg border border-border bg-card py-2 text-xs font-semibold text-foreground disabled:opacity-60">
+                  Cancel
+                </button>
+                <button onClick={() => action("end")} disabled={busy}
+                  className="flex-1 rounded-lg bg-red-600 py-2 text-xs font-semibold text-white disabled:opacity-60">
+                  {busy ? "Stopping…" : "Stop league"}
+                </button>
+              </div>
+            </div>
+          )
+        )
+      ) : (
+        <button onClick={() => action("leave")} disabled={busy}
+          className="mt-6 flex items-center justify-center gap-2 rounded-lg border border-border bg-card py-2.5 text-sm text-red-600 disabled:opacity-60">
+          <LogOut className="h-4 w-4" /> Leave league
+        </button>
+      )}
     </main>
   )
 }

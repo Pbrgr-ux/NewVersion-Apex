@@ -454,12 +454,35 @@ export async function joinLeague(code: string): Promise<{ ok: boolean; id?: stri
   return { ok: true, id: league.id }
 }
 
-/** Quitter une ligue. */
-export async function leaveLeague(leagueId: string): Promise<{ ok: boolean }> {
+/** Quitter une ligue. L'administrateur (owner) ne peut pas quitter sa ligue. */
+export async function leaveLeague(leagueId: string): Promise<{ ok: boolean; error?: string }> {
   const server = await createServerClient()
   const { data: { user } } = await server.auth.getUser()
-  if (!user) return { ok: false }
+  if (!user) return { ok: false, error: "Not signed in" }
   const db = admin()
+
+  const { data: league } = await db.from("leagues").select("owner_id").eq("id", leagueId).maybeSingle()
+  if (league?.owner_id === user.id) {
+    return { ok: false, error: "As the admin you can't leave — stop the league instead." }
+  }
+
   await db.from("league_members").delete().eq("league_id", leagueId).eq("user_id", user.id)
+  return { ok: true }
+}
+
+/** Arrêter une ligue (owner uniquement) : statut terminé + gel au jour J. */
+export async function endLeague(leagueId: string): Promise<{ ok: boolean; error?: string }> {
+  const server = await createServerClient()
+  const { data: { user } } = await server.auth.getUser()
+  if (!user) return { ok: false, error: "Not signed in" }
+  const db = admin()
+
+  const { data: league } = await db.from("leagues").select("owner_id, statut").eq("id", leagueId).maybeSingle()
+  if (!league) return { ok: false, error: "League not found" }
+  if (league.owner_id !== user.id) return { ok: false, error: "Only the league admin can stop it" }
+  if (league.statut !== "active") return { ok: true }   // déjà terminée
+
+  // fin_date = aujourd'hui → la valorisation est gelée à ce jour (cf. leaguePerfMap)
+  await db.from("leagues").update({ statut: "terminee", fin_date: todayISO() }).eq("id", leagueId)
   return { ok: true }
 }
