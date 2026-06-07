@@ -62,12 +62,23 @@ export type LeagueMemberRow = {
   positions: { ticker: string; name: string; allocation_pct: number }[]  // vide si non-Pro
 }
 
+export type LeaguePositionRow = {
+  ticker:         string
+  name:           string
+  allocation_pct: number
+  open_price:     number | null
+  prix_actuel:    number | null
+  variation:      number | null   // % depuis l'ouverture
+  pnl_eur:        number | null
+}
+
 export type LeagueDetail = {
   id:                  string
   name:                string
   code:                string
   isOwner:             boolean
   isPro:               boolean
+  myPositions:         LeaguePositionRow[]
   capital_initial:     number
   max_allocation_pct:  number
   tickers_autorises:   string[] | null
@@ -138,17 +149,19 @@ async function frozenQuotes(db: DbClient, tickers: string[], finDate: string): P
  * ouvertes sont valorisées au dernier cours ≤ freezeDate (gel), sinon au prix
  * temps réel. Renvoie une Map<user_id, perf%> (null si pas de données).
  */
+type LeaguePos = PerfPosition & { base_capital: number | null }
+
 async function leaguePerfMap(
   db: DbClient,
   leagueId: string,
   freezeDate?: string | null,
-): Promise<{ perf: Map<string, number | null>; openByUser: Map<string, PerfPosition[]> }> {
+): Promise<{ perf: Map<string, number | null>; openByUser: Map<string, LeaguePos[]>; quotes: Map<string, number> }> {
   const { data: positions } = await db
     .from("positions")
-    .select("user_id, ticker, allocation_pct, open_price, close_price, status, opened_at")
+    .select("user_id, ticker, allocation_pct, open_price, close_price, status, opened_at, base_capital")
     .eq("league_id", leagueId)
 
-  const byUser = new Map<string, PerfPosition[]>()
+  const byUser = new Map<string, LeaguePos[]>()
   const openTickers = new Set<string>()
   for (const p of positions ?? []) {
     const uid = p.user_id ?? ""
@@ -161,6 +174,7 @@ async function leaguePerfMap(
       close_price:    p.close_price != null ? Number(p.close_price) : null,
       status:         p.status,
       opened_at:      p.opened_at,
+      base_capital:   p.base_capital != null ? Number(p.base_capital) : null,
     })
     if ((p.status ?? "open") === "open") openTickers.add(p.ticker)
   }
@@ -171,12 +185,12 @@ async function leaguePerfMap(
     : await getLiveQuotes([...openTickers])
 
   const perf = new Map<string, number | null>()
-  const openByUser = new Map<string, PerfPosition[]>()
+  const openByUser = new Map<string, LeaguePos[]>()
   for (const [uid, pos] of byUser) {
     perf.set(uid, computeChainedPerf(pos, quotes))
     openByUser.set(uid, pos.filter((p) => (p.status ?? "open") === "open"))
   }
-  return { perf, openByUser }
+  return { perf, openByUser, quotes }
 }
 
 /** Ligues dont l'utilisateur courant est membre + son rang dans chacune. */
@@ -311,7 +325,31 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
   ])
 
   const userOf = new Map(usersRes.data?.map((u) => [u.id, u]) ?? [])
-  const { perf, openByUser } = perfRes
+  const { perf, openByUser, quotes } = perfRes
+
+  // Mes positions ouvertes dans cette ligue, valorisées (style dashboard)
+  const myPositions: LeaguePositionRow[] = (openByUser.get(user.id) ?? [])
+    .sort((a, b) => b.allocation_pct - a.allocation_pct)
+    .map((p) => {
+      const live = quotes.get(p.ticker) ?? null
+      const open = p.open_price
+      let variation: number | null = null
+      if (live != null && open && open > 0) {
+        const ratio = live / open
+        if (ratio <= 10 && ratio >= 0.1) variation = parseFloat(((ratio - 1) * 100).toFixed(2))
+      }
+      const invested = p.base_capital != null ? p.base_capital * (p.allocation_pct / 100) : null
+      const pnl = invested != null && variation != null ? Math.round(invested * (variation / 100)) : null
+      return {
+        ticker:         p.ticker,
+        name:           TICKER_MAP[p.ticker]?.name ?? p.ticker,
+        allocation_pct: p.allocation_pct,
+        open_price:     open,
+        prix_actuel:    live,
+        variation,
+        pnl_eur:        pnl,
+      }
+    })
 
   const rows: LeagueMemberRow[] = memberIds
     .map((uid) => ({
@@ -337,6 +375,7 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
     code:                league.code,
     isOwner:             league.owner_id === user.id,
     isPro,
+    myPositions,
     capital_initial:     league.capital_initial,
     max_allocation_pct:  league.max_allocation_pct,
     tickers_autorises:   league.tickers_autorises,

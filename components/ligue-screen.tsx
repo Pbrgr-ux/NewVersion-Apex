@@ -19,6 +19,10 @@ function fmtPerf(v: number | null) {
   if (v == null) return "—"
   return `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`
 }
+function fmtPrix(v: number | null) {
+  if (v == null) return "—"
+  return v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+}
 
 export function LigueScreen({ detail }: { detail: LeagueDetail }) {
   const router = useRouter()
@@ -139,6 +143,55 @@ export function LigueScreen({ detail }: { detail: LeagueDetail }) {
           </div>
         ))}
       </div>
+
+      {/* Mes positions dans cette ligue (style dashboard) */}
+      {detail.myPositions.length > 0 && (
+        <div className="mt-6">
+          <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">My positions</h3>
+          <div className="flex flex-col gap-2">
+            {detail.myPositions.map((pos) => {
+              const positive = (pos.variation ?? 0) >= 0
+              return (
+                <Link key={pos.ticker} href={`/stock/${encodeURIComponent(pos.ticker)}`}>
+                  <div className="flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2 transition-colors hover:border-primary/40">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
+                        {pos.ticker.replace(".", "").slice(0, 2)}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-foreground leading-tight">{pos.ticker}</span>
+                        <span className="text-xs text-muted-foreground">{pos.allocation_pct}%</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex flex-col items-end leading-tight">
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          Acq {pos.open_price != null ? pos.open_price.toFixed(2) : "—"}
+                        </span>
+                        <span className="text-sm font-medium tabular-nums text-foreground">
+                          {pos.prix_actuel != null ? pos.prix_actuel.toFixed(2) : "—"}
+                        </span>
+                      </div>
+                      <div className="flex w-20 flex-col items-end leading-tight">
+                        <span className={`text-sm font-bold tabular-nums ${
+                          pos.variation == null ? "text-muted-foreground" : positive ? "text-green-600" : "text-red-600"
+                        }`}>
+                          {pos.variation == null ? "—" : fmtPerf(pos.variation)}
+                        </span>
+                        <span className={`text-xs font-medium tabular-nums ${
+                          pos.pnl_eur == null ? "text-muted-foreground" : positive ? "text-green-600" : "text-red-600"
+                        }`}>
+                          {pos.pnl_eur == null ? "—" : `${pos.pnl_eur >= 0 ? "+" : ""}${fmtPrix(pos.pnl_eur)} €`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Indice Pro pour voir les positions */}
       {!detail.isPro && (
