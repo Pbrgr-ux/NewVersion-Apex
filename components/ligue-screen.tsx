@@ -6,6 +6,7 @@ import Link from "next/link"
 import { ArrowLeft, Copy, Check, LogOut, Crown, Lock, TrendingUp, Ban } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { resolvePreset, isImageUrl } from "@/lib/avatars"
+import { formatCode } from "@/lib/league-codes"
 import type { LeagueDetail } from "@/lib/leagues"
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -28,7 +29,7 @@ export function LigueScreen({ detail }: { detail: LeagueDetail }) {
   const [err, setErr]         = useState("")
 
   async function copyCode() {
-    await navigator.clipboard.writeText(detail.code)
+    await navigator.clipboard.writeText(formatCode(detail.code))
     setCopied(true); setTimeout(() => setCopied(false), 1500)
   }
   async function action(act: "leave" | "end") {
@@ -51,7 +52,7 @@ export function LigueScreen({ detail }: { detail: LeagueDetail }) {
         </Link>
         <button onClick={copyCode} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-mono font-semibold text-foreground">
           {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
-          {detail.code}
+          {formatCode(detail.code)}
         </button>
       </div>
 

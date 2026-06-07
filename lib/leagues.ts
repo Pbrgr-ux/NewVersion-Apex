@@ -14,6 +14,7 @@ import { getCurrentSeasonId } from "@/lib/seasons"
 import { TICKER_MAP }     from "@/lib/tickers"
 import { getLiveQuotes }  from "@/lib/live-quotes"
 import { computeChainedPerf, type PerfPosition } from "@/lib/perf"
+import { normalizeCode }  from "@/lib/league-codes"
 
 export const MAX_LEAGUES = 3
 
@@ -93,9 +94,10 @@ export type LeagueContext = {
   statut:              string
 }
 
+// 8 lettres (sans I/O ambigus). Stockées sans tiret ; affichées en 4-4.
 function genCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("")
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+  return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("")
 }
 
 type DbClient = ReturnType<typeof admin>
@@ -441,7 +443,7 @@ export async function joinLeague(code: string): Promise<{ ok: boolean; id?: stri
   const { data: league } = await db
     .from("leagues")
     .select("id, saison, capital_initial, statut")
-    .eq("code", code.trim().toUpperCase())
+    .eq("code", normalizeCode(code))
     .maybeSingle()
   if (!league) return { ok: false, error: "Invalid code" }
   if (league.statut !== "active") return { ok: false, error: "This league is closed" }

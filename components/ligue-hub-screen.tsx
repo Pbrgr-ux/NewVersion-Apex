@@ -110,10 +110,10 @@ export function LigueHubScreen({ leagues, isPro = false }: { leagues: LeagueSumm
             <p className="text-xs text-muted-foreground mt-0.5">Enter the invite code.</p>
           </div>
           <input value={code} onChange={(e) => { setCode(e.target.value.toUpperCase()); setError("") }}
-            placeholder="e.g. WOLF42" maxLength={6}
+            placeholder="e.g. ABCD-EFGH" maxLength={9}
             className="w-full rounded-lg border border-border bg-input px-4 py-3 text-center font-mono text-lg tracking-widest text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
           {error && <p className="text-xs text-red-500">{error}</p>}
-          <button type="submit" disabled={busy || code.length < 4}
+          <button type="submit" disabled={busy || code.replace(/[^A-Za-z0-9]/g, "").length < 4}
             className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60">
             {busy && <Loader2 className="h-4 w-4 animate-spin" />} Join →
           </button>
