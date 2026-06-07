@@ -16,6 +16,7 @@ export type Database = {
           is_pro:     boolean
           is_admin:   boolean
           avatar:     string | null
+          pro_until:  string | null
           created_at: string
         }
         Insert: {
@@ -25,14 +26,24 @@ export type Database = {
           is_pro?:     boolean
           is_admin?:   boolean
           avatar?:     string | null
+          pro_until?:  string | null
           created_at?: string
         }
         Update: {
-          pseudo?:   string
-          is_pro?:   boolean
-          is_admin?: boolean
-          avatar?:   string | null
+          pseudo?:    string
+          is_pro?:    boolean
+          is_admin?:  boolean
+          avatar?:    string | null
+          pro_until?: string | null
         }
+        Relationships: []
+      }
+
+      // ── app_config ─────────────────────────────────────────
+      app_config: {
+        Row:    { key: string; value: string | null; updated_at: string }
+        Insert: { key: string; value?: string | null; updated_at?: string }
+        Update: { value?: string | null; updated_at?: string }
         Relationships: []
       }
 

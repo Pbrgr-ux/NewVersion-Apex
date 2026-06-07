@@ -15,6 +15,7 @@ import { createClient }                        from "@/lib/supabase/server"
 import { TICKER_MAP }                          from "@/lib/tickers"
 import { getCurrentSeasonId } from "@/lib/seasons"
 import { getSaisonsNomMap }   from "@/lib/seasons-server"
+import { getEffectivePro }    from "@/lib/pro"
 
 export type ProfilPosition = {
   ticker:         string
@@ -74,14 +75,14 @@ export async function getProfilData(): Promise<ProfilData | null> {
   // Fallback sur user_metadata si la ligne n'existe pas encore
   const { data: dbUser } = await supabase
     .from("users")
-    .select("pseudo, is_pro, email, created_at, avatar")
+    .select("pseudo, is_pro, pro_until, email, created_at, avatar")
     .eq("id", user.id)
     .maybeSingle()
 
   const pseudo      = dbUser?.pseudo    ?? (user.user_metadata?.pseudo as string | undefined) ?? user.email?.split("@")[0] ?? "Trader"
   const email       = dbUser?.email     ?? user.email ?? ""
   const memberSince = (dbUser?.created_at ?? user.created_at).split("T")[0]
-  const isPro       = dbUser?.is_pro    ?? false
+  const isPro       = getEffectivePro(dbUser)
   const isAdmin     = (dbUser as { is_admin?: boolean } | null)?.is_admin ?? false
   const avatar      = dbUser?.avatar ?? null
 

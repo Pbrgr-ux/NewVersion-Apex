@@ -6,6 +6,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { TICKER_MAP }   from "@/lib/tickers"
+import { getEffectivePro } from "@/lib/pro"
 
 export type NewsRow = {
   ticker:       string
@@ -28,11 +29,11 @@ export async function getNewsroomData(): Promise<NewsroomData | null> {
 
   const { data: dbUser } = await supabase
     .from("users")
-    .select("is_pro")
+    .select("is_pro, pro_until")
     .eq("id", user.id)
     .maybeSingle()
 
-  const isPro = dbUser?.is_pro ?? false
+  const isPro = getEffectivePro(dbUser)
 
   // Inutile de charger les actus si pas Pro (la page redirige/affiche le paywall)
   if (!isPro) return { isPro: false, items: [] }

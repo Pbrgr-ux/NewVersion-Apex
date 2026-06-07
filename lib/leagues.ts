@@ -15,6 +15,7 @@ import { TICKER_MAP }     from "@/lib/tickers"
 import { getLiveQuotes }  from "@/lib/live-quotes"
 import { computeChainedPerf, type PerfPosition } from "@/lib/perf"
 import { normalizeCode }  from "@/lib/league-codes"
+import { getEffectivePro } from "@/lib/pro"
 
 export const MAX_LEAGUES = 3
 
@@ -200,8 +201,8 @@ export async function getMyLeagues(): Promise<{ leagues: LeagueSummary[]; userId
   if (!user) return { leagues: [], userId: null, isPro: false }
 
   const db = admin()
-  const { data: dbUser } = await db.from("users").select("is_pro").eq("id", user.id).maybeSingle()
-  const isPro = dbUser?.is_pro ?? false
+  const { data: dbUser } = await db.from("users").select("is_pro, pro_until").eq("id", user.id).maybeSingle()
+  const isPro = getEffectivePro(dbUser)
 
   const { data: memberships } = await db
     .from("league_members")
@@ -309,8 +310,8 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
     .select("id").eq("league_id", leagueId).eq("user_id", user.id).maybeSingle()
   if (!myMembership) return null
 
-  const { data: dbUser } = await db.from("users").select("is_pro").eq("id", user.id).maybeSingle()
-  const isPro = dbUser?.is_pro ?? false
+  const { data: dbUser } = await db.from("users").select("is_pro, pro_until").eq("id", user.id).maybeSingle()
+  const isPro = getEffectivePro(dbUser)
 
   // Ligue terminée → gel de la valorisation + persistance du statut
   const closed = isLeagueClosed(league)
@@ -418,8 +419,8 @@ export async function createLeague(config: LeagueConfig): Promise<{ ok: boolean;
   if (!name) return { ok: false, error: "Name required" }
 
   const db = admin()
-  const { data: dbUser } = await db.from("users").select("is_pro").eq("id", user.id).maybeSingle()
-  if (!dbUser?.is_pro) return { ok: false, error: "Pro required to create a league" }
+  const { data: dbUser } = await db.from("users").select("is_pro, pro_until").eq("id", user.id).maybeSingle()
+  if (!getEffectivePro(dbUser)) return { ok: false, error: "Pro required to create a league" }
 
   const { count } = await db.from("league_members").select("id", { count: "exact", head: true }).eq("user_id", user.id)
   if ((count ?? 0) >= MAX_LEAGUES) return { ok: false, error: `Max ${MAX_LEAGUES} leagues at a time` }
