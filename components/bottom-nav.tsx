@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, BarChart3, User, Newspaper } from "lucide-react"
+import { Home, BarChart3, User, Newspaper, Users } from "lucide-react"
 
 // Pages sans barre de navigation (auth / accueil)
 const HIDDEN = ["/", "/signup", "/connexion", "/mot-de-passe-oublie", "/auth/confirmed"]
@@ -10,6 +10,7 @@ const HIDDEN = ["/", "/signup", "/connexion", "/mot-de-passe-oublie", "/auth/con
 const ITEMS = [
   { href: "/dashboard",  label: "Dashboard", icon: Home },
   { href: "/classement", label: "Ranking",   icon: BarChart3 },
+  { href: "/ligue",      label: "Leagues",   icon: Users },
   { href: "/newsroom",   label: "News",      icon: Newspaper },
   { href: "/profil",     label: "Profile",   icon: User },
 ]
@@ -27,7 +28,7 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
-              className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${
+              className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 ${
                 active ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
