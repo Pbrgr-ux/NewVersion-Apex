@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { TrendingUp, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { OAuthButtons } from "@/components/oauth-buttons"
 
 const INPUT_CLASS =
   "w-full rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-[var(--signup-blue)] focus:ring-1 focus:ring-[var(--signup-blue)] disabled:opacity-50"
@@ -106,6 +107,16 @@ export function SignupScreen() {
           <p className="mt-1 text-sm text-muted-foreground">
             Start competing. One trade changes everything.
           </p>
+        </div>
+
+        {/* Inscription sociale */}
+        <OAuthButtons />
+
+        {/* Séparateur */}
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">or</span>
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

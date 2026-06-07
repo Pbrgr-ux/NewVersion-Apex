@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code             = searchParams.get("code")
   const type             = searchParams.get("type")          // "signup" | "recovery" | null
+  const nextRaw          = searchParams.get("next")          // ex. "/dashboard" (login OAuth)
+  // Sécurité : n'accepter qu'un chemin interne (évite open-redirect)
+  const next             = nextRaw && nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : null
   const error            = searchParams.get("error")
   const errorDescription = searchParams.get("error_description")
 
@@ -31,7 +34,11 @@ export async function GET(request: NextRequest) {
       if (type === "recovery") {
         return NextResponse.redirect(`${origin}/profil/changer-mot-de-passe`)
       }
-      // Confirmation d'inscription → page de succès 2s
+      // Login social (next fourni) → destination directe (ex. dashboard)
+      if (next) {
+        return NextResponse.redirect(`${origin}${next}`)
+      }
+      // Confirmation d'inscription par email → page de succès 2s
       return NextResponse.redirect(`${origin}/auth/confirmed`)
     }
   }

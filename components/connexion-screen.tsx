@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { TrendingUp, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { OAuthButtons } from "@/components/oauth-buttons"
 
 const INPUT_CLASS =
   "w-full rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50"
@@ -64,6 +65,16 @@ export function ConnexionScreen() {
           <p className="mt-1 text-sm text-muted-foreground">
             Sign in to continue your streak.
           </p>
+        </div>
+
+        {/* Connexion sociale */}
+        <OAuthButtons />
+
+        {/* Séparateur */}
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">or</span>
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
