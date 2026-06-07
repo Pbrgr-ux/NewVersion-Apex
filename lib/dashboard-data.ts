@@ -386,6 +386,13 @@ export async function getDashboardData(): Promise<DashboardData> {
     ? parseFloat(((seasonFactor - 1) * 100).toFixed(2))
     : (classementRes.data?.perf_totale != null ? parseFloat(Number(classementRes.data.perf_totale).toFixed(2)) : null)
 
+  // Perf de saison "canonique" = celle du classement (cron), cohérente avec le
+  // rang affiché, le preview de classement et la page profil. La perf live
+  // (intraday) reste réservée aux tuiles Today / This week.
+  const seasonPerfCanonical = classementRes.data?.perf_totale != null
+    ? parseFloat(Number(classementRes.data.perf_totale).toFixed(2))
+    : seasonPerfLive
+
   // ── Stats de trading (chaque position = un trade) ────────────
   const tradeReturns: number[] = []
   for (const p of allPositions ?? []) {
@@ -411,7 +418,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       day:    hasDayData   ? parseFloat(dayPerf.toFixed(2))   : null,
       week:   hasWeekData  ? parseFloat(weekPerf.toFixed(2))  : null,
       month:  hasMonthData ? parseFloat(monthPerf.toFixed(2)) : null,
-      season: seasonPerfLive,
+      season: seasonPerfCanonical,
     },
     positions,
     classement: {
@@ -421,7 +428,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     },
     season:        seasonWithNom ?? seasonData,
     // Capital = richesse all-time : [100k × Π(saisons terminées)] × (1 + perf saison)
-    capitalAjuste: Math.round(wealthBase * (1 + (seasonPerfLive ?? 0) / 100)),
+    capitalAjuste: Math.round(wealthBase * (1 + (seasonPerfCanonical ?? 0) / 100)),
     allTime,
     indices,
     leaderboard,

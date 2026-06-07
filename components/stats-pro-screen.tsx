@@ -28,7 +28,7 @@ const lastSunday = (() => {
 })()
 
 const formatDate = (date: Date) => {
-  return date.toLocaleDateString("fr-FR", {
+  return date.toLocaleDateString("en-US", {
     day: "numeric",
     month: "long",
     year: "numeric",

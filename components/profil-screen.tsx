@@ -42,7 +42,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
   const { isPro, isAdmin } = user
 
   const initials    = user.pseudo.slice(0, 2).toUpperCase()
-  const memberDate  = new Date(user.memberSince).toLocaleDateString("fr-FR", {
+  const memberDate  = new Date(user.memberSince).toLocaleDateString("en-US", {
     month: "long", year: "numeric",
   })
   const preset = resolvePreset(avatar)

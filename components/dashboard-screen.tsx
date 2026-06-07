@@ -52,7 +52,7 @@ function fmtPerf1(v: number | null, placeholder = "—"): string {
 
 function fmtPrix(v: number | null): string {
   if (v === null) return "—"
-  return v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  return v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 function perfColor(v: number | null): string {
