@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Copy, Check, LogOut, Crown, Lock, TrendingUp, Ban } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { resolvePreset, isImageUrl } from "@/lib/avatars"
 import { formatCode } from "@/lib/league-codes"
 import type { LeagueDetail } from "@/lib/leagues"
@@ -104,44 +103,60 @@ export function LigueScreen({ detail }: { detail: LeagueDetail }) {
         </Link>
       )}
 
-      {/* Classement membres */}
-      <div className="flex flex-col gap-2">
-        {detail.members.map((m) => (
-          <div key={m.user_id} className={`rounded-xl border bg-card ${m.isSelf ? "border-green-600/40 bg-green-600/5" : "border-border"}`}>
-            <button
-              onClick={() => detail.isPro && setExpanded(expanded === m.user_id ? null : m.user_id)}
-              className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
-            >
-              <span className="w-5 text-center text-sm font-bold tabular-nums text-muted-foreground">{m.rang}</span>
-              <Avatar className="h-8 w-8 shrink-0">
-                {avatarSrc(m.avatar) && <AvatarImage src={avatarSrc(m.avatar)!} alt="" />}
-                <AvatarFallback className="bg-secondary text-xs font-medium text-foreground">{m.pseudo.slice(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                <span className={`truncate text-sm ${m.isSelf ? "font-bold" : "font-medium"} text-foreground`}>{m.pseudo}{m.isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}</span>
-                {m.is_pro && <Crown className="h-3 w-3 text-primary shrink-0" />}
-              </div>
-              <span className={`text-sm font-bold tabular-nums ${(m.perf ?? 0) >= 0 ? "text-green-600" : "text-red-600"}`}>{fmtPerf(m.perf)}</span>
-            </button>
+      {/* Classement membres — même container que le dashboard */}
+      <div className="rounded-xl border border-border bg-card px-2.5 py-3">
+        <div className="mb-2 flex items-center justify-between px-1.5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ranking</span>
+          <span className="text-xs text-muted-foreground">{detail.members.length} member{detail.members.length > 1 ? "s" : ""}</span>
+        </div>
 
-            {/* Positions (Pro) */}
-            {detail.isPro && expanded === m.user_id && (
-              <div className="border-t border-border px-3 py-2">
-                {m.positions.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No position</p>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {m.positions.map((p) => (
-                      <span key={p.ticker} className="rounded-md bg-secondary px-2 py-0.5 text-xs text-foreground">
-                        {p.ticker} <span className="text-muted-foreground">{p.allocation_pct}%</span>
-                      </span>
-                    ))}
+        <div className="flex flex-col gap-1.5">
+          {detail.members.map((m) => {
+            const medal = m.rang === 1 ? "bg-amber-400 text-black" : m.rang === 2 ? "bg-slate-300 text-black" : m.rang === 3 ? "bg-orange-500 text-white" : "bg-secondary text-muted-foreground"
+            const src = avatarSrc(m.avatar)
+            return (
+              <div key={m.user_id}>
+                <button
+                  onClick={() => detail.isPro && setExpanded(expanded === m.user_id ? null : m.user_id)}
+                  className={`flex w-full items-center gap-2.5 px-2 py-1 text-left ${m.isSelf ? "rounded-[4px] bg-green-600/10" : ""}`}
+                >
+                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${medal}`}>{m.rang}</span>
+                  {src ? (
+                    <img src={src} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
+                      {m.pseudo.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span className={`flex-1 min-w-0 truncate text-sm text-foreground ${m.isSelf ? "font-bold" : "font-medium"}`}>
+                    {m.pseudo}{m.isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
+                    {m.is_pro && <Crown className="ml-1 inline h-3 w-3 text-primary" />}
+                  </span>
+                  <span className={`text-sm font-bold tabular-nums ${m.perf == null ? "text-muted-foreground" : m.perf >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    {fmtPerf(m.perf)}
+                  </span>
+                </button>
+
+                {/* Positions du membre (Pro) */}
+                {detail.isPro && expanded === m.user_id && (
+                  <div className="mt-1 px-2 pb-1">
+                    {m.positions.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No position</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {m.positions.map((p) => (
+                          <span key={p.ticker} className="rounded-md bg-secondary px-2 py-0.5 text-xs text-foreground">
+                            {p.ticker} <span className="text-muted-foreground">{p.allocation_pct}%</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
-        ))}
+            )
+          })}
+        </div>
       </div>
 
       {/* Mes positions dans cette ligue (style dashboard) */}
