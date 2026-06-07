@@ -95,14 +95,6 @@ export function LigueScreen({ detail }: { detail: LeagueDetail }) {
         </div>
       </div>
 
-      {/* Trader pour cette ligue */}
-      {detail.statut === "active" && (
-        <Link href={`/arbitrage?league=${detail.id}`}
-          className="mb-4 flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
-          <TrendingUp className="h-4 w-4" /> Trade for this league
-        </Link>
-      )}
-
       {/* Classement membres — même container que le dashboard */}
       <div className="rounded-xl border border-border bg-card px-2.5 py-3">
         <div className="mb-2 flex items-center justify-between px-1.5">
@@ -158,6 +150,14 @@ export function LigueScreen({ detail }: { detail: LeagueDetail }) {
           })}
         </div>
       </div>
+
+      {/* Trader pour cette ligue (entre le classement et mes positions) */}
+      {detail.statut === "active" && (
+        <Link href={`/arbitrage?league=${detail.id}`}
+          className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
+          <TrendingUp className="h-4 w-4" /> Trade for this league
+        </Link>
+      )}
 
       {/* Mes positions dans cette ligue (style dashboard) */}
       {detail.myPositions.length > 0 && (
