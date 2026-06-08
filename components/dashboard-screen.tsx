@@ -9,6 +9,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Button }            from "@/components/ui/button"
 import { useArbitrageWindow } from "@/hooks/use-arbitrage-window"
+import type { ArbitrageWindowConfig } from "@/lib/arbitrage-window"
 import type { DashboardData, LeaderRow } from "@/lib/dashboard-data"
 import { resolvePreset, isImageUrl } from "@/lib/avatars"
 
@@ -61,8 +62,8 @@ function perfColor(v: number | null): string {
 }
 
 // ── Composant ─────────────────────────────────────────────────
-export function DashboardScreen({ data }: { data: DashboardData }) {
-  const arbitrage = useArbitrageWindow()
+export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mainWindow?: ArbitrageWindowConfig }) {
+  const arbitrage = useArbitrageWindow(mainWindow)
   const { perf, positions, classement, hasPortfolio, season, capitalAjuste, allTime, indices, leaderboard, tradingStats } = data
 
   return (

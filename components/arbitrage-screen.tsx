@@ -88,7 +88,7 @@ const TABS: { label: string; region: Region }[] = [
   { label: "📦 ETF",    region: "ETF"    },
 ]
 
-export function ArbitrageScreen({ leagueContexts = [], initialLeagueId = null }: { leagueContexts?: LeagueContext[]; initialLeagueId?: string | null }) {
+export function ArbitrageScreen({ leagueContexts = [], initialLeagueId = null, mainWindow = MAIN_WINDOW }: { leagueContexts?: LeagueContext[]; initialLeagueId?: string | null; mainWindow?: ArbitrageWindowConfig }) {
   const supabase  = createClient()
   const router    = useRouter()
 
@@ -103,8 +103,8 @@ export function ArbitrageScreen({ leagueContexts = [], initialLeagueId = null }:
   // Config dérivée du contexte
   const windowConfig: ArbitrageWindowConfig = useMemo(() => activeLeague
     ? { jours: activeLeague.fenetre_jours, heureDebut: activeLeague.fenetre_heure_debut, heureFin: activeLeague.fenetre_heure_fin }
-    : MAIN_WINDOW,
-    [activeLeague])
+    : mainWindow,
+    [activeLeague, mainWindow])
   const maxAlloc = activeLeague?.max_allocation_pct ?? 50
   const universe = useMemo(() => {
     const allowed = activeLeague?.tickers_autorises

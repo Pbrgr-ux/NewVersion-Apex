@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics }    from '@vercel/analytics/next'
 import { TopHeader }    from '@/components/top-header'
 import { BottomNav }    from '@/components/bottom-nav'
+import { getActiveSeasonWindow } from '@/lib/seasons-server'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -31,17 +32,18 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const mainWindow = await getActiveSeasonWindow()
   return (
     <html lang="en" className="bg-background">
       <body className="font-sans antialiased">
         {/* Conteneur centré sur desktop, plein écran sur mobile */}
         <div className="mx-auto w-full max-w-xl min-h-svh relative bg-background shadow-[0_0_40px_rgba(0,0,0,0.15)]">
-          <TopHeader />
+          <TopHeader window={mainWindow} />
           {children}
           <BottomNav />
         </div>

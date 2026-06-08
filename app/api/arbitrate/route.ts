@@ -18,6 +18,7 @@ import { getCurrentSeasonId }        from "@/lib/seasons"
 import { getLiveQuotes }             from "@/lib/live-quotes"
 import { isWindowOpen }              from "@/lib/arbitrage-window"
 import { isLeagueClosed }            from "@/lib/leagues"
+import { getActiveSeasonWindow }     from "@/lib/seasons-server"
 
 function admin() {
   return createClient<Database>(
@@ -83,6 +84,11 @@ export async function POST(req: NextRequest) {
     maxAlloc           = league.max_allocation_pct
     allowedTickers     = league.tickers_autorises && league.tickers_autorises.length > 0
       ? new Set(league.tickers_autorises) : null
+  } else {
+    // Jeu principal : fenêtre validée côté serveur via la config de saison
+    if (!isWindowOpen(new Date(), await getActiveSeasonWindow())) {
+      return NextResponse.json({ error: "Trading window is closed" }, { status: 400 })
+    }
   }
 
   // Validation univers + max alloc par action (pour les ligues)

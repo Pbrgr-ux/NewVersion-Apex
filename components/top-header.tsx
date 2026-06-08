@@ -4,13 +4,14 @@ import Link from "next/link"
 import { usePathname }        from "next/navigation"
 import { TrendingUp }         from "lucide-react"
 import { useArbitrageWindow } from "@/hooks/use-arbitrage-window"
+import type { ArbitrageWindowConfig } from "@/lib/arbitrage-window"
 
 // Pages qui ont déjà leur propre branding centré → pas de header
 const HIDDEN_PATHS = ["/", "/signup", "/connexion", "/mot-de-passe-oublie", "/auth/confirmed"]
 
-export function TopHeader() {
+export function TopHeader({ window }: { window?: ArbitrageWindowConfig }) {
   const pathname  = usePathname()
-  const arbitrage = useArbitrageWindow()
+  const arbitrage = useArbitrageWindow(window)
   if (HIDDEN_PATHS.includes(pathname)) return null
 
   return (

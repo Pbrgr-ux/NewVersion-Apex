@@ -1,5 +1,6 @@
 import { DashboardScreen } from "@/components/dashboard-screen"
 import { getDashboardData }  from "@/lib/dashboard-data"
+import { getActiveSeasonWindow } from "@/lib/seasons-server"
 
 export const dynamic = "force-dynamic" // toujours des données fraîches
 
@@ -9,6 +10,6 @@ export const metadata = {
 }
 
 export default async function DashboardPage() {
-  const data = await getDashboardData()
-  return <DashboardScreen data={data} />
+  const [data, mainWindow] = await Promise.all([getDashboardData(), getActiveSeasonWindow()])
+  return <DashboardScreen data={data} mainWindow={mainWindow} />
 }
