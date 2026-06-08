@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Crown, LogOut, Calendar, Trophy,
   Zap, ChevronRight, Users,
   Loader2, KeyRound, TrendingUp, TrendingDown,
-  Settings, Pencil,
+  Settings, Pencil, Upload,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button }            from "@/components/ui/button"
@@ -37,6 +37,9 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
   const [loggingOut, setLoggingOut] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [avatar, setAvatar]         = useState<string | null>(data.user.avatar)
+  const [uploading, setUploading]   = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef                = useRef<HTMLInputElement>(null)
 
   const { user, saison, historique, positions, hasPortfolio } = data
   const { isPro, isAdmin } = user
@@ -60,6 +63,39 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
     setPickerOpen(false)
     const { data: { user: u } } = await supabase.auth.getUser()
     if (u) await supabase.from("users").update({ avatar: value }).eq("id", u.id)
+  }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadError(null)
+
+    // Validations : type image + taille ≤ 2 Mo
+    if (!file.type.startsWith("image/")) { setUploadError("Please choose an image file."); return }
+    if (file.size > 2 * 1024 * 1024)     { setUploadError("Image too large (max 2 MB)."); return }
+
+    setUploading(true)
+    try {
+      const { data: { user: u } } = await supabase.auth.getUser()
+      if (!u) { setUploadError("Not signed in."); return }
+
+      const ext  = (file.name.split(".").pop() || "jpg").toLowerCase()
+      const path = `${u.id}/${Date.now()}.${ext}`   // dossier par utilisateur (RLS)
+
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (upErr) { setUploadError(upErr.message); return }
+
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path)
+      const url = pub.publicUrl
+      setAvatar(url)
+      await supabase.from("users").update({ avatar: url }).eq("id", u.id)
+      setPickerOpen(false)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
   }
 
   return (
@@ -98,7 +134,28 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
                   </button>
                 ))}
               </div>
-              <button onClick={() => setPickerOpen(false)} className="mt-4 w-full rounded-lg bg-secondary py-2.5 text-sm font-semibold text-foreground">
+              {/* Upload d'une photo perso */}
+              <div className="mt-4 border-t border-border pt-4">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleUpload}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-secondary py-2.5 text-sm font-semibold text-foreground hover:bg-card disabled:opacity-60"
+                >
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {uploading ? "Uploading…" : "Upload a photo"}
+                </button>
+                <p className="mt-1.5 text-center text-xs text-muted-foreground">JPG / PNG · max 2 MB</p>
+                {uploadError && <p className="mt-1.5 text-center text-xs text-red-500">{uploadError}</p>}
+              </div>
+
+              <button onClick={() => setPickerOpen(false)} className="mt-3 w-full rounded-lg bg-secondary py-2.5 text-sm font-semibold text-foreground">
                 Close
               </button>
             </div>
