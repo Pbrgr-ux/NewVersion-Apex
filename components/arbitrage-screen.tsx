@@ -312,7 +312,7 @@ export function ArbitrageScreen({ leagueContexts = [], initialLeagueId = null, m
           onChange={(e) => setActiveLeagueId(e.target.value === "main" ? null : e.target.value)}
           className="w-full appearance-none rounded-lg border border-border bg-card px-3 py-1.5 pr-8 text-sm font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
         >
-          <option value="main">Main game</option>
+          <option value="main">Major League</option>
           {leagueContexts.map((l) => (
             <option key={l.id} value={l.id}>{l.name}</option>
           ))}
@@ -450,7 +450,7 @@ export function ArbitrageScreen({ leagueContexts = [], initialLeagueId = null, m
       {/* ── Solde ──────────────────────────────────────────────── */}
       <div className="flex flex-col items-center gap-1 px-4 py-6 border-b border-border">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {activeLeague ? `${activeLeague.name} · capital` : "Available capital"}
+          {activeLeague ? `${activeLeague.name} · capital` : "Major League · capital"}
         </span>
         <span className="text-3xl font-bold tabular-nums text-foreground">
           {currentCapital.toLocaleString("en-US")} €
