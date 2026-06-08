@@ -255,17 +255,6 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
         </div>
       )}
 
-      {/* ── Votre position (sticky) ──────────────────────────── */}
-      {selfEntry && (
-        <div className="mx-4 mb-2 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2">
-          <span className="text-sm font-medium text-primary">Your position</span>
-          <span className="font-bold text-primary tabular-nums">
-            #{selfEntry.rang}
-            <span className="ml-2 font-normal text-primary/70">{fmtPerf(selfEntry.perf)}</span>
-          </span>
-        </div>
-      )}
-
       {/* ── Tabs ────────────────────────────────────────────── */}
       <div className="px-4 pb-2">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
@@ -286,6 +275,18 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
         ) : (
           <>
             <Podium entries={top3} />
+
+            {/* ── Votre position (sous le podium) ──────────────── */}
+            {selfEntry && (
+              <div className="mb-3 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2">
+                <span className="text-sm font-medium text-primary">Your position</span>
+                <span className="font-bold text-primary tabular-nums">
+                  #{selfEntry.rang}
+                  <span className="ml-2 font-normal text-primary/70">{fmtPerf(selfEntry.perf)}</span>
+                </span>
+              </div>
+            )}
+
             <div className="flex flex-col gap-2">
               {rest.map((entry) => (
                 <LeaderboardRow
