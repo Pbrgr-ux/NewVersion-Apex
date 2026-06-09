@@ -44,9 +44,11 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const host  = h.get("host") ?? ""
   const proto = h.get("x-forwarded-proto") ?? "https"
   const shareUrl  = `${proto}://${host}/u/${p.userId}`
-  const shareText = p.rang
-    ? `I'm #${p.rang} (${fmtPerf(p.seasonPerf)}) on TradeLeague 🚀`
-    : `Check out my TradeLeague profile 🚀`
+  const shareText = p.topPct
+    ? `Top ${p.topPct}% on TradeLeague (#${p.rang}) 🚀 Can you beat me?`
+    : p.rang
+      ? `I'm #${p.rang} on TradeLeague 🚀`
+      : `Check out my TradeLeague profile 🚀`
 
   const src = avatarSrc(p.avatar)
 
@@ -76,7 +78,12 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           <h1 className="text-xl font-bold text-foreground">{p.pseudo}</h1>
           {p.isPro && <Crown className="h-4 w-4 text-primary" />}
         </div>
-        <p className="mb-5 text-xs text-muted-foreground">{p.seasonNom}</p>
+        <p className="mb-3 text-xs text-muted-foreground">{p.seasonNom}</p>
+        {p.topPct && (
+          <div className="mb-4 inline-flex rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">
+            Top {p.topPct}%
+          </div>
+        )}
 
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-lg bg-secondary/50 py-3">
