@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
   TrendingUp, TrendingDown, Clock, Trophy,
@@ -12,6 +13,8 @@ import { useArbitrageWindow } from "@/hooks/use-arbitrage-window"
 import type { ArbitrageWindowConfig } from "@/lib/arbitrage-window"
 import type { DashboardData, LeaderRow } from "@/lib/dashboard-data"
 import { resolvePreset, isImageUrl } from "@/lib/avatars"
+import { createClient } from "@/lib/supabase/client"
+import { ShareButton } from "@/components/share-button"
 
 // Ligne de classement compacte (top 3 + moi)
 function LeaderLine({ r }: { r: LeaderRow }) {
@@ -64,6 +67,15 @@ function perfColor(v: number | null): string {
 // ── Composant ─────────────────────────────────────────────────
 export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mainWindow?: ArbitrageWindowConfig }) {
   const arbitrage = useArbitrageWindow(mainWindow)
+
+  // Identifiant pour le lien de partage public /u/[id]
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setShareUrl(`${window.location.origin}/u/${user.id}`)
+    })
+  }, [])
   const { perf, positions, classement, hasPortfolio, season, capitalAjuste, allTime, indices, leaderboard, tradingStats } = data
 
   return (
@@ -187,6 +199,16 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
               </span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Partager mon résultat ─────────────────────────────── */}
+      {shareUrl && (
+        <div className="mx-4 mb-5">
+          <ShareButton
+            url={shareUrl}
+            text={data.classement.rang ? `I'm #${data.classement.rang} on TradeLeague 🚀` : "Check out my TradeLeague run 🚀"}
+          />
         </div>
       )}
 
