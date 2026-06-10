@@ -1,21 +1,27 @@
 import { ImageResponse } from "next/og"
 import { NextRequest } from "next/server"
 import { getPublicProfile } from "@/lib/public-profile"
-import { buildCard, type CardFormat } from "@/lib/share-card"
+import { buildCard, type CardFormat, type CardVariant } from "@/lib/share-card"
 
 export const runtime = "nodejs"
 
+const VARIANTS: CardVariant[] = ["auto", "week", "podium", "alltime", "rankup"]
+
 /**
- * GET /u/[id]/card?f=square|story|wide
+ * GET /u/[id]/card?f=square|story|wide&v=auto|week|podium|alltime|rankup&from=N
  * Image PNG partageable/téléchargeable (l'image devient le message).
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const fRaw = req.nextUrl.searchParams.get("f")
+  const sp = req.nextUrl.searchParams
+  const fRaw = sp.get("f")
   const format: CardFormat = fRaw === "square" || fRaw === "story" || fRaw === "wide" ? fRaw : "square"
+  const vRaw = sp.get("v") as CardVariant | null
+  const variant: CardVariant = vRaw && VARIANTS.includes(vRaw) ? vRaw : "auto"
+  const fromRank = sp.get("from") ? parseInt(sp.get("from")!, 10) : null
 
   const p = await getPublicProfile(id)
-  const { element, width, height } = buildCard(p, format)
+  const { element, width, height } = buildCard(p, format, variant, fromRank)
 
   return new ImageResponse(element, {
     width,
