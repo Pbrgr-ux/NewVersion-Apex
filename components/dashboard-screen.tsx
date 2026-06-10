@@ -69,11 +69,15 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
   const arbitrage = useArbitrageWindow(mainWindow)
 
   // Identifiant pour le lien de partage public /u/[id]
-  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [shareUrl, setShareUrl]   = useState<string | null>(null)
+  const [cardBase, setCardBase]   = useState<string | undefined>(undefined)
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setShareUrl(`${window.location.origin}/u/${user.id}`)
+      if (user) {
+        setShareUrl(`${window.location.origin}/u/${user.id}`)
+        setCardBase(`${window.location.origin}/u/${user.id}/card`)
+      }
     })
   }, [])
   const { perf, positions, classement, hasPortfolio, season, capitalAjuste, allTime, indices, leaderboard, tradingStats } = data
@@ -207,6 +211,7 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
         <div className="mx-4 mb-5">
           <ShareButton
             url={shareUrl}
+            cardBase={cardBase}
             text={data.classement.rang ? `I'm #${data.classement.rang} on TradeLeague 🚀` : "Check out my TradeLeague run 🚀"}
           />
         </div>

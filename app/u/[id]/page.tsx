@@ -105,7 +105,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         </div>
 
         <div className="mt-5 flex flex-col gap-2">
-          <ShareButton url={shareUrl} text={shareText} label="Share" />
+          <ShareButton url={shareUrl} cardBase={`${proto}://${host}/u/${p.userId}/card`} text={shareText} label="Share" />
           <Link href="/signup" className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
             Join TradeLeague →
           </Link>
