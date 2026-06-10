@@ -3,89 +3,75 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Lock, Users, Plus, ArrowRight, ChevronRight, Loader2 } from "lucide-react"
-import type { LeagueSummary } from "@/lib/leagues"
-import { LeagueCreateForm, type LeaguePayload } from "@/components/league-create-form"
+import { Building2, Users, Plus, ArrowRight, ChevronRight, Loader2 } from "lucide-react"
+import type { FloorSummary } from "@/lib/floors"
 
 type View = "list" | "create" | "join"
 
-export function LigueHubScreen({ leagues, isPro = false }: { leagues: LeagueSummary[]; isPro?: boolean }) {
+export function FloorsHubScreen({ floors }: { floors: FloorSummary[] }) {
   const router = useRouter()
   const [view, setView]   = useState<View>("list")
+  const [name, setName]   = useState("")
   const [code, setCode]   = useState("")
   const [error, setError] = useState("")
   const [busy, setBusy]   = useState(false)
 
-  async function call(action: string, payload: Record<string, unknown>) {
+  async function call(action: string, payload: Record<string, string>) {
     setBusy(true); setError("")
     try {
-      const res = await fetch("/api/leagues", {
+      const res = await fetch("/api/floors", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, ...payload }),
       })
       const json = await res.json()
       if (!res.ok) { setError(json?.error ?? "Error"); return }
-      if (json.id) { router.push(`/ligue/${json.id}`); router.refresh() }
+      if (json.id) { router.push(`/floors/${json.id}`); router.refresh() }
     } finally { setBusy(false) }
   }
 
   return (
     <main className="flex min-h-svh flex-col bg-background px-4 pt-2 pb-24">
-      <div className="flex items-center gap-2 mb-4">
-        <Lock className="h-5 w-5 text-primary" />
-        <h1 className="text-base font-bold tracking-tight text-foreground uppercase">Private Leagues</h1>
+      <div className="flex items-center gap-2 mb-1">
+        <Building2 className="h-5 w-5 text-primary" />
+        <h1 className="text-base font-bold tracking-tight text-foreground uppercase">Floors</h1>
       </div>
+      <p className="text-xs text-muted-foreground mb-4">Private leaderboards on the Major League — same game, your crew.</p>
 
       {view === "list" && (
         <div className="flex flex-col gap-3">
-          {/* Mes ligues */}
-          {leagues.map((l) => (
-            <Link key={l.id} href={`/ligue/${l.id}`}
+          {floors.map((f) => (
+            <Link key={f.id} href={`/floors/${f.id}`}
               className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-primary/40">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary font-bold">
-                {l.name.charAt(0).toUpperCase()}
+                {f.name.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-foreground truncate">{l.name}</p>
+                <p className="font-semibold text-foreground truncate">{f.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {l.members} member{l.members > 1 ? "s" : ""}
-                  {l.myRank && <> · You #{l.myRank}</>}
-                  {l.isOwner && <> · Owner</>}
-                  {l.statut !== "active" ? <> · Ended</> : l.duration_mode === "permanent" ? <> · Permanent</> : null}
+                  {f.members} member{f.members > 1 ? "s" : ""}
+                  {f.myRank && <> · You #{f.myRank}</>}
+                  {f.isOwner && <> · Admin</>}
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
           ))}
 
-          {/* Actions */}
-          {isPro ? (
-            <button onClick={() => { setView("create"); setError("") }}
-              className="flex items-center gap-4 rounded-xl border border-primary/30 bg-primary/10 p-4 text-left active:scale-[0.98]">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20"><Plus className="h-5 w-5 text-primary" /></div>
-              <div className="flex-1">
-                <p className="font-semibold text-foreground">Create a league</p>
-                <p className="text-xs text-muted-foreground">PRO · up to 3 leagues</p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          ) : (
-            <Link href="/pro"
-              className="flex items-center gap-4 rounded-xl border border-border bg-card/60 p-4 text-left opacity-70">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary"><Lock className="h-5 w-5 text-muted-foreground" /></div>
-              <div className="flex-1">
-                <p className="font-semibold text-muted-foreground">Create a league</p>
-                <p className="text-xs text-muted-foreground">Pro required · tap to upgrade</p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            </Link>
-          )}
+          <button onClick={() => { setView("create"); setError("") }}
+            className="flex items-center gap-4 rounded-xl border border-primary/30 bg-primary/10 p-4 text-left active:scale-[0.98]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20"><Plus className="h-5 w-5 text-primary" /></div>
+            <div className="flex-1">
+              <p className="font-semibold text-foreground">Create a floor</p>
+              <p className="text-xs text-muted-foreground">Invite your friends with a code</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+          </button>
 
           <button onClick={() => { setView("join"); setError("") }}
             className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 text-left active:scale-[0.98]">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary"><Users className="h-5 w-5 text-foreground" /></div>
             <div className="flex-1">
-              <p className="font-semibold text-foreground">Join a league</p>
+              <p className="font-semibold text-foreground">Join a floor</p>
               <p className="text-xs text-muted-foreground">Enter a code from a friend</p>
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground" />
@@ -94,19 +80,28 @@ export function LigueHubScreen({ leagues, isPro = false }: { leagues: LeagueSumm
       )}
 
       {view === "create" && (
-        <LeagueCreateForm
-          busy={busy}
-          error={error}
-          onBack={() => { setView("list"); setError("") }}
-          onSubmit={(name: string, config: LeaguePayload) => call("create", { name, config })}
-        />
+        <form onSubmit={(e) => { e.preventDefault(); call("create", { name }) }} className="flex flex-col gap-4">
+          <button type="button" onClick={() => setView("list")} className="self-start text-xs text-muted-foreground hover:text-foreground">← Back</button>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">New floor</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">An invite code is generated automatically.</p>
+          </div>
+          <input value={name} onChange={(e) => { setName(e.target.value); setError("") }}
+            placeholder="Floor name" maxLength={32}
+            className="w-full rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+          {error && <p className="text-xs text-red-500">{error}</p>}
+          <button type="submit" disabled={busy || !name.trim()}
+            className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60">
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Create floor →
+          </button>
+        </form>
       )}
 
       {view === "join" && (
         <form onSubmit={(e) => { e.preventDefault(); call("join", { code }) }} className="flex flex-col gap-4">
           <button type="button" onClick={() => setView("list")} className="self-start text-xs text-muted-foreground hover:text-foreground">← Back</button>
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Join a league</h2>
+            <h2 className="text-lg font-semibold text-foreground">Join a floor</h2>
             <p className="text-xs text-muted-foreground mt-0.5">Enter the invite code.</p>
           </div>
           <input value={code} onChange={(e) => { setCode(e.target.value.toUpperCase()); setError("") }}

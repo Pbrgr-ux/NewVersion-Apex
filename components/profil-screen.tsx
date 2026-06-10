@@ -281,11 +281,11 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
           <Button
             variant="outline"
             className="h-12 justify-between border-border bg-card text-foreground hover:bg-secondary"
-            onClick={() => router.push("/ligue")}
+            onClick={() => router.push("/floors")}
           >
             <div className="flex items-center gap-3">
               <Users className="h-5 w-5 text-primary" />
-              <span>Private leagues</span>
+              <span>Floors</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Button>

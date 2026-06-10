@@ -50,8 +50,8 @@ const FEATURES = [
   },
   {
     icon: Users,
-    title: "Private leagues",
-    description: "Create leagues and challenge your friends with an invite code.",
+    title: "See your Floor rivals' positions",
+    description: "Floors are free for everyone — Pro reveals what your members hold.",
   },
   {
     icon: Eye,
