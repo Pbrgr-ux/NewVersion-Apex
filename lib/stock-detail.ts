@@ -7,6 +7,7 @@
 import { TICKER_MAP }                    from "@/lib/tickers"
 import { fetchHistory, fetchKeyStats }   from "@/lib/yahoo-finance"
 import type { PricePoint, StockStats }   from "@/lib/yahoo-finance"
+import { getTickerCrowd }                from "@/lib/pulse-data"
 
 export type StockDetail = {
   ticker:   string
@@ -14,15 +15,17 @@ export type StockDetail = {
   region:   string
   history:  PricePoint[]
   stats:    StockStats
+  crowd:    { holdersPct: number; avgAllocation: number; totalPlayers: number } | null
 }
 
 export async function getStockDetail(ticker: string): Promise<StockDetail | null> {
   const meta = TICKER_MAP[ticker]
   if (!meta) return null
 
-  const [history, stats] = await Promise.all([
+  const [history, stats, crowd] = await Promise.all([
     fetchHistory(meta.yahooSymbol),
     fetchKeyStats(meta.yahooSymbol),
+    getTickerCrowd(ticker),
   ])
 
   return {
@@ -31,5 +34,6 @@ export async function getStockDetail(ticker: string): Promise<StockDetail | null
     region:  meta.region,
     history,
     stats,
+    crowd,
   }
 }

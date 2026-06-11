@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Crown, Check, Eye, Users, BarChart3, Newspaper, Sparkles } from "lucide-react"
+import { Crown, Check, Eye, Users, BarChart3, Activity, Sparkles } from "lucide-react"
 
 type Plan = "monthly" | "annual"
 
@@ -44,9 +44,9 @@ const FEATURES = [
     description: "Every past season, ranks and performance, kept forever.",
   },
   {
-    icon: Newspaper,
-    title: "Daily newsroom",
-    description: "A short daily briefing on the stocks that moved.",
+    icon: Activity,
+    title: "Pulse insights",
+    description: "Week-over-week shifts in how the league is positioned (Pulse is free; trends are Pro).",
   },
   {
     icon: Users,

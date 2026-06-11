@@ -178,6 +178,29 @@ export function StockDetailScreen({ detail }: { detail: StockDetail }) {
         <PriceChart data={history} positive={positive} />
       </div>
 
+      {/* Positionnement de la foule (Pulse) */}
+      {detail.crowd && detail.crowd.holdersPct > 0 && (
+        <div className="mb-4 rounded-xl border border-border bg-card p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">League positioning</span>
+            <span className="text-xs text-muted-foreground">{detail.crowd.totalPlayers} player{detail.crowd.totalPlayers > 1 ? "s" : ""}</span>
+          </div>
+          <div className="flex items-baseline gap-4">
+            <div>
+              <span className="text-2xl font-bold tabular-nums text-foreground">{detail.crowd.holdersPct}%</span>
+              <span className="ml-1.5 text-xs text-muted-foreground">hold it</span>
+            </div>
+            <div>
+              <span className="text-2xl font-bold tabular-nums text-foreground">{detail.crowd.avgAllocation}%</span>
+              <span className="ml-1.5 text-xs text-muted-foreground">avg allocation</span>
+            </div>
+          </div>
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${detail.crowd.holdersPct}%` }} />
+          </div>
+        </div>
+      )}
+
       {/* Ratios clés */}
       <div className="grid grid-cols-2 gap-2">
         {RATIOS.map((r) => (
