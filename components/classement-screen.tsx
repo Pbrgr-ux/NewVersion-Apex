@@ -24,7 +24,6 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "allTime",   label: "All-Time" },
   { id: "mois",      label: "Month"    },
   { id: "semaine",   label: "Week"     },
-  { id: "jour",      label: "Day"      },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────
