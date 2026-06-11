@@ -10,6 +10,8 @@ import type { Database }              from "@/types/database"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { getCurrentSeasonId } from "@/lib/seasons"
 import { getSaisonsNomMap }   from "@/lib/seasons-server"
+import { getEffectivePro }    from "@/lib/pro"
+import { TICKER_MAP }         from "@/lib/tickers"
 
 const MAX_ENTRIES = 100
 
@@ -24,6 +26,7 @@ export type LeaderboardEntry = {
   statut_joueur: string           // "confirmed" | "rookie"
   perf_vs_cac40?: number | null
   perf_vs_sp500?: number | null
+  positions?: { ticker: string; name: string; allocation_pct: number }[]  // vide si viewer non-Pro
 }
 
 export type AllClassementData = {
@@ -33,6 +36,7 @@ export type AllClassementData = {
   mois:            LeaderboardEntry[]
   semaine:         LeaderboardEntry[]
   jour:            LeaderboardEntry[]
+  isPro:           boolean          // le viewer voit-il les positions des autres ?
   currentUserId:   string | null
   currentSaisonNom: string
   indices: {
@@ -101,7 +105,7 @@ export async function getAllClassementData(): Promise<AllClassementData> {
   const currentUserId           = me?.id ?? null
 
   const [usersRes, classementRes, portfoliosRes, coursRes, lastIndice, nomMap, palmaresRes] = await Promise.all([
-    admin.from("users").select("id, pseudo, is_pro, avatar"),
+    admin.from("users").select("id, pseudo, is_pro, avatar, pro_until"),
 
     admin
       .from("classement")
@@ -142,6 +146,25 @@ export async function getAllClassementData(): Promise<AllClassementData> {
   for (const u of usersRes.data ?? []) {
     userMap.set(u.id, { pseudo: u.pseudo, is_pro: u.is_pro, avatar: (u as { avatar?: string | null }).avatar ?? null })
   }
+
+  // Le viewer est-il Pro ? (autorise la vue des positions des autres)
+  const meRow = (usersRes.data ?? []).find((u) => u.id === currentUserId) as { is_pro?: boolean; pro_until?: string | null } | undefined
+  const isPro = getEffectivePro(meRow)
+
+  // Positions ouvertes par joueur (attachées seulement si le viewer est Pro)
+  const positionsByUser = new Map<string, { ticker: string; name: string; allocation_pct: number }[]>()
+  if (isPro) {
+    for (const p of portfoliosRes.data ?? []) {
+      type RawPos = { ticker: string; allocation_pct: number; status?: string }
+      const pos = ((p.positions ?? []) as RawPos[])
+        .filter((x) => (x.status ?? "open") === "open")
+        .sort((a, b) => b.allocation_pct - a.allocation_pct)
+        .map((x) => ({ ticker: x.ticker, name: TICKER_MAP[x.ticker]?.name ?? x.ticker, allocation_pct: Number(x.allocation_pct) }))
+      if (p.user_id) positionsByUser.set(p.user_id, pos)
+    }
+  }
+  const attach = (list: LeaderboardEntry[]): LeaderboardEntry[] =>
+    list.map((e) => ({ ...e, positions: isPro ? (positionsByUser.get(e.user_id) ?? []) : [] }))
 
   const indices = {
     cac40_variation: lastIndice.data?.cac40_variation_saison ?? null,
@@ -242,12 +265,13 @@ export async function getAllClassementData(): Promise<AllClassementData> {
   }))
 
   return {
-    confirmed,
-    rookie,
-    allTime: sortAndRank(allTimeEntries, userMap),
-    mois:    sortAndRank(userPerfs.map((u) => ({ ...u, perf: u.mois    })), userMap),
-    semaine: sortAndRank(userPerfs.map((u) => ({ ...u, perf: u.semaine })), userMap),
-    jour:    sortAndRank(userPerfs.map((u) => ({ ...u, perf: u.jour    })), userMap),
+    confirmed: attach(confirmed),
+    rookie:    attach(rookie),
+    allTime:   attach(sortAndRank(allTimeEntries, userMap)),
+    mois:      attach(sortAndRank(userPerfs.map((u) => ({ ...u, perf: u.mois    })), userMap)),
+    semaine:   attach(sortAndRank(userPerfs.map((u) => ({ ...u, perf: u.semaine })), userMap)),
+    jour:      attach(sortAndRank(userPerfs.map((u) => ({ ...u, perf: u.jour    })), userMap)),
+    isPro,
     currentUserId,
     currentSaisonNom: nomMap?.get(CURRENT_SAISON) ?? `Saison S${CURRENT_SAISON}`,
     indices,

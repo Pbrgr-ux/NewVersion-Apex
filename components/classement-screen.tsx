@@ -62,6 +62,7 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
   const entries   = lists[activeTab]
   const currentId = data.currentUserId
   const selfEntry = entries.find((e) => e.user_id === currentId)
+  const [expanded, setExpanded] = useState<string | null>(null)
 
   const { cac40_variation, sp500_variation } = data.indices
 
@@ -144,24 +145,54 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
                   const medal = m.rang === 1 ? "bg-amber-400 text-black" : m.rang === 2 ? "bg-slate-300 text-black" : m.rang === 3 ? "bg-orange-500 text-white" : "bg-secondary text-muted-foreground"
                   const src = avatarSrc(m.avatar)
                   const isSelf = m.user_id === currentId
+                  const positions = m.positions ?? []
                   return (
-                    <div key={m.user_id} className={`flex w-full items-center gap-2.5 px-2 py-1 ${isSelf ? "rounded-[4px] bg-green-600/10" : ""}`}>
-                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${medal}`}>{m.rang}</span>
-                      {src ? (
-                        <img src={src} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
-                      ) : (
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">{m.pseudo.charAt(0).toUpperCase()}</span>
+                    <div key={m.user_id}>
+                      <button
+                        onClick={() => data.isPro && setExpanded(expanded === m.user_id ? null : m.user_id)}
+                        className={`flex w-full items-center gap-2.5 px-2 py-1 text-left ${isSelf ? "rounded-[4px] bg-green-600/10" : ""}`}
+                      >
+                        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${medal}`}>{m.rang}</span>
+                        {src ? (
+                          <img src={src} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                        ) : (
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">{m.pseudo.charAt(0).toUpperCase()}</span>
+                        )}
+                        <span className={`flex-1 min-w-0 truncate text-sm text-foreground ${isSelf ? "font-bold" : "font-medium"}`}>
+                          {m.pseudo}{isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
+                          {m.is_pro && <Crown className="ml-1 inline h-3 w-3 text-primary" />}
+                        </span>
+                        <span className={`text-sm font-bold tabular-nums ${m.perf == null ? "text-muted-foreground" : m.perf >= 0 ? "text-green-600" : "text-red-600"}`}>{fmtPerf(m.perf)}</span>
+                      </button>
+
+                      {data.isPro && expanded === m.user_id && (
+                        <div className="mt-1 px-2 pb-1">
+                          {positions.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">No position</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-1.5">
+                              {positions.map((p) => (
+                                <span key={p.ticker} className="rounded-md bg-secondary px-2 py-0.5 text-xs text-foreground">
+                                  {p.ticker} <span className="text-muted-foreground">{p.allocation_pct}%</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
-                      <span className={`flex-1 min-w-0 truncate text-sm text-foreground ${isSelf ? "font-bold" : "font-medium"}`}>
-                        {m.pseudo}{isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
-                        {m.is_pro && <Crown className="ml-1 inline h-3 w-3 text-primary" />}
-                      </span>
-                      <span className={`text-sm font-bold tabular-nums ${m.perf == null ? "text-muted-foreground" : m.perf >= 0 ? "text-green-600" : "text-red-600"}`}>{fmtPerf(m.perf)}</span>
                     </div>
                   )
                 })}
               </div>
             </div>
+
+            {/* Indice Pro pour voir les positions */}
+            {!data.isPro && (
+              <Link href="/pro" className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2.5 text-sm text-foreground">
+                <Crown className="h-4 w-4 text-primary" />
+                <span><span className="font-semibold text-primary">Go Pro</span> to see players&apos; positions</span>
+              </Link>
+            )}
           </>
         )}
       </div>
