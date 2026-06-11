@@ -154,25 +154,6 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
         </div>
       </div>
 
-      {/* ── Perfs secondaires (Today / Week / Ever) ──────────── */}
-      <div className="grid grid-cols-3 gap-2 px-4 mb-5">
-        {([
-          { label: "Today",     value: perf.day,  icon: <TrendingUp className="h-3 w-3" /> },
-          { label: "This week", value: perf.week, icon: null },
-          { label: "Ever",      value: allTime?.perf_totale_cumulee ?? null, icon: <Star className="h-3 w-3" /> },
-        ] as const).map(({ label, value, icon }) => (
-          <div key={label} className="flex flex-col items-center rounded-lg bg-secondary/30 px-2 py-1.5">
-            <div className="flex items-center justify-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {icon && <span className={perfColor(value)}>{icon}</span>}
-              <span className="truncate">{label}</span>
-            </div>
-            <span className={`text-sm font-bold tabular-nums leading-tight ${perfColor(value)}`}>
-              {fmtPerf1(value)}
-            </span>
-          </div>
-        ))}
-      </div>
-
       {/* ── Classement (top 3 + moi + écart) ─────────────────── */}
       {leaderboard.top.length > 0 && (
         <div className="mx-4 mb-5 rounded-xl border border-border bg-card px-2.5 py-3">
@@ -339,27 +320,48 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
         )}
       </div>
 
-      {/* ── Stats de trading (sous les positions) ────────────── */}
-      {tradingStats && tradingStats.tradesCount > 0 && (
-        <div className="px-4 pb-5">
+      {/* ── My stats (perfs Today/Week/Ever puis stats de trading) ─── */}
+      <div className="px-4 pb-5">
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
           My stats
         </h3>
-        <div className="grid grid-cols-4 gap-2">
+
+        {/* Perfs secondaires (Today / Week / Ever) */}
+        <div className="grid grid-cols-3 gap-2 mb-2">
           {([
-            { label: "Best",     value: tradingStats.bestTrade  != null ? fmtPerf1(tradingStats.bestTrade)  : "—", color: "text-green-600" },
-            { label: "Worst",    value: tradingStats.worstTrade != null ? fmtPerf1(tradingStats.worstTrade) : "—", color: "text-red-600" },
-            { label: "Win rate", value: tradingStats.winRate    != null ? `${tradingStats.winRate}%` : "—",       color: "text-foreground" },
-            { label: "Trades",   value: `${tradingStats.tradesCount}`,                                            color: "text-foreground" },
-          ] as const).map((s) => (
-            <div key={s.label} className="flex flex-col items-center rounded-lg bg-secondary/30 px-1 py-1.5">
-              <span className="text-xs text-muted-foreground text-center leading-tight">{s.label}</span>
-              <span className={`text-sm font-bold tabular-nums ${s.color}`}>{s.value}</span>
+            { label: "Today",     value: perf.day,  icon: <TrendingUp className="h-3 w-3" /> },
+            { label: "This week", value: perf.week, icon: null },
+            { label: "Ever",      value: allTime?.perf_totale_cumulee ?? null, icon: <Star className="h-3 w-3" /> },
+          ] as const).map(({ label, value, icon }) => (
+            <div key={label} className="flex flex-col items-center rounded-lg bg-secondary/30 px-2 py-1.5">
+              <div className="flex items-center justify-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {icon && <span className={perfColor(value)}>{icon}</span>}
+                <span className="truncate">{label}</span>
+              </div>
+              <span className={`text-sm font-bold tabular-nums leading-tight ${perfColor(value)}`}>
+                {fmtPerf1(value)}
+              </span>
             </div>
           ))}
         </div>
-        </div>
-      )}
+
+        {/* Stats de trading */}
+        {tradingStats && tradingStats.tradesCount > 0 && (
+          <div className="grid grid-cols-4 gap-2">
+            {([
+              { label: "Best",     value: tradingStats.bestTrade  != null ? fmtPerf1(tradingStats.bestTrade)  : "—", color: "text-green-600" },
+              { label: "Worst",    value: tradingStats.worstTrade != null ? fmtPerf1(tradingStats.worstTrade) : "—", color: "text-red-600" },
+              { label: "Win rate", value: tradingStats.winRate    != null ? `${tradingStats.winRate}%` : "—",       color: "text-foreground" },
+              { label: "Trades",   value: `${tradingStats.tradesCount}`,                                            color: "text-foreground" },
+            ] as const).map((s) => (
+              <div key={s.label} className="flex flex-col items-center rounded-lg bg-secondary/30 px-1 py-1.5">
+                <span className="text-xs text-muted-foreground text-center leading-tight">{s.label}</span>
+                <span className={`text-sm font-bold tabular-nums ${s.color}`}>{s.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ── Bouton arbitrage ─────────────────────────────────── */}
       <div className="px-4 pb-5">
