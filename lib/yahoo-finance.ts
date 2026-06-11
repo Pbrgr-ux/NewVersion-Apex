@@ -111,7 +111,7 @@ async function fetchBySymbols(symbols: string[]): Promise<FetchedPrice[]> {
 
 // ── Historique + ratios (fiche action) ────────────────────────
 
-export type PricePoint = { date: string; close: number }
+export type PricePoint = { date: string; close: number; ma200?: number | null }
 
 export type StockStats = {
   price:          number | null
@@ -125,12 +125,15 @@ export type StockStats = {
   volume:         number | null
 }
 
-/** Historique des cours (close) sur une période, ex: "6mo". */
-export async function fetchHistory(yahooSymbol: string, range = "6mo"): Promise<PricePoint[]> {
+/**
+ * Historique des cours (close) sur ~6 mois affichés + moyenne mobile 200 jours.
+ * On récupère ~16 mois pour pouvoir calculer la MA200 sur toute la fenêtre visible.
+ */
+export async function fetchHistory(yahooSymbol: string): Promise<PricePoint[]> {
   try {
     const now     = new Date()
     const period1 = new Date(now)
-    period1.setMonth(period1.getMonth() - 6)
+    period1.setMonth(period1.getMonth() - 16)   // 6 mois affichés + ~200 jours pour la MA200
 
     const raw = await yf.chart(yahooSymbol, {
       period1,
@@ -138,12 +141,30 @@ export async function fetchHistory(yahooSymbol: string, range = "6mo"): Promise<
       interval: "1d",
     }) as { quotes?: Array<{ date: Date | string; close: number | null }> }
 
-    return (raw?.quotes ?? [])
+    const all = (raw?.quotes ?? [])
       .filter((q) => q.close != null)
       .map((q) => ({
         date:  (q.date instanceof Date ? q.date : new Date(q.date)).toISOString().split("T")[0],
         close: Number(q.close),
       }))
+
+    // Moyenne mobile 200 jours (fenêtre glissante)
+    const WIN = 200
+    let sum = 0
+    const ma: (number | null)[] = []
+    for (let i = 0; i < all.length; i++) {
+      sum += all[i].close
+      if (i >= WIN) sum -= all[i - WIN].close
+      ma[i] = i >= WIN - 1 ? sum / WIN : null
+    }
+
+    // Fenêtre affichée = 6 derniers mois (la MA200 y est définie grâce à l'historique étendu)
+    const cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth() - 6)
+    const cutoffStr = cutoff.toISOString().split("T")[0]
+
+    return all
+      .map((p, i) => ({ ...p, ma200: ma[i] }))
+      .filter((p) => p.date >= cutoffStr)
   } catch (err) {
     console.error("[yahoo-finance] fetchHistory:", err)
     return []

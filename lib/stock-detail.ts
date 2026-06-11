@@ -21,7 +21,7 @@ export async function getStockDetail(ticker: string): Promise<StockDetail | null
   if (!meta) return null
 
   const [history, stats] = await Promise.all([
-    fetchHistory(meta.yahooSymbol, "6mo"),
+    fetchHistory(meta.yahooSymbol),
     fetchKeyStats(meta.yahooSymbol),
   ])
 

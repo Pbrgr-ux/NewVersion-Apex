@@ -25,27 +25,34 @@ function fmtPct(v: number | null): string {
 }
 
 // ── Graphique 6 mois (SVG) ────────────────────────────────────
-function PriceChart({ data, positive }: { data: { date: string; close: number }[]; positive: boolean }) {
+function PriceChart({ data, positive }: { data: { date: string; close: number; ma200?: number | null }[]; positive: boolean }) {
   if (data.length < 2) {
     return <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">No chart data</div>
   }
 
   const W = 320, H = 180, PAD = 4
   const closes = data.map((d) => d.close)
-  const min = Math.min(...closes)
-  const max = Math.max(...closes)
+  const maVals = data.map((d) => d.ma200).filter((v): v is number => v != null)
+  const hasMa  = maVals.length > 1
+  const MA_COLOR = "#d4af5a"
+  // Échelle incluant la MA200 pour que les deux courbes tiennent dans le cadre
+  const min = Math.min(...closes, ...maVals)
+  const max = Math.max(...closes, ...maVals)
   const range = max - min || 1
   const color = positive ? "#22c55e" : "#ef4444"
 
   const yFor = (price: number) => PAD + (1 - (price - min) / range) * (H - 2 * PAD)
+  const xFor = (i: number) => PAD + (i / (data.length - 1)) * (W - 2 * PAD)
 
-  const pts = data.map((d, i) => {
-    const x = PAD + (i / (data.length - 1)) * (W - 2 * PAD)
-    return `${x.toFixed(1)},${yFor(d.close).toFixed(1)}`
-  })
-
+  const pts = data.map((d, i) => `${xFor(i).toFixed(1)},${yFor(d.close).toFixed(1)}`)
   const line = pts.join(" ")
   const area = `${PAD},${H - PAD} ${line} ${W - PAD},${H - PAD}`
+
+  // Polyline MA200 (sur les points où elle est définie)
+  const maLine = hasMa
+    ? data.map((d, i) => (d.ma200 != null ? `${xFor(i).toFixed(1)},${yFor(d.ma200).toFixed(1)}` : null))
+        .filter(Boolean).join(" ")
+    : ""
 
   // Repères de dates (premier, milieu, dernier)
   const ticks = [0, Math.floor(data.length / 2), data.length - 1]
@@ -77,6 +84,11 @@ function PriceChart({ data, positive }: { data: { date: string; close: number }[
           <polygon points={area} fill="url(#stockGrad)" />
           <polyline points={line} fill="none" stroke={color} strokeWidth="1.5"
             strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          {/* Moyenne mobile 200 jours */}
+          {hasMa && (
+            <polyline points={maLine} fill="none" stroke={MA_COLOR} strokeWidth="1.2"
+              strokeDasharray="4 3" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          )}
         </svg>
         {/* Labels des niveaux (HTML, non déformés) */}
         {levels.map((lvl, i) => (
@@ -93,6 +105,17 @@ function PriceChart({ data, positive }: { data: { date: string; close: number }[
             {new Date(data[i].date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
           </span>
         ))}
+      </div>
+      {/* Légende */}
+      <div className="mt-2 flex items-center gap-4 px-1 text-[10px] text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-0.5 w-4 rounded" style={{ background: color }} /> Price
+        </span>
+        {hasMa && (
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-0 w-4 border-t border-dashed" style={{ borderColor: MA_COLOR }} /> MA 200d
+          </span>
+        )}
       </div>
     </div>
   )
