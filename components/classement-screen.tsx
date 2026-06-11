@@ -2,13 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import {
-  Trophy, TrendingUp, TrendingDown,
-  Home, BarChart3, User, Crown, Medal,
-} from "lucide-react"
+import { Trophy, Crown } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge }                        from "@/components/ui/badge"
 import type { AllClassementData, LeaderboardEntry } from "@/lib/classement-data"
 import { resolvePreset, isImageUrl }    from "@/lib/avatars"
 
@@ -36,146 +31,6 @@ const TABS: { id: TabId; label: string }[] = [
 function fmtPerf(v: number | null): string {
   if (v == null) return "—"
   return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`
-}
-
-function podiumRingClass(rank: 1 | 2 | 3): string {
-  return rank === 1 ? "ring-2 ring-amber-400"
-    : rank === 2   ? "ring-2 ring-slate-400"
-                   : "ring-2 ring-orange-500"
-}
-
-function podiumFallbackClass(rank: 1 | 2 | 3): string {
-  return rank === 1 ? "bg-gradient-to-br from-amber-400 to-yellow-500 text-white font-bold"
-    : rank === 2   ? "bg-gradient-to-br from-slate-400 to-gray-500 text-white font-bold"
-                   : "bg-gradient-to-br from-orange-500 to-amber-600 text-white font-bold"
-}
-
-function badgeBg(rank: 1 | 2 | 3): string {
-  return rank === 1 ? "bg-amber-400" : rank === 2 ? "bg-slate-400" : "bg-orange-500"
-}
-
-// ── Podium top 3 ──────────────────────────────────────────────
-function Podium({ entries }: { entries: LeaderboardEntry[] }) {
-  const first  = entries[0]
-  const second = entries[1]
-  const third  = entries[2]
-  if (!first) return null
-
-  function Slot({
-    entry,
-    rank,
-    size = "normal",
-  }: {
-    entry?: LeaderboardEntry
-    rank: 1 | 2 | 3
-    size?: "normal" | "large"
-  }) {
-    if (!entry) return <div className={size === "large" ? "h-16 w-16" : "h-14 w-14"} />
-    const positive = (entry.perf ?? 0) >= 0
-    return (
-      <>
-        {rank === 1 && <Crown className="h-6 w-6 text-amber-400 mb-0" />}
-        <div className="relative">
-          <Avatar className={`${size === "large" ? "h-16 w-16" : "h-14 w-14"} ${podiumRingClass(rank)}`}>
-            {avatarSrc(entry.avatar) && <AvatarImage src={avatarSrc(entry.avatar)!} alt="" />}
-            <AvatarFallback className={`${podiumFallbackClass(rank)} ${size === "large" ? "text-lg" : ""}`}>
-              {entry.pseudo.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className={`absolute -bottom-1 -right-1 flex ${size === "large" ? "h-6 w-6 text-xs" : "h-5 w-5 text-xs"} items-center justify-center rounded-full font-bold text-white ${badgeBg(rank)}`}>
-            {rank}
-          </div>
-        </div>
-        <span className={`${size === "large" ? "text-sm font-semibold" : "text-xs font-medium"} text-foreground truncate max-w-full px-1 text-center`}>
-          {entry.pseudo}
-        </span>
-        <span className={`${size === "large" ? "text-base" : "text-sm"} font-bold tabular-nums ${positive ? "text-success" : "text-danger"}`}>
-          {fmtPerf(entry.perf)}
-        </span>
-      </>
-    )
-  }
-
-  return (
-    <div className="mb-4 grid grid-cols-3 gap-2">
-      {/* 2e — décalé vers le bas */}
-      <div className="flex flex-col items-center gap-2 pt-6">
-        <Slot entry={second} rank={2} />
-      </div>
-      {/* 1er — au centre, plus grand */}
-      <div className="flex flex-col items-center gap-2">
-        <Slot entry={first} rank={1} size="large" />
-      </div>
-      {/* 3e — décalé vers le bas */}
-      <div className="flex flex-col items-center gap-2 pt-6">
-        <Slot entry={third} rank={3} />
-      </div>
-    </div>
-  )
-}
-
-// ── Ligne de classement ───────────────────────────────────────
-function LeaderboardRow({
-  entry,
-  isSelf,
-}: {
-  entry:  LeaderboardEntry
-  isSelf: boolean
-}) {
-  const positive = (entry.perf ?? 0) >= 0
-
-  let rowClass = "bg-card border-border"
-  if (isSelf)          rowClass = "border-primary/60 bg-primary/10"
-  else if (entry.rang === 1) rowClass = "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/40"
-  else if (entry.rang === 2) rowClass = "bg-gradient-to-r from-slate-400/10 to-gray-400/10 border-slate-400/40"
-  else if (entry.rang === 3) rowClass = "bg-gradient-to-r from-orange-600/10 to-amber-700/10 border-orange-600/40"
-
-  return (
-    <div className={`flex items-center gap-3 rounded-lg border p-3 ${rowClass}`}>
-      {/* Rang / icône */}
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-        {entry.rang === 1 ? <Crown  className="h-5 w-5 text-amber-400" />
-         : entry.rang === 2 ? <Medal className="h-5 w-5 text-slate-300" />
-         : entry.rang === 3 ? <Medal className="h-5 w-5 text-orange-400" />
-         : <span className="text-sm font-bold tabular-nums text-muted-foreground">#{entry.rang}</span>}
-      </div>
-
-      {/* Avatar */}
-      <Avatar className="h-9 w-9 shrink-0">
-        {avatarSrc(entry.avatar) && <AvatarImage src={avatarSrc(entry.avatar)!} alt="" />}
-        <AvatarFallback className="bg-secondary text-foreground text-xs font-medium">
-          {entry.pseudo.slice(0, 2).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-
-      {/* Pseudo + PRO */}
-      <div className="flex min-w-0 flex-1 items-center gap-1.5">
-        <span className={`truncate font-semibold ${
-          isSelf         ? "text-primary"    :
-          entry.rang <= 3 ? (entry.rang === 1 ? "text-amber-400" : entry.rang === 2 ? "text-slate-300" : "text-orange-400")
-                          : "text-foreground"
-        }`}>
-          {entry.pseudo}
-          {isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
-        </span>
-        {entry.is_pro && (
-          <Badge variant="secondary" className="shrink-0 bg-primary/20 text-primary text-xs px-1.5 py-0 leading-4">
-            PRO
-          </Badge>
-        )}
-      </div>
-
-      {/* Perf */}
-      <div className="flex shrink-0 items-center gap-1">
-        {positive
-          ? <TrendingUp   className="h-3.5 w-3.5 text-success" />
-          : <TrendingDown className="h-3.5 w-3.5 text-danger"  />}
-        <span className={`text-base font-bold tabular-nums ${positive ? "text-success" : "text-danger"}`}>
-          {fmtPerf(entry.perf)}
-        </span>
-      </div>
-    </div>
-  )
 }
 
 // ── Empty state ───────────────────────────────────────────────
@@ -206,8 +61,6 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
   }
 
   const entries   = lists[activeTab]
-  const top3      = entries.slice(0, 3)
-  const rest      = entries.slice(3)
   const currentId = data.currentUserId
   const selfEntry = entries.find((e) => e.user_id === currentId)
 
@@ -274,9 +127,7 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
           <EmptyTab tab={activeTab} />
         ) : (
           <>
-            <Podium entries={top3} />
-
-            {/* ── Votre position (sous le podium) ──────────────── */}
+            {/* ── Votre position ───────────────────────────────── */}
             {selfEntry && (
               <div className="mb-3 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2">
                 <span className="text-sm font-medium text-primary">Your position</span>
@@ -287,14 +138,30 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
               </div>
             )}
 
-            <div className="flex flex-col gap-2">
-              {rest.map((entry) => (
-                <LeaderboardRow
-                  key={entry.user_id}
-                  entry={entry}
-                  isSelf={entry.user_id === currentId}
-                />
-              ))}
+            {/* ── Classement — même forme que les Floors ───────── */}
+            <div className="rounded-xl border border-border bg-card px-2.5 py-3">
+              <div className="flex flex-col gap-1.5">
+                {entries.map((m) => {
+                  const medal = m.rang === 1 ? "bg-amber-400 text-black" : m.rang === 2 ? "bg-slate-300 text-black" : m.rang === 3 ? "bg-orange-500 text-white" : "bg-secondary text-muted-foreground"
+                  const src = avatarSrc(m.avatar)
+                  const isSelf = m.user_id === currentId
+                  return (
+                    <div key={m.user_id} className={`flex w-full items-center gap-2.5 px-2 py-1 ${isSelf ? "rounded-[4px] bg-green-600/10" : ""}`}>
+                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${medal}`}>{m.rang}</span>
+                      {src ? (
+                        <img src={src} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                      ) : (
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">{m.pseudo.charAt(0).toUpperCase()}</span>
+                      )}
+                      <span className={`flex-1 min-w-0 truncate text-sm text-foreground ${isSelf ? "font-bold" : "font-medium"}`}>
+                        {m.pseudo}{isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
+                        {m.is_pro && <Crown className="ml-1 inline h-3 w-3 text-primary" />}
+                      </span>
+                      <span className={`text-sm font-bold tabular-nums ${m.perf == null ? "text-muted-foreground" : m.perf >= 0 ? "text-green-600" : "text-red-600"}`}>{fmtPerf(m.perf)}</span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           </>
         )}
