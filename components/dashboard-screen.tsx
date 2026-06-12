@@ -14,7 +14,7 @@ import type { ArbitrageWindowConfig } from "@/lib/arbitrage-window"
 import type { DashboardData, LeaderRow } from "@/lib/dashboard-data"
 import { resolvePreset, isImageUrl } from "@/lib/avatars"
 import { createClient } from "@/lib/supabase/client"
-import { ShareButton } from "@/components/share-button"
+import { ShareSocial } from "@/components/share-social"
 
 // Ligne de classement compacte (top 3 + moi)
 function LeaderLine({ r }: { r: LeaderRow }) {
@@ -190,7 +190,8 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
       {/* ── Partager mon résultat ─────────────────────────────── */}
       {shareUrl && (
         <div className="mx-4 mb-5">
-          <ShareButton
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Share my result</p>
+          <ShareSocial
             url={shareUrl}
             cardBase={cardBase}
             text={data.classement.rang ? `I'm #${data.classement.rang} on TradeLeague 🚀` : "Check out my TradeLeague run 🚀"}
