@@ -1,6 +1,6 @@
 # TradeLeague — Document de reprise
 
-> Dernière mise à jour : 2026-06-11 · dernier commit `78b71d4` · branche `main` (remote `newversion` = `Pbrgr-ux/NewVersion-Apex`).
+> Dernière mise à jour : 2026-06-11 · dernier commit `9ad8baa` · branche `main` (remote `newversion` = `Pbrgr-ux/NewVersion-Apex`).
 > Ce fichier sert à reprendre le dev dans une nouvelle conversation. Lis-le en entier d'abord.
 
 ---
@@ -60,8 +60,6 @@ Dashboard, Ranking (forme Floors + positions Pro), Floors (création/join/leave/
 ## 4. CE QUI RESTE (bloquants de lancement)
 | Priorité | Tâche |
 |---|---|
-| 🔴 | **Vercel → désactiver Deployment Protection** (sinon `/u/[id]` + cartes de partage inaccessibles aux externes → partage cassé) |
-| 🔴 | **Confirmer migrations 011 / 012 / 013 en prod** (cf. §6). 011 critique : `users.pro_until` requis par `getEffectivePro`. |
 | 🔴 | **Auth prod** : Supabase → Site URL + Redirect URLs = domaine Vercel ; configurer providers OAuth (Google/Azure/Facebook) + les activer |
 | 🔴 | **Crons + données** : vérifier que `update-cours` tourne en prod (CRON_SECRET) et que la table `cours` se remplit (sinon perfs fausses) |
 | 🟠 | **Légal** : CGU, confidentialité, **disclaimer finance** (« jeu, pas de conseil en investissement ») |
@@ -100,9 +98,9 @@ Dashboard, Ranking (forme Floors + positions Pro), Floors (création/join/leave/
 | 008 | verrou is_pro/is_admin (inefficace seul) | ✅ |
 | 009 | config ligues + `league_id` | ✅ |
 | 010 | **correctif** verrou is_pro/is_admin | ✅ (vérifié : 0 ligne) |
-| 011 | offre fondateurs (`app_config`, `users.pro_until`, trigger) | ⚠️ **À CONFIRMER** (critique : `pro_until`) |
-| 012 | `ensure_pseudo` (login OAuth sans pseudo) | ⚠️ **À CONFIRMER** |
-| 013 | bucket Storage `avatars` + policies | ⚠️ **À CONFIRMER** (requis pour upload photo) |
+| 011 | offre fondateurs (`app_config`, `users.pro_until`, trigger) | ✅ |
+| 012 | `ensure_pseudo` (login OAuth sans pseudo) | ✅ |
+| 013 | bucket Storage `avatars` + policies | ✅ |
 
 Activer l'offre fondateurs (à la rentrée) :
 ```sql
