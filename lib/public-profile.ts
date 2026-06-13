@@ -30,6 +30,7 @@ export type PublicProfile = {
   weekSpark:   number[]        // ~7 points normalisés [0..1] pour le mini-graphe
   allTimePerf: number | null
   seasonNom:   string
+  leaderboard: { rang: number; pseudo: string; seasonPerf: number | null; isSelf: boolean }[]
 }
 
 function isoNDaysAgo(n: number): string {
@@ -97,6 +98,31 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
   const total = totalRes.count ?? 0
   // Percentile seulement si l'échantillon est significatif (sinon "Top 33%" sur 3 joueurs trompe)
   const topPct = rang && total >= 10 ? Math.max(1, Math.round((rang / total) * 100)) : null
+
+  // ── Leaderboard (top 3 + soi) pour la carte "ranking" ─────────
+  const { data: topRows } = await db
+    .from("classement")
+    .select("user_id, rang, perf_totale")
+    .eq("saison", saison)
+    .eq("statut_joueur", "confirmed")
+    .order("rang", { ascending: true })
+    .limit(3)
+
+  const lbIds = new Set<string>((topRows ?? []).map((r) => r.user_id))
+  lbIds.add(userId)
+  const { data: lbUsers } = await db.from("users").select("id, pseudo").in("id", [...lbIds])
+  const pseudoById: Record<string, string> = {}
+  for (const u of lbUsers ?? []) pseudoById[u.id] = u.pseudo
+
+  const leaderboard: PublicProfile["leaderboard"] = (topRows ?? []).map((r) => ({
+    rang:       r.rang ?? 0,
+    pseudo:     pseudoById[r.user_id] ?? "—",
+    seasonPerf: r.perf_totale != null ? parseFloat(Number(r.perf_totale).toFixed(2)) : null,
+    isSelf:     r.user_id === userId,
+  }))
+  if (rang && !leaderboard.some((l) => l.isSelf)) {
+    leaderboard.push({ rang, pseudo: pseudoById[userId] ?? user.pseudo, seasonPerf, isSelf: true })
+  }
 
   // ── Perf de la semaine + mini-graphe (jeu principal) ──────────
   let weekPerf: number | null = null
@@ -168,5 +194,6 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
     weekSpark,
     allTimePerf,
     seasonNom,
+    leaderboard,
   }
 }

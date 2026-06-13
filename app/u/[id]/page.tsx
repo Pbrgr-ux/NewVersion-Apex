@@ -18,8 +18,16 @@ function avatarSrc(a: string | null): string | null {
   return isImageUrl(a) ? a : null
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata(
+  { params, searchParams }: {
+    params: Promise<{ id: string }>
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  },
+): Promise<Metadata> {
   const { id } = await params
+  const sp = await searchParams
+  const kind = sp?.card === "ranking" ? "ranking" : "hero"
+
   const p = await getPublicProfile(id)
   if (!p) return { title: "TradeLeague" }
   const rank = p.rang ? `#${p.rang}` : ""
@@ -27,11 +35,18 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const description = p.seasonPerf != null
     ? `${fmtPerf(p.seasonPerf)} this season · ${p.seasonNom}`
     : `Playing ${p.seasonNom} on TradeLeague`
+
+  // Image OG = carte serveur (hero ou ranking) → incluse dans le message sur TOUS les navigateurs
+  const h = await headers()
+  const host  = h.get("host") ?? ""
+  const proto = h.get("x-forwarded-proto") ?? "https"
+  const image = `${proto}://${host}/u/${id}/card?f=wide&card=${kind}`
+
   return {
     title,
     description,
-    openGraph: { title, description, type: "profile" },
-    twitter:   { card: "summary_large_image", title, description },
+    openGraph: { title, description, type: "profile", images: [{ url: image, width: 1200, height: 630 }] },
+    twitter:   { card: "summary_large_image", title, description, images: [image] },
   }
 }
 

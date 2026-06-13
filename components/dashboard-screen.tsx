@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
   TrendingUp, TrendingDown, Clock, Trophy,
@@ -78,17 +78,13 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
       }
     })
   }, [])
-
-  // Refs pour capturer les containers à partager (image = copie exacte du DOM)
-  const heroRef    = useRef<HTMLDivElement>(null)
-  const rankingRef = useRef<HTMLDivElement>(null)
   const { perf, positions, classement, hasPortfolio, season, capitalAjuste, allTime, indices, leaderboard, tradingStats } = data
 
   return (
     <main className="flex min-h-svh flex-col bg-background pb-20">
 
       {/* ── HERO : titre saison + rang + capital + perf ──────── */}
-      <div ref={heroRef} className="mx-4 mt-2 mb-5 rounded-2xl border border-border bg-card px-4 py-2.5">
+      <div className="mx-4 mt-2 mb-5 rounded-2xl border border-border bg-card px-4 py-2.5">
 
         {/* Titre saison (en tête du container) */}
         <div className="mb-2 pb-2 border-b border-border/60">
@@ -152,7 +148,7 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
 
       {/* ── Classement (top 3 + moi + écart) ─────────────────── */}
       {leaderboard.top.length > 0 && (
-        <div ref={rankingRef} className="mx-4 mb-5 rounded-xl border border-border bg-card px-2.5 py-3">
+        <div className="mx-4 mb-5 rounded-xl border border-border bg-card px-2.5 py-3">
           <div className="flex items-center justify-between mb-2 px-1.5">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ranking</span>
             <Link href="/classement" className="flex items-center gap-0.5 text-xs font-semibold text-green-600">
@@ -189,11 +185,9 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
           <ShareSocial
             url={shareUrl}
             text={data.classement.rang ? `I'm #${data.classement.rang} on TradeLeague 🚀` : "Check out my TradeLeague run 🚀"}
-            targets={[
-              { key: "hero",    label: "Rank card", ref: heroRef },
-              ...(leaderboard.top.length > 0
-                ? [{ key: "ranking", label: "Ranking", ref: rankingRef }]
-                : []),
+            kinds={[
+              { key: "hero", label: "Rank card" },
+              ...(leaderboard.top.length > 0 ? [{ key: "ranking", label: "Ranking" }] : []),
             ]}
           />
         </div>

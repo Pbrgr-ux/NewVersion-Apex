@@ -1,19 +1,14 @@
 "use client"
 
-import { useState, type RefObject } from "react"
-import { toPng } from "html-to-image"
-import { Share2, Loader2, Download, Check, Copy, X as XIcon } from "lucide-react"
+import { useState } from "react"
+import { Share2, Check, Copy, X as XIcon } from "lucide-react"
 
-type Target = {
-  key:   string
-  label: string
-  ref:   RefObject<HTMLDivElement | null>
-}
+type Kind = { key: string; label: string }
 
 type Props = {
-  url:        string
+  url:        string   // lien de base, ex. `${origin}/u/${id}`
   text:       string
-  targets:    Target[]
+  kinds:      Kind[]   // cartouches partageables (hero / ranking)
   className?: string
 }
 
@@ -36,69 +31,47 @@ const ICONS = {
   ),
 }
 
-type Fallback = { imgUrl: string; label: string }
+type Fallback = { shareUrl: string; imgUrl: string; label: string }
 
-export function ShareSocial({ url, text, targets, className }: Props) {
+export function ShareSocial({ url, text, kinds, className }: Props) {
   const [step, setStep]         = useState<"idle" | "choose">("idle")
-  const [busy, setBusy]         = useState<string | null>(null)
   const [fallback, setFallback] = useState<Fallback | null>(null)
   const [copied, setCopied]     = useState(false)
   const enc = encodeURIComponent
 
-  // Capture le DOM d'un container → PNG (copie pixel-exacte du container)
-  async function capture(ref: RefObject<HTMLDivElement | null>): Promise<Blob | null> {
-    const node = ref.current
-    if (!node) return null
-    const bg = getComputedStyle(document.body).backgroundColor || undefined
-    const dataUrl = await toPng(node, { pixelRatio: 2, backgroundColor: bg, cacheBust: true })
-    return (await fetch(dataUrl)).blob()
-  }
-
-  async function onSelect(t: Target) {
-    setBusy(t.key)
-    try {
-      const blob = await capture(t.ref)
-      if (!blob) return
-      const file = new File([blob], `tradeleague-${t.key}.png`, { type: "image/png" })
-
-      // Mobile : partage natif de l'IMAGE exacte + message auto (l'OS propose FB/WhatsApp/X…)
-      // NB : on ne passe PAS `url` ici — sinon de nombreuses apps (WhatsApp/Facebook)
-      // traitent ça comme un partage de lien et IGNORENT l'image. Le lien va dans le texte.
-      if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], text: `${text}\n${url}` })
-          reset()
-          return
-        } catch {
-          // annulé par l'utilisateur → on retombe sur le repli
-        }
+  async function onSelect(k: Kind) {
+    const shareUrl = `${url}?card=${k.key}`
+    // Partage natif du LIEN (marche sur tous les mobiles, Firefox inclus) :
+    // la plateforme cible récupère l'image OG de la carte choisie.
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ url: shareUrl, text })
+        reset()
+        return
+      } catch {
+        // annulé → repli boutons
       }
-
-      // Desktop : pas de partage de fichier → repli (télécharger l'image + boutons réseau)
-      setFallback({ imgUrl: URL.createObjectURL(blob), label: t.label })
-    } catch {
-      // capture impossible (ex. image avatar cross-origin) → repli partage du lien sans image
-      setFallback({ imgUrl: "", label: t.label })
-    } finally {
-      setBusy(null)
     }
+    // Desktop / pas de Web Share → repli boutons réseau
+    setFallback({ shareUrl, imgUrl: `${url}/card?f=wide&card=${k.key}`, label: k.label })
   }
 
   function reset() {
-    if (fallback?.imgUrl) URL.revokeObjectURL(fallback.imgUrl)
     setFallback(null)
     setStep("idle")
   }
 
-  async function copyText() {
-    try { await navigator.clipboard.writeText(`${text} ${url}`); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch { /* noop */ }
+  async function copyLink(shareUrl: string) {
+    try { await navigator.clipboard.writeText(`${text} ${shareUrl}`); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch { /* noop */ }
   }
 
-  const NETS = [
-    { key: "facebook", label: "Facebook", bg: "bg-[#1877F2]", icon: ICONS.facebook, href: `https://www.facebook.com/sharer/sharer.php?u=${enc(url)}` },
-    { key: "whatsapp", label: "WhatsApp", bg: "bg-[#25D366]", icon: ICONS.whatsapp, href: `https://wa.me/?text=${enc(text + " " + url)}` },
-    { key: "x",        label: "X",        bg: "bg-black",      icon: ICONS.x,        href: `https://twitter.com/intent/tweet?text=${enc(text)}&url=${enc(url)}` },
-  ] as const
+  function nets(shareUrl: string) {
+    return [
+      { key: "facebook", label: "Facebook", bg: "bg-[#1877F2]", icon: ICONS.facebook, href: `https://www.facebook.com/sharer/sharer.php?u=${enc(shareUrl)}` },
+      { key: "whatsapp", label: "WhatsApp", bg: "bg-[#25D366]", icon: ICONS.whatsapp, href: `https://wa.me/?text=${enc(text + " " + shareUrl)}` },
+      { key: "x",        label: "X",        bg: "bg-black",      icon: ICONS.x,        href: `https://twitter.com/intent/tweet?text=${enc(text)}&url=${enc(shareUrl)}` },
+    ]
+  }
 
   return (
     <div className={className}>
@@ -122,22 +95,20 @@ export function ShareSocial({ url, text, targets, className }: Props) {
             </button>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            {targets.map((t) => (
+            {kinds.map((k) => (
               <button
-                key={t.key}
-                onClick={() => onSelect(t)}
-                disabled={busy !== null}
-                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary px-3 py-4 text-sm font-medium text-foreground transition-colors hover:border-primary/50 disabled:opacity-60"
+                key={k.key}
+                onClick={() => onSelect(k)}
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary px-3 py-4 text-sm font-medium text-foreground transition-colors hover:border-primary/50"
               >
-                {busy === t.key ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4 text-primary" />}
-                {t.label}
+                <Share2 className="h-4 w-4 text-primary" /> {k.label}
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Étape 2 (desktop) : repli — image prête, télécharger + partager le lien */}
+      {/* Étape 2 (repli desktop / pas de Web Share) : aperçu + boutons réseau */}
       {fallback && (
         <div className="rounded-2xl border border-border bg-card p-3">
           <div className="mb-2 flex items-center justify-between">
@@ -147,23 +118,11 @@ export function ShareSocial({ url, text, targets, className }: Props) {
             </button>
           </div>
 
-          {fallback.imgUrl && (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={fallback.imgUrl} alt={`${fallback.label} card`} className="mb-2 w-full rounded-xl border border-border" />
-              <a
-                href={fallback.imgUrl}
-                download={`tradeleague-${fallback.label.toLowerCase().replace(/\s+/g, "-")}.png`}
-                className="mb-3 flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-              >
-                <Download className="h-4 w-4" /> Download image
-              </a>
-            </>
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={fallback.imgUrl} alt={`${fallback.label} card`} loading="lazy" className="mb-3 aspect-[1200/630] w-full rounded-xl border border-border object-cover" />
 
-          <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">Then share the link</p>
           <div className="grid grid-cols-3 gap-2">
-            {NETS.map((n) => (
+            {nets(fallback.shareUrl).map((n) => (
               <a
                 key={n.key}
                 href={n.href}
@@ -180,7 +139,7 @@ export function ShareSocial({ url, text, targets, className }: Props) {
             ))}
           </div>
 
-          <button onClick={copyText} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary">
+          <button onClick={() => copyLink(fallback.shareUrl)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary">
             {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
             {copied ? "Copied!" : "Copy caption + link"}
           </button>

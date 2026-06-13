@@ -20,6 +20,7 @@ import type { PublicProfile } from "@/lib/public-profile"
 
 export type CardFormat  = "wide" | "square" | "story"
 export type CardVariant = "auto" | "week" | "podium" | "alltime" | "rankup"
+export type CardKind    = "hero" | "ranking"
 
 const SIZES: Record<CardFormat, { width: number; height: number }> = {
   wide:   { width: 1200, height: 630 },
@@ -49,6 +50,7 @@ export function buildCard(
   format: CardFormat,
   variant: CardVariant = "auto",
   fromRank?: number | null,
+  kind: CardKind = "hero",
 ) {
   const size = SIZES[format]
   const pseudo   = p?.pseudo ?? "Trader"
@@ -153,6 +155,48 @@ export function buildCard(
       <div style={{ display: "flex", color: C.gold, fontWeight: 700 }}>Can you beat me? →</div>
     </div>
   )
+
+  // ── Variante CLASSEMENT (top 3 + soi) ───────────────────────
+  if (kind === "ranking" && p?.leaderboard && p.leaderboard.length > 0) {
+    const rf = vertical ? 46 : 40
+    const rows = p.leaderboard.map((r, i) => (
+      <div key={i} style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
+        padding: vertical ? "22px 30px" : "16px 28px", borderRadius: 20,
+        background: r.isSelf ? "rgba(212,175,90,0.16)" : "rgba(255,255,255,0.05)",
+        border: `2px solid ${r.isSelf ? C.gold : "transparent"}`,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
+          <div style={{
+            display: "flex", width: rf + 18, height: rf + 18, borderRadius: 999,
+            alignItems: "center", justifyContent: "center", fontSize: rf * 0.62, fontWeight: 800,
+            background: r.rang === 1 ? "#d4af5a" : r.rang === 2 ? "#c7ccd6" : r.rang === 3 ? "#cd7f4d" : C.ring,
+            color: r.rang <= 3 ? C.goldText : C.muted,
+          }}>{r.rang}</div>
+          <div style={{ display: "flex", fontSize: rf, fontWeight: 700, color: r.isSelf ? C.gold : C.text }}>
+            {r.isSelf ? `${r.pseudo} (You)` : r.pseudo}
+          </div>
+        </div>
+        <div style={{ display: "flex", fontSize: rf, fontWeight: 800, color: (r.seasonPerf ?? 0) >= 0 ? C.up : C.down }}>
+          {fmtPerf(r.seasonPerf)}
+        </div>
+      </div>
+    ))
+    const rankingEl = (
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background: `linear-gradient(135deg, ${C.bgFrom} 0%, ${C.bgTo} 100%)`, color: C.text, padding: s.pad, fontFamily: "sans-serif" }}>
+        {Brand}
+        <div style={{ display: "flex", flexDirection: "column", gap: vertical ? 22 : 16, width: "100%" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div style={{ display: "flex", fontSize: s.lbl + 8, fontWeight: 800, color: C.gold, letterSpacing: 2 }}>RANKING</div>
+            <div style={{ display: "flex", fontSize: s.season, color: C.muted }}>{season}</div>
+          </div>
+          {rows}
+        </div>
+        {Footer}
+      </div>
+    )
+    return { element: rankingEl, ...size }
+  }
 
   const element = (
     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: vertical ? "center" : "stretch", background: `linear-gradient(135deg, ${C.bgFrom} 0%, ${C.bgTo} 100%)`, color: C.text, padding: s.pad, fontFamily: "sans-serif" }}>
