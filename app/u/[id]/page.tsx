@@ -5,7 +5,6 @@ import Link from "next/link"
 import { TrendingUp, Crown } from "lucide-react"
 import { getPublicProfile } from "@/lib/public-profile"
 import { resolvePreset, isImageUrl } from "@/lib/avatars"
-import { ShareButton } from "@/components/share-button"
 
 export const dynamic = "force-dynamic"
 
@@ -54,16 +53,6 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const { id } = await params
   const p = await getPublicProfile(id)
   if (!p) notFound()
-
-  const h = await headers()
-  const host  = h.get("host") ?? ""
-  const proto = h.get("x-forwarded-proto") ?? "https"
-  const shareUrl  = `${proto}://${host}/u/${p.userId}`
-  const shareText = p.topPct
-    ? `Top ${p.topPct}% on TradeLeague (#${p.rang}) 🚀 Can you beat me?`
-    : p.rang
-      ? `I'm #${p.rang} on TradeLeague 🚀`
-      : `Check out my TradeLeague profile 🚀`
 
   const src = avatarSrc(p.avatar)
 
@@ -120,7 +109,6 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         </div>
 
         <div className="mt-5 flex flex-col gap-2">
-          <ShareButton url={shareUrl} cardBase={`${proto}://${host}/u/${p.userId}/card`} text={shareText} label="Share" />
           <Link href="/signup" className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
             Join TradeLeague →
           </Link>
