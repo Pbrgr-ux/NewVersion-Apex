@@ -1,13 +1,23 @@
 "use client"
 
+import { useState, type RefObject } from "react"
+import { toPng } from "html-to-image"
+import { Share2, Loader2, Download, Check, Copy, X as XIcon } from "lucide-react"
+
+type Target = {
+  key:   string
+  label: string
+  ref:   RefObject<HTMLDivElement | null>
+}
+
 type Props = {
   url:        string
   text:       string
-  cardBase?:  string   // ex. `${origin}/u/${id}/card` → image partageable/téléchargeable
+  targets:    Target[]
   className?: string
 }
 
-// Logos de marque (lucide n'expose plus les icônes de marque) — viewBox 24×24, fill=currentColor
+// Logos de marque (lucide n'expose plus les icônes de marque) — viewBox 24×24
 const ICONS = {
   facebook: (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
@@ -26,11 +36,60 @@ const ICONS = {
   ),
 }
 
-export function ShareSocial({ url, text, cardBase, className }: Props) {
+type Fallback = { imgUrl: string; label: string }
+
+export function ShareSocial({ url, text, targets, className }: Props) {
+  const [step, setStep]         = useState<"idle" | "choose">("idle")
+  const [busy, setBusy]         = useState<string | null>(null)
+  const [fallback, setFallback] = useState<Fallback | null>(null)
+  const [copied, setCopied]     = useState(false)
   const enc = encodeURIComponent
 
-  function openShare(href: string) {
-    window.open(href, "_blank", "noopener,noreferrer")
+  // Capture le DOM d'un container → PNG (copie pixel-exacte du container)
+  async function capture(ref: RefObject<HTMLDivElement | null>): Promise<Blob | null> {
+    const node = ref.current
+    if (!node) return null
+    const bg = getComputedStyle(document.body).backgroundColor || undefined
+    const dataUrl = await toPng(node, { pixelRatio: 2, backgroundColor: bg, cacheBust: true })
+    return (await fetch(dataUrl)).blob()
+  }
+
+  async function onSelect(t: Target) {
+    setBusy(t.key)
+    try {
+      const blob = await capture(t.ref)
+      if (!blob) return
+      const file = new File([blob], `tradeleague-${t.key}.png`, { type: "image/png" })
+
+      // Mobile : partage natif de l'IMAGE exacte + message auto (l'OS propose FB/WhatsApp/X…)
+      if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], text, url })
+          reset()
+          return
+        } catch {
+          // annulé par l'utilisateur → on retombe sur le repli
+        }
+      }
+
+      // Desktop : pas de partage de fichier → repli (télécharger l'image + boutons réseau)
+      setFallback({ imgUrl: URL.createObjectURL(blob), label: t.label })
+    } catch {
+      // capture impossible (ex. image avatar cross-origin) → repli partage du lien sans image
+      setFallback({ imgUrl: "", label: t.label })
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  function reset() {
+    if (fallback?.imgUrl) URL.revokeObjectURL(fallback.imgUrl)
+    setFallback(null)
+    setStep("idle")
+  }
+
+  async function copyText() {
+    try { await navigator.clipboard.writeText(`${text} ${url}`); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch { /* noop */ }
   }
 
   const NETS = [
@@ -41,35 +100,90 @@ export function ShareSocial({ url, text, cardBase, className }: Props) {
 
   return (
     <div className={className}>
-      {/* Visuel proposé automatiquement : la carte "wide" est l'image OG attachée
-          au lien /u/[id] quand on partage sur Facebook / WhatsApp / X. */}
-      {cardBase && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={`${cardBase}?f=wide`}
-          alt="Your shareable result card"
-          width={1200}
-          height={630}
-          loading="lazy"
-          className="mb-3 aspect-[1200/630] w-full rounded-xl border border-border object-cover"
-        />
+      {/* Bouton principal */}
+      {step === "idle" && (
+        <button
+          onClick={() => setStep("choose")}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          <Share2 className="h-4 w-4" /> Share my result
+        </button>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
-        {NETS.map((n) => (
-          <button
-            key={n.key}
-            onClick={() => openShare(n.href)}
-            aria-label={`Share on ${n.label}`}
-            className="flex flex-col items-center gap-1.5"
-          >
-            <span className={`flex h-12 w-full items-center justify-center rounded-xl text-white transition-opacity hover:opacity-90 ${n.bg}`}>
-              {n.icon}
-            </span>
-            <span className="text-[11px] font-medium text-muted-foreground">{n.label}</span>
+      {/* Étape 1 : choix du cartouche à partager */}
+      {step === "choose" && !fallback && (
+        <div className="rounded-2xl border border-border bg-card p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-xs font-semibold text-foreground">What do you want to share?</p>
+            <button onClick={reset} aria-label="Close" className="text-muted-foreground hover:text-foreground">
+              <XIcon className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {targets.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => onSelect(t)}
+                disabled={busy !== null}
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary px-3 py-4 text-sm font-medium text-foreground transition-colors hover:border-primary/50 disabled:opacity-60"
+              >
+                {busy === t.key ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4 text-primary" />}
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Étape 2 (desktop) : repli — image prête, télécharger + partager le lien */}
+      {fallback && (
+        <div className="rounded-2xl border border-border bg-card p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-xs font-semibold text-foreground">Share “{fallback.label}”</p>
+            <button onClick={reset} aria-label="Close" className="text-muted-foreground hover:text-foreground">
+              <XIcon className="h-4 w-4" />
+            </button>
+          </div>
+
+          {fallback.imgUrl && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={fallback.imgUrl} alt={`${fallback.label} card`} className="mb-2 w-full rounded-xl border border-border" />
+              <a
+                href={fallback.imgUrl}
+                download={`tradeleague-${fallback.label.toLowerCase().replace(/\s+/g, "-")}.png`}
+                className="mb-3 flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                <Download className="h-4 w-4" /> Download image
+              </a>
+            </>
+          )}
+
+          <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">Then share the link</p>
+          <div className="grid grid-cols-3 gap-2">
+            {NETS.map((n) => (
+              <a
+                key={n.key}
+                href={n.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Share on ${n.label}`}
+                className="flex flex-col items-center gap-1.5"
+              >
+                <span className={`flex h-11 w-full items-center justify-center rounded-xl text-white transition-opacity hover:opacity-90 ${n.bg}`}>
+                  {n.icon}
+                </span>
+                <span className="text-[11px] font-medium text-muted-foreground">{n.label}</span>
+              </a>
+            ))}
+          </div>
+
+          <button onClick={copyText} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary">
+            {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
+            {copied ? "Copied!" : "Copy caption + link"}
           </button>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
