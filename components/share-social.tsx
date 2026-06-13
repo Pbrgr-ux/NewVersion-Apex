@@ -62,9 +62,11 @@ export function ShareSocial({ url, text, targets, className }: Props) {
       const file = new File([blob], `tradeleague-${t.key}.png`, { type: "image/png" })
 
       // Mobile : partage natif de l'IMAGE exacte + message auto (l'OS propose FB/WhatsApp/X…)
+      // NB : on ne passe PAS `url` ici — sinon de nombreuses apps (WhatsApp/Facebook)
+      // traitent ça comme un partage de lien et IGNORENT l'image. Le lien va dans le texte.
       if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
         try {
-          await navigator.share({ files: [file], text, url })
+          await navigator.share({ files: [file], text: `${text}\n${url}` })
           reset()
           return
         } catch {
