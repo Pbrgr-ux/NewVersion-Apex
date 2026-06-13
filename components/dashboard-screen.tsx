@@ -76,7 +76,7 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
         {/* Titre saison (en tête du container) */}
         <div className="mb-2 pb-2 border-b border-border/60">
           <div className="flex items-center justify-center gap-2">
-            <h1 className="text-base font-bold tracking-tight text-foreground uppercase">{season.label}</h1>
+            <h1 className="text-[15px] font-bold tracking-tight text-foreground uppercase">{season.label}</h1>
             {season.statut === "active" && <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />}
           </div>
           <div className="mt-0.5 flex items-center justify-between text-sm text-muted-foreground">
@@ -205,7 +205,7 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
         {!hasPortfolio || positions.length === 0 ? (
           /* ── Onboarding nouveau joueur ── */
           <div className="rounded-2xl border border-border bg-card px-4 py-5">
-            <p className="text-base font-bold text-foreground">Welcome to TradeLeague 👋</p>
+            <p className="text-[15px] font-bold text-foreground">Welcome to TradeLeague 👋</p>
             <p className="text-sm text-muted-foreground mt-0.5 mb-4">
               Build your portfolio, beat your rivals.
             </p>
@@ -367,7 +367,7 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
                   <Zap className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Alpha moyen</span>
                 </div>
-                <span className={`text-lg font-bold tabular-nums ${perfColor(allTime.alpha_moyen)}`}>
+                <span className={`text-[17px] font-bold tabular-nums ${perfColor(allTime.alpha_moyen)}`}>
                   {fmtPerf(allTime.alpha_moyen)} <span className="text-xs font-normal text-muted-foreground">/saison</span>
                 </span>
               </CardContent>
@@ -378,7 +378,7 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
                   <Trophy className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Meilleur rang</span>
                 </div>
-                <span className="text-lg font-bold text-foreground">
+                <span className="text-[17px] font-bold text-foreground">
                   {allTime.meilleur_rang ? `#${allTime.meilleur_rang}` : "—"}
                   {allTime.meilleur_rang_saison && (
                     <span className="text-xs font-normal text-muted-foreground ml-1">({allTime.meilleur_rang_saison})</span>
@@ -392,7 +392,7 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
                   <Star className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Seasons played</span>
                 </div>
-                <span className="text-lg font-bold text-foreground">{allTime.nb_saisons}</span>
+                <span className="text-[17px] font-bold text-foreground">{allTime.nb_saisons}</span>
               </CardContent>
             </Card>
             <Card className="bg-card border-border">
@@ -401,7 +401,7 @@ export function DashboardScreen({ data, mainWindow }: { data: DashboardData; mai
                   <Globe className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Win rate</span>
                 </div>
-                <span className="text-lg font-bold text-foreground">
+                <span className="text-[17px] font-bold text-foreground">
                   {allTime.win_rate != null ? `${allTime.win_rate}%` : "—"}
                 </span>
               </CardContent>
