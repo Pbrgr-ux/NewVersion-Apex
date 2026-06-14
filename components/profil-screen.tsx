@@ -102,7 +102,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
     <main className="flex min-h-svh flex-col bg-background pb-20">
 
       {/* ── Header avatar ────────────────────────────────────── */}
-      <div className="flex flex-col items-center gap-4 px-6 pt-10 pb-6">
+      <div className="flex flex-col items-center gap-4 px-4 pt-10 pb-6">
         <button onClick={() => setPickerOpen(true)} className="relative">
           <Avatar className="h-24 w-24 border-2 border-primary">
             {preset && <AvatarImage src={preset.src} alt={user.pseudo} />}
