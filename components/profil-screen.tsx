@@ -107,7 +107,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
           <Avatar className="h-24 w-24 border-2 border-primary">
             {preset && <AvatarImage src={preset.src} alt={user.pseudo} />}
             {!preset && isImageUrl(avatar) && <AvatarImage src={avatar!} alt={user.pseudo} />}
-            <AvatarFallback className="bg-secondary text-2xl font-bold text-foreground">
+            <AvatarFallback className="bg-secondary text-[17px] font-bold text-foreground">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -164,7 +164,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
 
         <div className="flex flex-col items-center gap-1.5">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-foreground">{user.pseudo}</h1>
+            <h1 className="text-[17px] font-bold text-foreground">{user.pseudo}</h1>
             {isPro && (
               <Badge className="bg-primary text-primary-foreground">
                 <Crown className="mr-1 h-3 w-3" />PRO
@@ -203,7 +203,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Ranking
             </span>
-            <span className="text-xl font-bold text-foreground">
+            <span className="text-[17px] font-bold text-foreground">
               {saison.rang != null ? `#${saison.rang}` : "—"}
             </span>
             {saison.total > 0 && (
@@ -220,7 +220,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Season perf
             </span>
-            <span className={`text-xl font-bold tabular-nums ${perfColor(saison.perf_totale)}`}>
+            <span className={`text-[17px] font-bold tabular-nums ${perfColor(saison.perf_totale)}`}>
               {fmtPerf(saison.perf_totale)}
             </span>
             {saison.perf_totale == null && (
@@ -261,7 +261,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
                       ? <TrendingUp className="h-4 w-4 text-green-500" />
                       : <TrendingDown className="h-4 w-4 text-red-500" />
                     }
-                    <span className={`text-base font-bold tabular-nums ${perfColor(row.perf_totale)}`}>
+                    <span className={`text-[15px] font-bold tabular-nums ${perfColor(row.perf_totale)}`}>
                       {fmtPerf(row.perf_totale)}
                     </span>
                   </div>

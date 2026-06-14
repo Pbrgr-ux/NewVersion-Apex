@@ -12,7 +12,7 @@ export function PulseScreen({ data }: { data: PulseData }) {
     <main className="flex min-h-svh flex-col bg-background px-4 pt-2 pb-24">
       <div className="flex items-center gap-2 mb-1">
         <Activity className="h-5 w-5 text-primary" />
-        <h1 className="text-base font-bold tracking-tight text-foreground uppercase">Pulse</h1>
+        <h1 className="text-[15px] font-bold tracking-tight text-foreground uppercase">Pulse</h1>
       </div>
       <p className="text-xs text-muted-foreground mb-4">Where the league is positioned this week — are you with the crowd or against it?</p>
 
@@ -31,7 +31,7 @@ export function PulseScreen({ data }: { data: PulseData }) {
           <div className="flex flex-col gap-1.5">
             {rows.map((r) => (
               <Link key={r.ticker} href={`/stock/${encodeURIComponent(r.ticker)}`}
-                className="rounded-xl border border-border bg-card px-3 py-2.5 transition-colors hover:border-primary/40">
+                className="rounded-xl border border-border bg-card px-2.5 py-2.5 transition-colors hover:border-primary/40">
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-bold text-foreground">
                     {r.ticker.replace(".", "").slice(0, 2)}
@@ -55,7 +55,7 @@ export function PulseScreen({ data }: { data: PulseData }) {
             ))}
           </div>
 
-          <p className="mt-4 text-center text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-4 text-center text-xs leading-relaxed text-muted-foreground">
             Anonymous, aggregated positioning — individual portfolios stay private.
           </p>
         </>

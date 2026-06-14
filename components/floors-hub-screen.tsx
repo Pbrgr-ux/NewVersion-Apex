@@ -33,7 +33,7 @@ export function FloorsHubScreen({ floors }: { floors: FloorSummary[] }) {
     <main className="flex min-h-svh flex-col bg-background px-4 pt-2 pb-24">
       <div className="flex items-center gap-2 mb-1">
         <Building2 className="h-5 w-5 text-primary" />
-        <h1 className="text-base font-bold tracking-tight text-foreground uppercase">Floors</h1>
+        <h1 className="text-[15px] font-bold tracking-tight text-foreground uppercase">Floors</h1>
       </div>
       <p className="text-xs text-muted-foreground mb-4">Private leaderboards on the Major League — same game, your crew.</p>
 
@@ -41,7 +41,7 @@ export function FloorsHubScreen({ floors }: { floors: FloorSummary[] }) {
         <div className="flex flex-col gap-3">
           {floors.map((f) => (
             <Link key={f.id} href={`/floors/${f.id}`}
-              className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-primary/40">
+              className="flex items-center gap-3 rounded-xl border border-border bg-card px-2.5 py-2.5 hover:border-primary/40">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary font-bold">
                 {f.name.charAt(0).toUpperCase()}
               </div>
@@ -83,7 +83,7 @@ export function FloorsHubScreen({ floors }: { floors: FloorSummary[] }) {
         <form onSubmit={(e) => { e.preventDefault(); call("create", { name }) }} className="flex flex-col gap-4">
           <button type="button" onClick={() => setView("list")} className="self-start text-xs text-muted-foreground hover:text-foreground">← Back</button>
           <div>
-            <h2 className="text-lg font-semibold text-foreground">New floor</h2>
+            <h2 className="text-[17px] font-semibold text-foreground">New floor</h2>
             <p className="text-xs text-muted-foreground mt-0.5">An invite code is generated automatically.</p>
           </div>
           <input value={name} onChange={(e) => { setName(e.target.value); setError("") }}
@@ -101,12 +101,12 @@ export function FloorsHubScreen({ floors }: { floors: FloorSummary[] }) {
         <form onSubmit={(e) => { e.preventDefault(); call("join", { code }) }} className="flex flex-col gap-4">
           <button type="button" onClick={() => setView("list")} className="self-start text-xs text-muted-foreground hover:text-foreground">← Back</button>
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Join a floor</h2>
+            <h2 className="text-[17px] font-semibold text-foreground">Join a floor</h2>
             <p className="text-xs text-muted-foreground mt-0.5">Enter the invite code.</p>
           </div>
           <input value={code} onChange={(e) => { setCode(e.target.value.toUpperCase()); setError("") }}
             placeholder="e.g. ABCD-EFGH" maxLength={9}
-            className="w-full rounded-lg border border-border bg-input px-4 py-3 text-center font-mono text-lg tracking-widest text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+            className="w-full rounded-lg border border-border bg-input px-4 py-3 text-center font-mono text-[17px] tracking-widest text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
           {error && <p className="text-xs text-red-500">{error}</p>}
           <button type="submit" disabled={busy || code.replace(/[^A-Za-z0-9]/g, "").length < 4}
             className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60">

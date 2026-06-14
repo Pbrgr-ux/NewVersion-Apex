@@ -75,7 +75,7 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
     <main className="flex min-h-svh flex-col bg-background pb-20">
 
       {/* ── Header ──────────────────────────────────────────── */}
-      <div className="flex flex-col items-center gap-1 px-6 pt-6 pb-2">
+      <div className="flex flex-col items-center gap-1 px-4 pt-6 pb-2">
         <div className="flex items-center gap-2">
           <Trophy className="h-4 w-4 text-primary" />
           <h1 className="text-sm font-bold text-foreground">Ranking</h1>
@@ -139,7 +139,7 @@ export function ClassementScreen({ data }: { data: AllClassementData }) {
             )}
 
             {/* ── Classement — même forme que les Floors ───────── */}
-            <div className="rounded-xl border border-border bg-card px-2.5 py-3">
+            <div className="rounded-xl border border-border bg-card px-2.5 py-2.5">
               <div className="flex flex-col gap-1.5">
                 {entries.map((m) => {
                   const medal = m.rang === 1 ? "bg-amber-400 text-black" : m.rang === 2 ? "bg-slate-300 text-black" : m.rang === 3 ? "bg-orange-500 text-white" : "bg-secondary text-muted-foreground"
