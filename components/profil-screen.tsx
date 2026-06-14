@@ -198,7 +198,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
       {/* ── Classement saison courante ───────────────────────── */}
       <div className="grid grid-cols-2 gap-3 px-4 pb-4">
         <Card className="bg-card border-border">
-          <CardContent className="flex flex-col items-center gap-0.5 py-3 px-2">
+          <CardContent className="flex flex-col items-center gap-0.5 px-2.5 py-2.5">
             <Trophy className="h-5 w-5 text-primary mb-0.5" />
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Ranking
@@ -215,7 +215,7 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
         </Card>
 
         <Card className="bg-card border-border">
-          <CardContent className="flex flex-col items-center gap-0.5 py-3 px-2">
+          <CardContent className="flex flex-col items-center gap-0.5 px-2.5 py-2.5">
             <Zap className="h-5 w-5 text-primary mb-0.5" />
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Season perf
