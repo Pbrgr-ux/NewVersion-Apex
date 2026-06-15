@@ -67,8 +67,8 @@ export function ConnexionScreen() {
           </p>
         </div>
 
-        {/* Connexion sociale */}
-        <OAuthButtons />
+        {/* Connexion sociale (Google uniquement) */}
+        <OAuthButtons providers={["google"]} />
 
         {/* Séparateur */}
         <div className="my-5 flex items-center gap-3">
