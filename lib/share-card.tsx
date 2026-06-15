@@ -151,7 +151,7 @@ export function buildCard(
 
   const Footer = (
     <div style={{ display: "flex", justifyContent: "space-between", width: "100%", fontSize: 26, color: C.muted }}>
-      <div style={{ display: "flex" }}>One trade a week. Real rivals.</div>
+      <div style={{ display: "flex" }}>One trade a week. Real glory.</div>
       <div style={{ display: "flex", color: C.gold, fontWeight: 700 }}>Can you beat me? →</div>
     </div>
   )

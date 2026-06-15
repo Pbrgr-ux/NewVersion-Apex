@@ -35,7 +35,7 @@ export function SplashScreen() {
           <h2 className="text-balance text-2xl font-semibold leading-tight tracking-tight text-foreground">
             One trade a week.
             <br />
-            Real stocks. Real rivals.
+            Real stocks. Real glory.
             <br />
             <span className="text-primary">No excuses.</span>
           </h2>

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og"
 
 export const runtime = "nodejs"
-export const alt = "TradeLeague — One trade a week. Real rivals."
+export const alt = "TradeLeague — One trade a week. Real glory."
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -26,7 +26,7 @@ export default function Image() {
           <div style={{ display: "flex", fontSize: 72, fontWeight: 800, lineHeight: 1.05 }}>One trade a week.</div>
           <div style={{ display: "flex", fontSize: 72, fontWeight: 800, lineHeight: 1.05 }}>
             <span>Real stocks. </span>
-            <span style={{ color: C.gold, marginLeft: 18 }}>Real rivals.</span>
+            <span style={{ color: C.gold, marginLeft: 18 }}>Real glory.</span>
           </div>
           <div style={{ display: "flex", fontSize: 34, color: C.muted, marginTop: 16 }}>Build your portfolio. Beat the index. Climb the leaderboard.</div>
         </div>

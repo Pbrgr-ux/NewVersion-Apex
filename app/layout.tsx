@@ -11,17 +11,17 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://finance-app-splash.vercel.app'),
-  title: 'TradeLeague - One trade a week. Real rivals.',
+  title: 'TradeLeague - One trade a week. Real glory.',
   description: 'Build your portfolio each week and take on your rivals on real markets.',
   openGraph: {
-    title: 'TradeLeague - One trade a week. Real rivals.',
+    title: 'TradeLeague - One trade a week. Real glory.',
     description: 'Build your portfolio each week and take on your rivals on real markets.',
     type: 'website',
     siteName: 'TradeLeague',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'TradeLeague - One trade a week. Real rivals.',
+    title: 'TradeLeague - One trade a week. Real glory.',
     description: 'Build your portfolio each week and take on your rivals on real markets.',
   },
   generator: 'v0.app',
