@@ -238,8 +238,9 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
         </div>
       </div>
 
-      {/* ── CTA Go Pro (si pas déjà Pro) ─────────────────────── */}
-      {!isPro && (
+      {/* ── CTA Go Pro (masqué : offre Pro non disponible pour l'instant) ──
+          Réactiver en remettant `{!isPro && (` à la place de `{false && (`. */}
+      {false && (
         <Link href="/pro" className="mx-4 mb-4">
           <div className="flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20">
@@ -298,8 +299,8 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
           </h3>
           <div className="flex flex-col gap-2">
             {historique.map((row) => (
-              <Card key={row.saison} className="bg-card border-border">
-                <CardContent className="flex items-center justify-between px-4 py-3">
+              <Card key={row.saison} className="bg-card border-border py-2">
+                <CardContent className="flex items-center justify-between px-4 py-2">
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                       S{row.saison}
