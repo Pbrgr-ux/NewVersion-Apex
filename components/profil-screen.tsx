@@ -7,7 +7,7 @@ import {
   Crown, LogOut, Calendar, Trophy,
   Zap, ChevronRight, Users,
   Loader2, KeyRound, TrendingUp, TrendingDown,
-  Settings, Pencil, Upload,
+  Settings, Pencil, Upload, Check, X,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button }            from "@/components/ui/button"
@@ -44,7 +44,14 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
   const { user, saison, historique, positions, hasPortfolio } = data
   const { isPro, isAdmin } = user
 
-  const initials    = user.pseudo.slice(0, 2).toUpperCase()
+  // Édition du pseudo
+  const [pseudo, setPseudo]               = useState(user.pseudo)
+  const [editingPseudo, setEditingPseudo] = useState(false)
+  const [pseudoInput, setPseudoInput]     = useState(user.pseudo)
+  const [pseudoBusy, setPseudoBusy]       = useState(false)
+  const [pseudoError, setPseudoError]     = useState<string | null>(null)
+
+  const initials    = pseudo.slice(0, 2).toUpperCase()
   const memberDate  = new Date(user.memberSince).toLocaleDateString("en-US", {
     month: "long", year: "numeric",
   })
@@ -95,6 +102,29 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
+
+  async function savePseudo() {
+    const v = pseudoInput.trim()
+    setPseudoError(null)
+    if (v === pseudo) { setEditingPseudo(false); return }
+    if (v.length < 3)  { setPseudoError("At least 3 characters."); return }
+    if (v.length > 20) { setPseudoError("20 characters max."); return }
+
+    setPseudoBusy(true)
+    try {
+      const { data: { user: u } } = await supabase.auth.getUser()
+      if (!u) { setPseudoError("Not signed in."); return }
+      const { error } = await supabase.from("users").update({ pseudo: v }).eq("id", u.id)
+      if (error) {
+        setPseudoError(error.code === "23505" ? "This username is already taken." : error.message)
+        return
+      }
+      setPseudo(v)
+      setEditingPseudo(false)
+    } finally {
+      setPseudoBusy(false)
     }
   }
 
@@ -163,14 +193,43 @@ export function ProfilScreen({ data }: { data: ProfilData }) {
         )}
 
         <div className="flex flex-col items-center gap-1.5">
-          <div className="flex items-center gap-2">
-            <h1 className="text-[17px] font-bold text-foreground">{user.pseudo}</h1>
-            {isPro && (
-              <Badge className="bg-primary text-primary-foreground">
-                <Crown className="mr-1 h-3 w-3" />PRO
-              </Badge>
-            )}
-          </div>
+          {editingPseudo ? (
+            <div className="flex w-full max-w-[260px] flex-col items-center gap-2">
+              <input
+                value={pseudoInput}
+                onChange={(e) => { setPseudoInput(e.target.value); setPseudoError(null) }}
+                onKeyDown={(e) => { if (e.key === "Enter") savePseudo(); if (e.key === "Escape") { setEditingPseudo(false); setPseudoInput(pseudo); setPseudoError(null) } }}
+                maxLength={20}
+                autoFocus
+                aria-label="Username"
+                className="w-full rounded-lg border border-border bg-input px-3 py-2 text-center text-[17px] font-bold text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+              <div className="flex items-center gap-2">
+                <button onClick={savePseudo} disabled={pseudoBusy}
+                  className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-60">
+                  {pseudoBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Save
+                </button>
+                <button onClick={() => { setEditingPseudo(false); setPseudoInput(pseudo); setPseudoError(null) }}
+                  className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary">
+                  <X className="h-3.5 w-3.5" /> Cancel
+                </button>
+              </div>
+              {pseudoError && <p className="text-xs text-red-500">{pseudoError}</p>}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <h1 className="text-[17px] font-bold text-foreground">{pseudo}</h1>
+              <button onClick={() => { setEditingPseudo(true); setPseudoInput(pseudo) }}
+                aria-label="Edit username" className="text-muted-foreground hover:text-foreground">
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              {isPro && (
+                <Badge className="bg-primary text-primary-foreground">
+                  <Crown className="mr-1 h-3 w-3" />PRO
+                </Badge>
+              )}
+            </div>
+          )}
           <p className="text-sm text-muted-foreground">{user.email}</p>
           <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
             <Calendar className="h-3.5 w-3.5" />
