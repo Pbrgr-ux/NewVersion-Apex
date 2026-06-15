@@ -10,10 +10,19 @@
  * `heureDebut`h00 et `heureFin`h00 (intervalle par jour, fuseau Europe/Paris).
  */
 
+// Intervalle avancé : jours + heures, avec passage minuit si fin <= debut.
+// Permet des fenêtres différentes selon le jour (ex. semaine la nuit, dimanche en journée).
+export type WindowInterval = {
+  jours: number[]   // 0 = dim … 6 = sam
+  debut: number     // 0-23
+  fin:   number     // 1-24 ; si fin <= debut → la fenêtre passe minuit (se termine le lendemain)
+}
+
 export type ArbitrageWindowConfig = {
-  jours:      number[]   // 0 = dim … 6 = sam
+  jours:      number[]   // 0 = dim … 6 = sam   (modèle simple)
   heureDebut: number     // 0-23
-  heureFin:   number     // 0-23
+  heureFin:   number     // 0-24
+  intervals?: WindowInterval[]   // si présent et non vide → prioritaire (multi-intervalles + passage minuit)
 }
 
 export type ArbitrageWindowState = {
@@ -74,35 +83,54 @@ export function formatDuration(totalSec: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
 }
 
+// Normalise la config en liste d'intervalles (le modèle simple = 1 intervalle).
+function toIntervals(cfg: ArbitrageWindowConfig): WindowInterval[] {
+  if (cfg.intervals && cfg.intervals.length > 0) return cfg.intervals
+  return [{ jours: cfg.jours ?? [], debut: cfg.heureDebut, fin: cfg.heureFin }]
+}
+
 export function computeWindowState(now: Date, cfg: ArbitrageWindowConfig): ArbitrageWindowState {
-  const jours = cfg.jours ?? []
-  if (jours.length === 0) return INITIAL_WINDOW
+  const intervals = toIntervals(cfg).filter((iv) => iv.jours?.length > 0 && iv.fin !== iv.debut)
+  if (intervals.length === 0) return INITIAL_WINDOW
 
   const { weekday, hour, minute, second } = getParisComponents(now)
-  const sod      = hour * 3600 + minute * 60 + second
-  const openSod  = cfg.heureDebut * 3600
-  const closeSod = cfg.heureFin * 3600
+  const sod = hour * 3600 + minute * 60 + second
 
-  const isOpen = jours.includes(weekday) && sod >= openSod && sod < closeSod
-
-  if (isOpen) {
-    const secUntilClose  = closeSod - sod
-    const windowCloseISO = new Date(now.getTime() + secUntilClose * 1000).toISOString()
-    return {
-      isOpen:         true,
-      timeUntilOpen:  "--",
-      timeUntilClose: formatDuration(Math.round(secUntilClose)),
-      windowCloseISO,
+  // Matérialise toutes les occurrences sur [-1j, +8j] en secondes depuis maintenant.
+  // Gère le passage minuit (fin <= debut → la fenêtre se prolonge le lendemain).
+  const ranges: { start: number; end: number }[] = []
+  for (const iv of intervals) {
+    const wrap   = iv.fin <= iv.debut
+    const durSec = ((wrap ? iv.fin + 24 : iv.fin) - iv.debut) * 3600
+    for (let k = -1; k <= 8; k++) {
+      const wd = (((weekday + k) % 7) + 7) % 7
+      if (!iv.jours.includes(wd)) continue
+      const start = k * 86400 + iv.debut * 3600 - sod
+      ranges.push({ start, end: start + durSec })
     }
   }
 
-  let secUntilOpen = Infinity
-  for (let k = 0; k <= 7; k++) {
-    const wd = (weekday + k) % 7
-    if (!jours.includes(wd)) continue
-    const sec = k * 86400 + openSod - sod
-    if (sec > 0) { secUntilOpen = sec; break }
+  // Ouvert maintenant ? (+ fusion des plages contiguës pour la fermeture)
+  let curEnd = -Infinity
+  for (const r of ranges) if (r.start <= 0 && r.end > 0) curEnd = Math.max(curEnd, r.end)
+  if (curEnd > 0) {
+    let extended = true
+    while (extended) {
+      extended = false
+      for (const r of ranges) if (r.start <= curEnd && r.end > curEnd) { curEnd = r.end; extended = true }
+    }
+    const secUntilClose = Math.round(curEnd)
+    return {
+      isOpen:         true,
+      timeUntilOpen:  "--",
+      timeUntilClose: formatDuration(secUntilClose),
+      windowCloseISO: new Date(now.getTime() + secUntilClose * 1000).toISOString(),
+    }
   }
+
+  // Prochaine ouverture
+  let secUntilOpen = Infinity
+  for (const r of ranges) if (r.start > 0) secUntilOpen = Math.min(secUntilOpen, r.start)
 
   return {
     isOpen:         false,
