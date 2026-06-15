@@ -109,8 +109,8 @@ export function SignupScreen() {
           </p>
         </div>
 
-        {/* Inscription sociale */}
-        <OAuthButtons />
+        {/* Inscription sociale (Google uniquement) */}
+        <OAuthButtons providers={["google"]} />
 
         {/* Séparateur */}
         <div className="my-5 flex items-center gap-3">
