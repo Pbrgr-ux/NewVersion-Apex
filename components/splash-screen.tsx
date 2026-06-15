@@ -61,6 +61,9 @@ export function SplashScreen() {
           >
             <Link href="/connexion">Sign In</Link>
           </Button>
+          <p className="px-2 text-center text-[11px] leading-relaxed text-muted-foreground">
+            Fantasy trading game for entertainment only — not investment advice.
+          </p>
         </div>
       </div>
 
